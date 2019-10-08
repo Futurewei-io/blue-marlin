@@ -1,0 +1,85 @@
+plugins {
+    id "org.sonarqube" version "2.6"
+}
+
+group 'com.bluemarlin.ims.imsservice'
+
+def versionName() {
+    return '1.0.0.0'
+}
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'BlueMarlin'
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    apply plugin: 'project-report'
+
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+    ext {
+        commonsLang3Version = '3.4'
+        junitVersion = '4.12'
+    }
+    configurations {
+        compile.exclude group: 'ch.qos.logback'
+    }
+    repositories {
+        maven { url 'http://repo1.maven.org/maven2/' }
+        maven { url 'https://maven.google.com' }
+    }
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: "${junitVersion}"
+        compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.16.1'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.6'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
+        compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '6.2.0'
+    }
+}
+
+
+project(':imsservice') {
+    apply plugin: 'java'
+    apply plugin: 'war'
+
+    war.baseName = 'imsservice'
+    project.webAppDirName = 'src/main/webapp'
+    sourceSets {
+        main {
+            java {
+                srcDir 'src/main/java'
+            }
+        }
+    }
+
+    dependencies {
+        compile group: 'org.springframework', name: 'spring-web', version: "4.2.4.RELEASE"
+        compile group: 'org.springframework', name: 'spring-webmvc', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-context-support', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-jms', version: '4.2.4.RELEASE'
+        compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
+        compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
+        compile group: 'org.glassfish.jersey.core', name: 'jersey-common', version: '2.29'
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLang3Version}"
+        compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.0'
+        compile group: 'com.lmax', name: 'disruptor', version: '3.4.2'
+        compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
+        compile group: 'org.apache.commons', name: 'commons-math3', version: '3.0'
+        compile group: 'org.json', name: 'json', version: '20160810'
+    }
+
+    test {
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+}
+
+

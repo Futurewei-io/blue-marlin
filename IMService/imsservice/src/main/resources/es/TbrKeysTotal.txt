@@ -1,0 +1,5 @@
+int totals=0;
+for(int entry : params._source.data.days.values()){
+    totals+=entry;
+}
+return totals;

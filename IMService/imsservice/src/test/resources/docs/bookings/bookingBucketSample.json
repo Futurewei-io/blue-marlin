@@ -1,0 +1,9 @@
+{
+  "day":"20101001",
+  "minus_bk_ids":["120"],
+  "and_bk_ids":["132"],
+  "bk_ids_order":["120","132"],
+  "allocated_amount":{"120":0},
+  "priority":1,
+  "avg_tbr_map":{}
+}

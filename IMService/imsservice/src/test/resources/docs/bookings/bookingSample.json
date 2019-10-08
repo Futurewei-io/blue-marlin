@@ -1,0 +1,12 @@
+{
+  "bk_id" : "120",
+  "adv_id" : "1300",
+  "days" : ["20100101","20100101"],
+  "query" : {
+    "g" : "g_m_sample",
+    "dm" : "bndal00_sample"
+  },
+  "price" : "10",
+  "amount" : 0,
+  "del":true
+}
