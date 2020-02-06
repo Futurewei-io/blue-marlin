@@ -83,5 +83,5 @@ def get_model_stats(cfg, model_name, model_version):
     doc = es.search(body)
     if doc == None or len(doc) != 1:
         raise Exception(
-            'model/version {}{} not found'.format(model_name, model_version))
+            'model/version {}/{} not valid'.format(model_name, model_version))
     return doc[0]

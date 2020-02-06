@@ -3,7 +3,7 @@ bucket_size: 1 # same as log_processor; about 5000 records per bucket
 bucket_step: 1
 es_host: '10.193.217.111'
 es_port: '9200'
-es_predictions_index: 'predictions_02012020'
+es_predictions_index: 'predictions_02062020'
 es_predictions_type: 'doc'
 es_model_index: 'model_stats'
 es_model_type: 'stat'
