@@ -28,7 +28,7 @@ from predictor_dl_model.trainer import feeder
 sys.modules['feeder'] = feeder
 
 
-def run(cfg, model_name, model_verion):
+def run(cfg, model_name, model_version, serving_url):
 
     sc = SparkContext()
     hive_context = HiveContext(sc)
@@ -39,22 +39,8 @@ def run(cfg, model_name, model_verion):
     bucket_step = cfg['bucket_step']
     factdata = cfg['factdata']
 
-    model_stats = get_model_stats(cfg,model_name,model_verion)
+    model_stats = get_model_stats(cfg, model_name, model_version)
     print(model_stats)
-
-    # feeder = None
-    # with open("data/vars/feeder_meta.pkl", mode='rb') as file:
-    #     feeder = pickle.load(file)
-    # print(type(feeder))
-    # print(feeder)
-
-    # # inp = VarFeeder.read_vars("data/vars")
-    # # print(type(inp))
-    # # Writing a JSON file
-    # # with open('data.json', 'w') as f:
-    # #     json.dump(inp, f)
-
-    # feeder_brc = sc.broadcast(feeder)
 
     start_bucket = 0
     while True:
@@ -66,7 +52,7 @@ def run(cfg, model_name, model_verion):
 
         # Read factdata table
         command = """
-        select count_array,day,hour,uckey from {} where day between '2018-01-01' and '2018-01-05' and bucket_id between {} and {}
+        select count_array,day,hour,uckey from {} where bucket_id between {} and {}
         """.format(factdata, str(start_bucket), str(end_bucket))
 
         start_bucket = end_bucket + 1
@@ -85,10 +71,10 @@ def run(cfg, model_name, model_verion):
 
         l = df.take(1)
         row = l[0]
-        predict_counts_for_uckey(forecaster, model_stats, cfg)(row['uckey'], row['prediction_input'])
+        predict_counts_for_uckey(serving_url, forecaster, model_stats, cfg)(row['uckey'], row['prediction_input'])
         break
 
-        predictor_udf = udf(predict_counts_for_uckey(forecaster, model_stats, cfg), StringType())
+        predictor_udf = udf(predict_counts_for_uckey(serving_url, forecaster, model_stats, cfg), StringType())
 
         df = df.withColumn('prediction_output', predictor_udf(df.uckey, df.prediction_input))
 
@@ -123,4 +109,5 @@ if __name__ == '__main__':
         logger_operation.error("Unexpected error:{}".format(sys.exc_info()[0]))
         raise
 
-    run(cfg, 's32', '1')
+    serving_url = 'http://10.193.217.108:8501/v1/models/faezeh1:predict'
+    run(cfg, 's32', '1',serving_url)

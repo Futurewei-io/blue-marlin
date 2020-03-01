@@ -59,7 +59,7 @@ def run(cfg, model_name, model_version, serving_url):
 
         # Read factdata table
         command = """
-        select count_array,day,hour,uckey from {} where bucket_id between {} and {} and not day='2018-03-29' and not day='2018-03-30' and not day='2018-03-31'
+        select count_array,day,hour,uckey from {} where bucket_id between {} and {}
         """.format(factdata, str(start_bucket), str(end_bucket))
 
         start_bucket = end_bucket + 1

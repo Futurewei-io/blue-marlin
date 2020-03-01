@@ -8,7 +8,7 @@ import math
 # read es
 es_host = '10.193.217.111'
 es_port = '9200'
-es_index = 'predictions_02052020'
+es_index = 'predictions_02252020'
 es_type = 'doc'
 es = ESClient(es_host, es_port, es_index, es_type)
 hits = es.search({"size": 1000})
@@ -47,9 +47,9 @@ while True:
         break
 
     # Read factdata table
-    command = """
-        select count_array,day,hour,uckey from {} where bucket_id between {} and {}
-        """.format(factdata, str(start_bucket), str(end_bucket))
+    # command = """
+    #     select count_array,day,hour,uckey from {} where bucket_id between {} and {}
+    #     """.format(factdata, str(start_bucket), str(end_bucket))
 
     command = """
         select * from trainready_tmp
@@ -93,7 +93,7 @@ while True:
         hour = row['hour']
         h = row['price_cat']
         ts_n = row['ts_n']
-        days = [('2018-03-29', ts_n[-3]), ('2018-03-30',
+        days = [('2018-03-22', ts_n[-10]), ('2018-03-23',  ts_n[-9]), ('2018-03-24', ts_n[-8]),('2018-03-25', ts_n[-7]),('2018-03-26', ts_n[-6]), ('2018-03-27',  ts_n[-5]), ('2018-03-28', ts_n[-4]),('2018-03-29', ts_n[-3]), ('2018-03-30',
                                            ts_n[-2]), ('2018-03-31', ts_n[-1])]
 
         for day, count in days:
