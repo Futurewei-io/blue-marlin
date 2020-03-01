@@ -28,6 +28,7 @@ import pickle
 import statistics
 
 import predictor_dl_model.pipeline.transform as transform
+from predictor_dl_model.pipeline.util import get_dow
 
 
 def __save_as_table(df, table_name, hive_context, create_table):
@@ -53,11 +54,13 @@ def __save_as_table(df, table_name, hive_context, create_table):
             t string,
             si string,
             r string,
+            page_popularity float,
+            page_popularity_n float,
             price_cat_0_n float, price_cat_1_n float, price_cat_2_n float, price_cat_3_n float,
             g_g_m int, g_g_f int, g_g_x int,
             g_g_m_n float, g_g_f_n float, g_g_x_n float,
             a_1_n float, a_2_n float, a_3_n float, a_4_n float,
-            t_3G_n float,t_4G_n float,
+            t_3G_n float,t_4G_n float,t_5G_n float,
             si_1_n float,si_2_n float,si_3_n float
             )
             """.format(table_name)
@@ -75,18 +78,20 @@ def __save_as_table(df, table_name, hive_context, create_table):
               't',
               'si',
               'r',
+              'page_popularity',
+              'page_popularity_n',
               'price_cat_0_n', 'price_cat_1_n', 'price_cat_2_n', 'price_cat_3_n',
               'g_g_m', 'g_g_f', 'g_g_x',
               'g_g_m_n', 'g_g_f_n', 'g_g_x_n',
               'a_1_n', 'a_2_n', 'a_3_n', 'a_4_n',
-              't_3G_n', 't_4G_n',
-              'si_1_n', 'si_2_n', 'si_3_n'
+              't_3G_n', 't_4G_n','t_5G_n',
+              'si_1_n', 'si_2_n', 'si_3_n',              
               ).write.format('hive').option("header", "true").option("encoding", "UTF-8").mode('append').insertInto(table_name)
 
 def normalize(mlist):
     avg = statistics.mean(mlist)
     std = statistics.stdev(mlist)
-    return [(item-avg)/(std) for item in mlist]
+    return [0 if std==0  else (item-avg)/(std) for item in mlist], avg, std
 
 def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, table_name, bucket_size, bucket_step, tf_statistics_path, holidays):
 
@@ -99,24 +104,12 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
         day = day + timedelta(days=-1)
     day_list.sort()
 
-    dow_list = []
-    for day in day_list:
-        dday = datetime.strptime(day, '%Y-%m-%d')
-        dow_list.append(float(dday.weekday()))
-
     tsf = {}
-    week_period = 7.0 / (2 * math.pi)
-    sin_list = [math.sin(x / week_period) for x in dow_list]
-    cos_list = [math.cos(x / week_period) for x in dow_list]
-    tsf['dow_sin'] = sin_list
-    tsf['dow_cos'] = cos_list
-
     tsf['days'] =   day_list
-    holidays_norm = normalize([1 if day in holidays else 0 for day in day_list])
+    holidays = [1 if day in holidays else 0 for day in day_list]
+    holidays_norm, hol_avg, hol_std = normalize(holidays)
 
-    output = open(tf_statistics_path, 'wb')
-    pickle.dump(tsf, output)
-    output.close()
+    tsf['holidays_norm'] = holidays_norm
 
     start_bucket = 0
     first_round = True
@@ -157,6 +150,8 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
          # replace nan with median
         df = transform.replace_with_median(df)
 
+        df = transform.calculate_page_popularity(df)
+
         df = transform.add_uph(df)
 
         # Log processor code to know the index of features
@@ -165,7 +160,7 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
         df = df.withColumn('a', transform.add_feature_udf(4)(df.uckey))
         df = df.withColumn('si', transform.add_feature_udf(1)(df.uckey))
         df = df.withColumn('r', transform.add_feature_udf(7)(df.uckey))
-        df = df.withColumn('t', transform.add_feature_udf(0)(df.uckey))
+        df = df.withColumn('t', transform.add_feature_udf(2)(df.uckey))
         df = df.withColumn('g', transform.add_feature_udf(3)(df.uckey))
 
         collection_map = {}
@@ -179,7 +174,7 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
         collection_map[feature_name] = feature_value_list
 
         feature_name = 't'
-        feature_value_list = ['3G', '4G']
+        feature_value_list = ['3G', '4G', '5G']
         collection_map[feature_name] = feature_value_list
 
         feature_name = 'si'
@@ -195,12 +190,26 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
         feature_value_list = ['0', '1', '2', '3']
         collection_map[feature_name] = feature_value_list
 
+        stats_map = {}
         for feature_name, feature_value_list in collection_map.items():
             df = transform.add_ohe_feature(df, feature_name, feature_value_list)
             for feature_value in feature_value_list:
                 ohe_feature = feature_name + '_' + str(feature_value)
-                df = transform.normalize_ohe_feature(
+                df, stats = transform.normalize_ohe_feature(
                     df, ohe_feature=ohe_feature)
+                stats_map[ohe_feature] = stats
+
+        stats_map['holiday_stats'] = [hol_avg, hol_std]
+        
+        df, stats = transform.normalize_ohe_feature(df, ohe_feature='page_popularity')
+        stats_map['page_popularity'] = stats
+
+        # write into pkl file
+        tsf['stats']=stats_map
+        print(tsf)
+        output = open(tf_statistics_path, 'wb')
+        pickle.dump(tsf, output)
+        output.close()
 
         __save_as_table(df, table_name, hive_context, first_round)
         first_round = False
@@ -209,14 +218,16 @@ def prepare_tfrecords(hive_context, factdata_table_name, yesterday, past_days, t
 if __name__ == "__main__":
     sc = SparkContext()
     hive_context = HiveContext(sc)
+    sc.setLogLevel('warn')
+
 
     yesterday = "2018-02-01"
-    past_days = 31
-    table_name = 'trainready_t1'
-    bucket_size = 64
-    bucket_step = 10
+    past_days = 10
+    table_name = 'trainready_temp'
+    bucket_size = 1
+    bucket_step = 1
     tf_statistics_path = 'tf_statistics.pkl'
     holidays = []
     
-    prepare_tfrecords(hive_context, 'factdata', yesterday,
+    prepare_tfrecords(hive_context, 'factdata3m2', yesterday,
                       past_days, table_name, bucket_size, bucket_step, tf_statistics_path, holidays)

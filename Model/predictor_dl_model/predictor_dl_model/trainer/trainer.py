@@ -91,6 +91,7 @@ class AggMetric:
         self.metrics = metrics
 
     def _mean(self, fun) -> float:
+        # noinspection PyTypeChecker
         return np.mean([fun(metric) for metric in self.metrics])
 
     @property
@@ -474,7 +475,9 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
 
         eval_stages = []
         if side_split:
-            side_eval_model = Model(side_eval_pipe, hparams, is_train=False, seed=seed)
+            side_eval_model = Model(side_eval_pipe, hparams, is_train=False,
+                                    #loss_mask=np.concatenate([np.zeros(50, dtype=np.float32), np.ones(10, dtype=np.float32)]),
+                                    seed=seed)
             eval_stages.append((Stage.EVAL_SIDE, side_eval_model))
             if avg_sgd:
                 eval_stages.append((Stage.EVAL_SIDE_EMA, side_eval_model))
@@ -528,6 +531,7 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
             return {ema.average_name(v):v for v in model.train_model.ema._averages}
 
         ema_names = dict(chain(*[ema_vars(model).items() for model in all_models]))
+        #ema_names = all_models[0].train_model.ema.variables_to_restore()
         ema_loader = tf.train.Saver(var_list=ema_names,  max_to_keep=1, name='ema_loader')
         ema_saver = tf.train.Saver(max_to_keep=1, name='ema_saver')
     else:
@@ -561,13 +565,16 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
         eval_stages.append(Stage.EVAL_SIDE)
         ema_eval_stages.append(Stage.EVAL_SIDE_EMA)
 
+    # gpu_options=tf.GPUOptions(allow_growth=False),
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
                                           gpu_options=tf.GPUOptions(allow_growth=gpu_allow_growth))) as sess:
         sess.run(init)
+        # pipe.load_vars(sess)
         inp.restore(sess)
         for model in all_models:
             model.init(sess)
- 
+        # if beholder:
+        #    visualizer = Beholder(session=sess, logdir=summ_path)
         step = 0
         prev_top = np.inf
         best_smape = np.inf
@@ -576,7 +583,9 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
 
         for epoch in range(max_epoch):
 
+            # n_steps = pusher.n_pages // batch_size
             if tqdm:
+                #tqr = trange(steps_per_epoch, desc="%2d" % (epoch + 1), leave=False)
                 tqr = trange(steps_per_epoch, desc="%2d" % (epoch + 1), leave=False,
                              file=logging.root.handlers[0].stream)
 
@@ -586,9 +595,36 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
             for _ in tqr:
                 try:
                     step = trainer.train_step(sess, epoch)
+
+                    pred, time_y, true_y, true_x, time_x, page_ix , norm_mean ,norm_std, lagged_ix =sess.run([trainer.trainers[0].train_model.predictions, trainer.trainers[0].train_model.inp.time_y,trainer.trainers[0].train_model.inp.true_y,
+                                          trainer.trainers[0].train_model.inp.true_x,trainer.trainers[0].train_model.inp.time_x, trainer.trainers[0].train_model.inp.page_ix , trainer.trainers[0].train_model.inp.norm_mean, trainer.trainers[0].train_model.inp.norm_std
+                                                                                                   ,trainer.trainers[0].train_model.inp.lagged_x])
+                    #sess.run(trainer.trainers[0].train_model.inp.inp.hits)
+                    #inp = all_models[0].train_model.inp.inp,
+
+                    pred_exp = np.round(np.expm1(pred))
+
+                    true_exp = np.expm1(true_y )
+
+                    error_exp= np.mean(np.abs(true_exp-pred_exp) /(true_exp))
+                    error= np.mean(np.abs(true_y -pred )/(true_y))
+                    # page_ix = sess.run([trainer.trainers[0].train_model.inp.page_ix])[0][0]
+                    # true_x = sess.run([trainer.trainers[0].train_model.inp.true_x])[0][0]
+                    last_error =  error_exp
+                    epsilon = 0.1  # Smoothing factor, helps SMAPE to be well-behaved near zero
+                    true_o = np.expm1(true_y)
+                    pred_o = np.expm1(pred)
+                    summ = np.maximum(np.abs(true_o) + epsilon, 0.5 + epsilon)
+                    smape = np.mean(np.abs(pred_o - true_o) / summ)
+
+
+
                 except tf.errors.OutOfRangeError:
                     break
-
+                    # if beholder:
+                    #  if step % 5 == 0:
+                    # noinspection PyUnboundLocalVariable
+                    #  visualizer.update()
                 if step % eval_every_step == 0:
                     if eval_stages:
                         trainer.eval_step(sess, epoch, step, eval_batches, stages=eval_stages)
@@ -636,10 +672,10 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
 
 
             if trainer.has_active():
-                status += ", frwd/side best MAE=%.3f/%.3f, SMAPE=%.3f/%.3f; avg MAE=%.3f/%.3f, SMAPE=%.3f/%.3f, %d am" % \
+                status += ", frwd/side best MAE=%.3f/%.3f, SMAPE=%.3f/%.3f; avg MAE=%.3f/%.3f, SMAPE=%.3f/%.3f, %d am ,Error=%3f " % \
                           (eval_mae.best_epoch, eval_mae_side.best_epoch, eval_smape.best_epoch, eval_smape_side.best_epoch,
                            eval_mae.avg_epoch,  eval_mae_side.avg_epoch,  eval_smape.avg_epoch,  eval_smape_side.avg_epoch,
-                           trainer.has_active())
+                           trainer.has_active(), last_error)
                 log.info(status)
             else:
                 log.info(status)
@@ -654,7 +690,7 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
         return np.mean(best_epoch_smape, dtype=np.float64)
 
 
-def predict(checkpoints, hparams, return_x=False, verbose=False, predict_window=6, back_offset=0, n_models=1,
+def predict(checkpoints, hparams, return_x=False, verbose=False, predict_window=10, back_offset=10, n_models=1,
             target_model=0, asgd=False, seed=1, batch_size=1024):
     with tf.variable_scope('input') as inp_scope:
         with tf.device("/cpu:0"):
@@ -694,10 +730,23 @@ def predict(checkpoints, hparams, return_x=False, verbose=False, predict_window=
             pipe.init_iterator(sess)
             saver.restore(sess, checkpoint)
             cnt = 0
+            e = []
             while True:
                 try:
                     if return_x:
-                        pred, x, pname = sess.run([model.predictions, model.inp.true_x, model.inp.page_ix])
+                        #truex, timex, normx, laggedx, truey, timey, normy, normmean, normstd, pgfeatures, pageix
+                        pgfeatures, y ,pred, x, pname, truex , timex, timey= sess.run([model.inp.ucdoc_features, model.inp.true_y, model.predictions, model.inp.true_x, model.inp.page_ix, model.inp.true_x, model.inp.time_x, model.inp.time_y ])
+                        # print(pname, '\n', "true_y:", '\n', np.round(np.expm1(y)), '\n', "prediction:", '\n',
+                        #       np.round(np.expm1(pred)), np.average(np.divide(np.abs(np.subtract(np.round(np.expm1(pred)),np.round(np.expm1(y)))),np.round(np.expm1(y)))))
+                        error = np.average(np.divide(np.abs(np.subtract(np.round(np.expm1(pred)),np.round(np.expm1(y)))),np.round(np.expm1(y))))
+                        e.append(error)
+                        # if pname == b'magazinelock,1,3G,g_f,2,pt,1004,icc,2,11':
+                        #     print(pgfeatures, y ,pred, x, pname, truex , timex, timey)
+                        #     raise NotImplementedError()
+
+                              # ,np.average(np.divide(np.abs(np.subtract(np.round(np.expm1(y)),np.round(np.expm1(pred)))),np.round(np.expm1(y)) )),
+                              #  "time_y:",timey, "time_x:" , timex)
+                        # print(np.average(np.divide(np.abs(np.subtract(np.round(np.expm1(y)),np.round(np.expm1(pred)))),np.round(np.expm1(y)) )))
                     else:
                         pred, pname = sess.run([model.predictions, model.inp.page_ix])
                     utf_names = [str(name, 'utf-8') for name in pname]
@@ -709,13 +758,14 @@ def predict(checkpoints, hparams, return_x=False, verbose=False, predict_window=
                         x_buffer.append(x_values)
                     newline = cnt % 80 == 0
                     if cnt > 0:
-                        log.info('.', end='\n' if newline else '', flush=True)
+                        log.info('.') #, end='\n' if newline else '' , flush=True
                     if newline:
-                        log.info(cnt, end='')
+                        log.info(cnt) #, end='\n'
                     cnt += 1
                 except tf.errors.OutOfRangeError:
                     log.info('🎉')
                     break
+            print(np.average(e))
             cp_predictions = pd.concat(pred_buffer)
             if predictions is None:
                 predictions = cp_predictions
@@ -747,6 +797,8 @@ class DummyTqdmFile(object):
             #tqdm.write(x, file=self.file, end='\n')
 
     def flush(self):
+        #fp_flush = getattr(self.file, 'flush', lambda: None)
+        #fp_flush()
         return getattr(self.file, "flush", lambda: None)()
 
 
@@ -798,3 +850,14 @@ if __name__ == '__main__':
     param_dict['hparams'] = build_from_set(cfg['trainer']['hparam_set'])
     del param_dict['hparam_set']
     train(**param_dict)
+
+    # hparams = build_hparams()
+    # # result = predict("definc_attn", hparams, n_models=1, train_sampling=1.0, eval_sampling=1.0, patience=5, multi_gpu=True,
+    # #                save_best_model=False, gpu=0, eval_memsize=15, seed=5, verbose=True, forward_split=False,
+    # #                write_summaries=True, side_split=True, do_eval=False, predict_window=63, asgd_decay=None, max_steps=11500,
+    # #                save_from_step=10500)
+    #
+    # # print("Training result:", result)
+    # ckpt_file = tf.train.latest_checkpoint('data/cpt/s32')
+    # preds = predict([ckpt_file],hparams, return_x=True, back_offset=11, predict_window=10,verbose=False, n_models=1, target_model=0, asgd=False,batch_size=1)
+    # print(preds)

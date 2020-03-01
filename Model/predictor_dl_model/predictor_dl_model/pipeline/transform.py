@@ -67,6 +67,10 @@ def calculate_time_series(df, day_list):
     df = df.withColumn('ts', _udf(df.ts_list_map))
     return df
 
+def calculate_page_popularity(df):
+    df = df.withColumn('page_popularity',udf(lambda x: statistics.median(x), FloatType())(df.ts_n))
+    return df
+
 
 def add_uph(df):
     df = df.withColumn('uph', udf(lambda x, y, z: ','.join(
@@ -140,7 +144,9 @@ def normalize_ohe_feature(df, ohe_feature):
     if (std_value == 0):
         std_value = 1.0
 
+    stats = [avg_value, std_value]
+
     df = df.withColumn(ohe_feature + '_n', udf(lambda x: _normalize(x,
                                                                     avg_value, std_value), FloatType())(df[ohe_feature]))
 
-    return df
+    return df, stats
