@@ -1,0 +1,66 @@
+log:
+  level: 'WARN' # log level for spark and app
+
+pipeline:
+  factdata_table_name: "factdata3m2" 
+  yesterday: "2018-03-31" # data is used for training from -<prepare_past_days> to -1(yesterday)
+  prepare_past_days: 90
+  tmp_table_name: 'trainready_tmp' # name of the hive table that keeps cleansed and normalized data before writing it into tfrecords, over-writes the existing table
+  bucket_size: 10 # maximum number of buckets to process starting from 0
+  bucket_step: 10 # size of bucket batch that is processed in one iteration
+  tfrecords_hdfs_path: 'bluemarline/dlpredictor/pipeline/factdata.tfrecord.20102020' # it is hdfs location for tfrecords, over-writes the existing files
+  tf_statistics_path: '/home/user01/tf_statistics.pkl'
+  holidays: ['2018-01-01', '2018-01-15', '2018-02-19', '2018-03-31', '2018-05-28', '2018-07-04', '2018-09-03',
+                '2018-11-22', '2018-11-23', '2018-12-25']
+
+tfrecorder_reader:
+  tfrecords_local_path: '/home/user01/factdata.tfrecord.02102020' # it us local path for tfrecords, over-writes the existing files
+  data_dir: 'data/vars'
+  valid_threshold: 0.0 # default=0.0, type=float, help="Series minimal length threshold (pct of data length)"
+  add_days: 0 # default=64, type=int, help="Add N days in a future for prediction"
+  start: '' # help="Effective start date. Data before the start is dropped"
+  end: '' # help="Effective end date. Data past the end is dropped"
+  corr_backoffset: 0 # default=0, type=int, help="Offset for correlation calculation"
+  batch_size: 11880 # batch size of exmaples in tfrecord
+  duration: 90 # time series length, This has to less or equal prepare_past_days
+  tf_statistics_path: '/home/user01/tf_statistics.pkl'
+
+trainer:
+  name: 's32' # default='s32', help='Model name to identify different logs/checkpoints'
+  hparam_set: 's32' # default='s32', help="Hyperparameters set to use (see hparams.py for available sets)"
+  n_models: 1 # default=1, type=int, help="Jointly train n models with different seeds"
+  multi_gpu: false # default=False,  action='store_true', help="Use multiple GPUs for multi-model training, one GPU per model"
+  seed: 5 # default=5, type=int, help="Random seed"
+  logdir: 'data/logs' # efault='data/logs', help="Directory for summary logs"
+  max_epoch: 250 # type=int, default=100, help="Max number of epochs"
+  patience: 2 # type=int, default=2, help="Early stopping: stop after N epochs without improvement. Requires do_eval=True"
+  train_sampling: 1.0 # type=float, default=1.0, help="Sample this percent of data for training"
+  eval_sampling: 1.0 # type=float, default=1.0, help="Sample this percent of data for evaluation"
+  eval_memsize: 15 # type=int, default=5, help="Approximate amount of avalable memory on GPU, used for calculation of optimal evaluation batch size"
+  gpu: 0 # default=0, type=int, help='GPU instance to use'
+  gpu_allow_growth: false # default=False,  action='store_true', help='Allow to gradually increase GPU memory usage instead of grabbing all available memory at start'
+  save_best_model: false # default=False,  action='store_true', help='Save best model during training. Requires do_eval=True'
+  forward_split: false # default=True, dest='forward_split',  action='store_false', help='Use walk-forward split for model evaluation. Requires do_eval=True'
+  side_split: false # default=False, action='store_true', help='Use side split for model evaluation. Requires do_eval=True'
+  do_eval: false # default=True, dest='do_eval', action='store_false', help="Don't evaluate model quality during training"
+  write_summaries: true # default=True, dest='write_summaries', action='store_false', help="Don't Write Tensorflow summaries"
+  verbose: false # default=False, action='store_true', help='Print additional information during graph construction'
+  asgd_decay: 0.99 # type=float,  help="EMA decay for averaged SGD. Not use ASGD if not set"
+  tqdm: true # default=True, dest='tqdm', action='store_false', help="Don't use tqdm for status display during training"
+  max_steps: 20000 # type=int, help="Stop training after max steps"
+  save_from_step: 100 # type=int, help="Save model on each evaluation (10 evals per epoch), starting from this step"
+  predict_window: 10 # default=3, type=int, help="Number of days to predict"
+
+save_model:
+  data_dir: data/vars
+  ckpt_dir: data/cpt/s32 
+  saved_dir: data/vars
+  model_version: 1
+  train_window: 60 # Should be same as the one in hparams
+
+
+elastic_search:
+  es_host: "10.193.217.111"
+  es_port: 9200
+  es_index: 'model_stats'
+  es_type: 'stat'

@@ -5,7 +5,7 @@ import re
 params_s32 = dict(
     batch_size=200,
     # train_window=380,
-    train_window=59,
+    train_window=60,
     train_skip_first=0,
     rnn_depth=400,
     use_attn=False,

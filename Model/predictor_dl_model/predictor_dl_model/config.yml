@@ -8,21 +8,21 @@ pipeline:
   tmp_table_name: 'trainready_tmp' # name of the hive table that keeps cleansed and normalized data before writing it into tfrecords, over-writes the existing table
   bucket_size: 10 # maximum number of buckets to process starting from 0
   bucket_step: 10 # size of bucket batch that is processed in one iteration
-  tfrecords_hdfs_path: 'bluemarline/dlpredictor/pipeline/factdata.tfrecord.10142020' # it is hdfs location for tfrecords, over-writes the existing files
-  tf_statistics_path: /home/faezeh/tf_statistics.pkl
+  tfrecords_hdfs_path: 'factdata.tfrecord.02212020' # it is hdfs location for tfrecords, over-writes the existing files
+  tf_statistics_path: '/home/faezeh/tf_statistics.pkl'
   holidays: ['2018-01-01', '2018-01-15', '2018-02-19', '2018-03-31', '2018-05-28', '2018-07-04', '2018-09-03',
                 '2018-11-22', '2018-11-23', '2018-12-25']
 
 tfrecorder_reader:
-  tfrecords_local_path: '/home/faezeh/factdata.tfrecord.10142020' # it us local path for tfrecords, over-writes the existing files
+  tfrecords_local_path: '/home/faezeh/factdata.tfrecord.02212020' # it us local path for tfrecords, over-writes the existing files
   data_dir: 'data/vars'
   valid_threshold: 0.0 # default=0.0, type=float, help="Series minimal length threshold (pct of data length)"
-  add_days: 10 # default=64, type=int, help="Add N days in a future for prediction"
+  add_days: 0 # default=64, type=int, help="Add N days in a future for prediction"
   start: '' # help="Effective start date. Data before the start is dropped"
   end: '' # help="Effective end date. Data past the end is dropped"
   corr_backoffset: 0 # default=0, type=int, help="Offset for correlation calculation"
   batch_size: 11880 # batch size of exmaples in tfrecord
-  duration: 90 # time series length
+  duration: 90 # time series length, This has to less or equal prepare_past_days
   tf_statistics_path: '/home/faezeh/tf_statistics.pkl'
 
 trainer:
@@ -32,7 +32,7 @@ trainer:
   multi_gpu: false # default=False,  action='store_true', help="Use multiple GPUs for multi-model training, one GPU per model"
   seed: 5 # default=5, type=int, help="Random seed"
   logdir: 'data/logs' # efault='data/logs', help="Directory for summary logs"
-  max_epoch: 10 # type=int, default=100, help="Max number of epochs"
+  max_epoch: 250 # type=int, default=100, help="Max number of epochs"
   patience: 2 # type=int, default=2, help="Early stopping: stop after N epochs without improvement. Requires do_eval=True"
   train_sampling: 1.0 # type=float, default=1.0, help="Sample this percent of data for training"
   eval_sampling: 1.0 # type=float, default=1.0, help="Sample this percent of data for evaluation"
@@ -56,3 +56,11 @@ save_model:
   ckpt_dir: data/cpt/s32 
   saved_dir: data/vars
   model_version: 1
+  train_window: 60 # Should be same as the one in hparams
+
+
+elastic_search:
+  es_host: "10.193.217.111"
+  es_port: 9200
+  es_index: 'model_stats'
+  es_type: 'stat'

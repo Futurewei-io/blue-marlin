@@ -30,8 +30,8 @@ tf.app.flags.DEFINE_integer('batch_size', 1024, 'number of sample in each batch'
 tf.app.flags.DEFINE_integer('model_version', 1, 'version number of the model.')
 tf.app.flags.DEFINE_integer('target_model', 1, 'the index of model to use.')
 tf.app.flags.DEFINE_integer('n_models', 1, 'number of the model.')
-tf.app.flags.DEFINE_integer('train_window', 20, 'number of time spots in training')
-tf.app.flags.DEFINE_integer('predict_window', 3, 'Number of days to predict')
+tf.app.flags.DEFINE_integer('train_window', 60, 'number of time spots in training')
+tf.app.flags.DEFINE_integer('predict_window', 10, 'Number of days to predict')
 tf.app.flags.DEFINE_string('saved_dir', '/tmp/faezeh', 'directory to save generated tfserving model.')
 tf.app.flags.DEFINE_string('ckpt_dir', default='data/cpt/s32', help='checkpint directory')
 tf.app.flags.DEFINE_string('data_dir', 'data/vars', 'input data directory')
@@ -94,18 +94,19 @@ def main(_):
       shutil.rmtree(export_path)
     builder = tf.saved_model.builder.SavedModelBuilder(export_path)
 
-    true_x = tf.saved_model.utils.build_tensor_info(model.inp.true_x)
-    time_x = tf.saved_model.utils.build_tensor_info(model.inp.time_x)
-    norm_x = tf.saved_model.utils.build_tensor_info(model.inp.norm_x)
-    lagged_x = tf.saved_model.utils.build_tensor_info(model.inp.lagged_x)
-    true_y = tf.saved_model.utils.build_tensor_info(model.inp.true_y)
-    time_y = tf.saved_model.utils.build_tensor_info(model.inp.time_y)
-    norm_y = tf.saved_model.utils.build_tensor_info(model.inp.norm_y)
-    norm_mean = tf.saved_model.utils.build_tensor_info(model.inp.norm_mean)
-    norm_std = tf.saved_model.utils.build_tensor_info(model.inp.norm_std)
-    pg_features = tf.saved_model.utils.build_tensor_info(model.inp.ucdoc_features)
-    page_ix = tf.saved_model.utils.build_tensor_info(model.inp.page_ix)
+    true_x = tf.saved_model.utils.build_tensor_info(pipe.true_x) # model.inp.true_x
+    time_x = tf.saved_model.utils.build_tensor_info(pipe.time_x) # model.inp.time_x
+    norm_x = tf.saved_model.utils.build_tensor_info(pipe.norm_x) # model.inp.norm_x
+    lagged_x = tf.saved_model.utils.build_tensor_info(pipe.lagged_x) # model.inp.lagged_x
+    true_y = tf.saved_model.utils.build_tensor_info(pipe.true_y) # model.inp.true_y
+    time_y = tf.saved_model.utils.build_tensor_info(pipe.time_y) # model.inp.time_y
+    norm_y = tf.saved_model.utils.build_tensor_info(pipe.norm_y) # model.inp.norm_y
+    norm_mean = tf.saved_model.utils.build_tensor_info(pipe.norm_mean) # model.inp.norm_mean
+    norm_std = tf.saved_model.utils.build_tensor_info(pipe.norm_std) # model.inp.norm_std
+    pg_features = tf.saved_model.utils.build_tensor_info(pipe.ucdoc_features) # model.inp.ucdoc_features
+    page_ix = tf.saved_model.utils.build_tensor_info(pipe.page_ix) # model.inp.page_ix
 
+    #pred = tf.saved_model.utils.build_tensor_info(graph.get_operation_by_name('m_0/add').outputs[0])
     pred = tf.saved_model.utils.build_tensor_info(model.predictions)
 
     labeling_signature = (
