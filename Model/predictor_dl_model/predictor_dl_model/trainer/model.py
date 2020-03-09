@@ -334,6 +334,35 @@ def rnn_activation_loss(rnn_output, beta):
 
 
 class Model:
+    """
+    Main entrance of model.
+    The entire model can be separated into 2 major stages: encoder and decoder.
+    encoder takes input historical impression as well as related features like any other RNN
+    architectures do. At the end, encoder outputs a neural representation.
+    The output of encoder is going to be the input for decoder.
+    Encoder makes an output encoded in neural representational form which is somewhat encrypted.
+    Decoder has the ability to look inside the encoder's output adn create a different sequence data.
+    (future impression in this case)
+    there are 6 majors steps (functions) in the model.
+    1. make_encoder: build encoder model. Functions rnn_stability_loss & rnn_activation_loss are used to compute
+                     stability & activation losses (enc_stab_loss, enc_activation_loss) from encoder's output.
+    2. convert_cudnn_state_v2: connection between functions make_encoder and decoder. Although GRU cell is used
+                               to build both encoder and decoder models, they are of different APIs. GRU defined
+                               in Cudnn RNN is used in encoder while Python wrapper for block GRU is used in decoder.
+                               This function converts encoder outputs to the format of decoder's inputs.
+    3. decoder: build decoder model. Functions rnn_stability_loss & rnn_activation_loss are used to compute
+                     stability & activation losses (dec_stab_loss, dec_activation_loss) from encoder's output.
+    4. decode_prediction: compute prediction values from decoder's output.
+    5. calc_loss: compute smape_loss (and some other losses, but not used) &
+                  total loss = smape_loss + enc_stab_loss + enc_activation + dec_stab_loss + dec_activation
+    6. make_train_op: wrap up information from steps 1 - 5 and add some necessary operations in training, i.e.
+                      optimization method: Adam
+                      global step: default
+                      reg_losses: tf.Graphkeys.REGULARIZATION_LOSSES (added to total loss, typical method to
+                                  improve model's generaliztion ability)
+                      gradient clipping threshold: used in SGD (stochastic gradient descent) to make sure the
+                                                   gradient used in training will not be too large.
+    """
     def __init__(self, inp: InputPipe, hparams, is_train, seed, graph_prefix=None, asgd_decay=None, loss_mask=None):
         """
         Encoder-decoder prediction model
