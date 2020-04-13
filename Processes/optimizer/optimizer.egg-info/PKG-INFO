@@ -1,0 +1,23 @@
+Metadata-Version: 1.2
+Name: optimizer
+Version: 2.0.0
+Summary: All the packages required for running predictor
+Home-page: https://github.com/Futurewei-io/blue-marlin
+Author: Reza Adibnia
+Author-email: reza.adibnia@futurewei.com
+License: Apache License 2.0
+Description: Branches till Mar 17, 2020
+        Try to work on individual branch first.
+        
+        $ git branch -r
+          origin/HEAD -> origin/master
+          origin/bcao-test-0317
+          origin/cduh-optimizer
+          origin/cduh-test-coverage-122019
+          origin/master
+        
+Platform: linux
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: Apache License 2.0
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
