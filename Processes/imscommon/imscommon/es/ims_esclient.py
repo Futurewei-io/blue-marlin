@@ -54,7 +54,10 @@ class ESClient:
         return self.__put(doc_id, json_doc)
 
     def index(self, id, doc):
-        return self.es.index(index=self.es_index, doc_type=self.es_type, id=id, body=doc)
+        if id is not None:
+            return self.es.index(index=self.es_index, id=id, body=doc)
+        else:
+            return self.es.index(index=self.es_index, body=doc)
 
     def does_exist(self, uckey):
         try:
@@ -106,7 +109,7 @@ class ESClient:
     def update_by_query(self, body):
         try:
             res = self.es.update_by_query(
-                index=self.es_index, doc_type=self.es_type, body=body)
+                index=self.es_index, body=body)
         except Exception as e:
             logger.error(
                 "Failed to update by query in ES index: %s ,error message is : %s" % (self.es_index, e))
@@ -115,6 +118,18 @@ class ESClient:
     def search(self, body):
         res = self.es.search(index=self.es_index, body=body)
         return [hit["_source"] for hit in res['hits']['hits']]
+
+    def raw_search(self, body):
+        res = self.es.search(index=self.es_index, body=body)
+        return res
+
+    def delete(self, id):
+        res = self.es.delete(index=self.es_index, id=id)
+        return res
+
+    def aggregations(self, body):
+        res = self.es.search(index=self.es_index, body=body)
+        return res['aggregations']
 
 
 if __name__ == '__main__':

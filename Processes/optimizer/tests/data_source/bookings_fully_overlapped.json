@@ -1,0 +1,98 @@
+[
+    {
+        "days" : [
+          "20180402"
+        ],
+        "bk_id" : "b1",
+        "adv_id" : "advid100",
+        "price" : 50.0,
+        "amount" : 500,
+        "query" : {
+          "r" : null,
+          "g" : [
+            "g_x"
+          ],
+          "a" : null,
+          "t" : null,
+          "si" : null,
+          "m" : null,
+          "aus" : null,
+          "ais" : null,
+          "pdas" : [
+            "254"
+          ],
+          "exclude_pdas" : null,
+          "apps" : null,
+          "exclude_apps" : null,
+          "dms" : null,
+          "pm" : "NONE",
+          "dpc" : null,
+          "ipl" : null
+        },
+        "del" : false
+    },
+    {
+        "days" : [
+          "20180402"
+        ],
+        "bk_id" : "b3",
+        "adv_id" : "advid100",
+        "price" : 100.0,
+        "amount" : 1000,
+        "query" : {
+          "r" : null,
+          "g" : null,
+          "a" : null,
+          "t" : null,
+          "si" : [
+            "2"
+          ],
+          "m" : null,
+          "aus" : null,
+          "ais" : null,
+          "pdas" : [
+            "254"
+          ],
+          "exclude_pdas" : null,
+          "apps" : null,
+          "exclude_apps" : null,
+          "dms" : null,
+          "pm" : "NONE",
+          "dpc" : null,
+          "ipl" : null
+        },
+        "del" : false
+    },
+    {
+        "days" : [
+          "20180402"
+        ],
+        "bk_id" : "b2",
+        "adv_id" : "advid100",
+        "price" : 80.0,
+        "amount" : 800,
+        "query" : {
+          "r" : null,
+          "g" : null,
+          "a" : [
+            "1"
+          ],
+          "t" : null,
+          "si" : null,
+          "m" : null,
+          "aus" : null,
+          "ais" : null,
+          "pdas" : [
+            "254"
+          ],
+          "exclude_pdas" : null,
+          "apps" : null,
+          "exclude_apps" : null,
+          "dms" : null,
+          "pm" : "NONE",
+          "dpc" : null,
+          "ipl" : null
+        },
+        "del" : false
+    }
+]
