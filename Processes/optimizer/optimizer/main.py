@@ -297,7 +297,7 @@ def run(cfg):
     tomorrow = optimizer.util.get_next_date(day)
 
     # use only tomorrow to create the allocation plan
-    df = df.where('day = {}'.format(tomorrow))
+    df = df.filter(df.day == tomorrow)
 
     # this method add the bbs ucdocs allocation_map with their values
     df = add_ucdoc_bb_allocation_map(cfg, df, bookings_map)
