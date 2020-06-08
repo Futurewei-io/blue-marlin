@@ -4,5 +4,5 @@ For all the announcements, please follow our twitter: https://twitter.com/fw_mar
 
 Blue Marlin events, please go to https://github.com/Futurewei-io/blue-marlin/wiki/Blue-Marlin-Events
 
-Blue Marlin meeting notes, please go to https://github.com/Futurewei-io/blue-marlin/wiki/Jan-28,-2020-Meeting-notes
+Blue Marlin meeting notes, please go to https://github.com/Futurewei-io/blue-marlin/wiki/blue-marlin-Meeting-notes 
 
