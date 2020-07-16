@@ -20,3 +20,19 @@ Pipeline takes the following steps:
 4. Writes model into local directory
 5. Compare the new model and old model (new model evaluation)(future)
 6. Set the predictor to use the new model - predictor reads the name of the model that it uses from Ealsticsearch (future)
+
+### uckey aggregation
+uckey='123',a=1,g=male,ts=[10,15], count=25, useless=true, m=12.5, m_n = (m-M)/STD = -0.1667
+uckey='434',a=3,g=male,ts=[20,5], count=25, useless=true, m=12.5, m_n = -0.1667
+uckey='645',a=3,g=female,ts=[30,10], count=40, useless=false, m=20, m_n = 0.33
+
+M = mean of all ms = 15
+STD = std of all ms = 4.33 
+total_count = 90
+
+threshold = 
+
+agg
+uckey='<don't care>',a={1:1,3:2},g={male:2,female:1},ts=[60,30]
+
+sha256('123-434-655')='ffjfnjrfjeredmdkewmdwke' = 256 chars

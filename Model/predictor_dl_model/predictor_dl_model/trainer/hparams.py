@@ -3,11 +3,11 @@ import re
 
 # Manually selected params
 params_s32 = dict(
-    batch_size=200,
+    batch_size=300,
     # train_window=380,
     train_window=60,
     train_skip_first=0,
-    rnn_depth=400,
+    rnn_depth=500,
     use_attn=False,
     attention_depth=60,
     attention_heads=10,

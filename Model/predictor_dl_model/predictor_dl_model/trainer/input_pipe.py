@@ -118,7 +118,6 @@ class InputPipe:
         # Convert masked (see above) or NaN lagged hits to zeros
         lag_zeros = tf.zeros_like(lagged_hit)
         lagged_hit = tf.where(lag_mask | tf.is_nan(lagged_hit), lag_zeros, lagged_hit)
-
         # Split for train and test
         x_hits, y_hits = tf.split(cropped_hit, [self.train_window, self.predict_window], axis=0)
 
@@ -172,8 +171,6 @@ class InputPipe:
         zeros_x = tf.reduce_sum(tf.to_int32(tf.equal(x_hits, 0.0)))
         keep = zeros_x <= self.max_train_empty
         return keep
-
-
 
     def make_features(self, x_hits, y_hits, dow, lagged_hits, pf_age, pf_si, pf_network, pf_gender, page_ix, pf_price_cat,
     page_popularity, quarter_autocorr):

@@ -232,6 +232,9 @@ def calc_loss(predictions, true_y, additional_mask=None):
     """
     # Take into account NaN's in true values
     mask = tf.is_finite(true_y)
+    # Take into account zero's in true values (due to sparse issue)
+    mask_nonzero = tf.not_equal(true_y, tf.constant(0, dtype=tf.float32))
+    mask = tf.logical_and(mask, mask_nonzero)
     # Fill NaNs by zeros (can use any value)
     true_y = tf.where(mask, true_y, tf.zeros_like(true_y))
     # Assign zero weight to NaNs

@@ -16,10 +16,12 @@ import pandas as pd
 
 FORWARD_OFFSET = 11
 
-def get_start_end(records_len,train_window):
+
+def get_start_end(records_len, train_window):
     start = records_len - train_window - FORWARD_OFFSET
     end = records_len - FORWARD_OFFSET
-    return start,end
+    return start, end
+
 
 def lag_indexes(day_list):
     """
@@ -35,7 +37,7 @@ def lag_indexes(day_list):
 
     def lag(offset):
         dates = date_range - offset
-        return pd.Series(data=base_index.loc[dates].fillna(-1).astype(np.int16).values, index=date_range)
+        return pd.Series(data=base_index[dates].fillna(-1).astype(np.int64).values, index=date_range)
 
     return [lag(pd.DateOffset(months=m)) for m in (1, 2)]
 
@@ -88,7 +90,6 @@ def make_pred_input(duration, train_window, predict_window, full_record_exp, x_h
         std = 1
     norm_x_hits = [(_ - mean) / std for _ in x_hits]
 
-
     # lagged_ix = np.where(lagged_ix==-1, np.NaN, lagged_ix)
     cropped_lags = lagged_ix
     # Mask for -1 (no data) lag indexes
@@ -101,7 +102,7 @@ def make_pred_input(duration, train_window, predict_window, full_record_exp, x_h
     lag_zeros = np.zeros_like(lagged_hit)
     lagged_hit = np.where(lag_mask | np.isnan(
         lagged_hit), lag_zeros, lagged_hit)
-    start,end=get_start_end(duration, train_window)
+    start, end = get_start_end(duration, train_window)
     lagged_hit = lagged_hit[start:end+predict_window]
     norm_lagged_hits = np.divide(np.subtract(lagged_hit, mean), std)
 
@@ -138,7 +139,7 @@ def make_pred_input(duration, train_window, predict_window, full_record_exp, x_h
     return x_hits, x_features, norm_x_hits, x_lagged, y_features, mean, std, flat_ucdoc_features, page_ix  # , stat
 
 
-def get_predict_post_body(model_stats, day_list, day_list_cut, uckey, age, si, network, gender, media, ip_location,full_record,  hits , hour, price_cat):
+def get_predict_post_body(model_stats, day_list, day_list_cut, uckey, age, si, network, gender, media, ip_location, full_record,  hits, hour, price_cat):
 
     price_cat = str(price_cat)
     hour = str(hour)
@@ -149,7 +150,8 @@ def get_predict_post_body(model_stats, day_list, day_list_cut, uckey, age, si, n
     full_record_exp = np.log(np.add(full_record, 1)).tolist()
 
     if len(day_list_cut) != train_window+predict_window:
-        raise Exception('day_list_cut and train window + predicti_window do not match. {} {} {}'.format(len(day_list_cut),train_window,predict_window))
+        raise Exception('day_list_cut and train window + predicti_window do not match. {} {} {}'.format(
+            len(day_list_cut), train_window, predict_window))
 
     dow = get_dow(day_list_cut)
     dow = [[dow[0][i], dow[1][i]] for i in range(train_window+predict_window)]
@@ -195,8 +197,8 @@ def get_predict_post_body(model_stats, day_list, day_list_cut, uckey, age, si, n
     duration = model_stats['model']['duration']
     # x_hits, x_features, norm_x_hits, x_lagged, y_features, mean, std, flat_ucdoc_features, page_ix
     truex, timex, normx, laggedx, timey, normmean, normstd, pgfeatures, pageix = make_pred_input(duration,
-        train_window, predict_window, full_record_exp, x_hits, dow, lagged_indx, pf_age, pf_si, pf_network, pf_gender, page_ix,
-        pf_price_cat, page_popularity, quarter_autocorr)
+                                                                                                 train_window, predict_window, full_record_exp, x_hits, dow, lagged_indx, pf_age, pf_si, pf_network, pf_gender, page_ix,
+                                                                                                 pf_price_cat, page_popularity, quarter_autocorr)
 
     # ys are not important]
     truey = [1 for _ in range(predict_window)]
@@ -216,27 +218,27 @@ def predict(serving_url, model_stats, day_list, uckey, age, si, network, gender,
 
     prediction_results = []
     for full_record, hour, price_cat in records_hour_price_list:
-          train_window = model_stats['model']['train_window']
-          prediction_window = model_stats['model']['predict_window']
-          start = len(full_record)-train_window-FORWARD_OFFSET
-          end = len(full_record)-FORWARD_OFFSET
-          hits = full_record[start:end]
-          day_list_cut = day_list[start:end+prediction_window]
-          predict_day_list = day_list[end: end+prediction_window]
+        train_window = model_stats['model']['train_window']
+        prediction_window = model_stats['model']['predict_window']
+        start = len(full_record)-train_window-FORWARD_OFFSET
+        end = len(full_record)-FORWARD_OFFSET
+        hits = full_record[start:end]
+        day_list_cut = day_list[start:end+prediction_window]
+        predict_day_list = day_list[end: end+prediction_window]
 
-          uph = ','.join([uckey,str(price_cat),str(hour)])
+        uph = ','.join([uckey, str(price_cat), str(hour)])
 
-          body = {"instances": []}
-          instance = get_predict_post_body(
-                  model_stats, day_list, day_list_cut, uph, age, si, network, gender, media, ip_location,full_record, hits, hour, price_cat)
-          body['instances'].append(instance)
+        body = {"instances": []}
+        instance = get_predict_post_body(
+            model_stats, day_list, day_list_cut, uph, age, si, network, gender, media, ip_location, full_record, hits, hour, price_cat)
+        body['instances'].append(instance)
 
-          # URL="http://10.193.217.105:8501/v1/models/faezeh:predict"
-          body_json = json.dumps(body)
-          result = requests.post(serving_url, data=body_json).json()
-          predictions = result['predictions'][0]
-          predictions = np.round(np.expm1(predictions))
-          prediction_results.append(predictions.tolist())
+        # URL="http://10.193.217.105:8501/v1/models/faezeh1:predict"
+        body_json = json.dumps(body)
+        result = requests.post(serving_url, data=body_json).json()
+        predictions = result['predictions'][0]
+        predictions = np.round(np.expm1(predictions))
+        prediction_results.append(predictions.tolist())
 
     return prediction_results, predict_day_list
 
@@ -329,28 +331,27 @@ if __name__ == '__main__':  # record is equal to window size
         }
     }
     days = ['2018-01-01', '2018-01-02', '2018-01-03', '2018-01-04', '2018-01-05', '2018-01-06', '2018-01-07',
-           '2018-01-08', '2018-01-09', '2018-01-10', '2018-01-11', '2018-01-12', '2018-01-13', '2018-01-14',
-           '2018-01-15', '2018-01-16', '2018-01-17', '2018-01-18', '2018-01-19', '2018-01-20', '2018-01-21', '2018-01-22',
-           '2018-01-23', '2018-01-24', '2018-01-25', '2018-01-26', '2018-01-27', '2018-01-28', '2018-01-29',
-           '2018-01-30', '2018-01-31', '2018-02-01', '2018-02-02', '2018-02-03', '2018-02-04', '2018-02-05',
-           '2018-02-06', '2018-02-07', '2018-02-08', '2018-02-09', '2018-02-10', '2018-02-11', '2018-02-12',
-           '2018-02-13', '2018-02-14', '2018-02-15', '2018-02-16', '2018-02-17', '2018-02-18', '2018-02-19',
-           '2018-02-20', '2018-02-21', '2018-02-22', '2018-02-23', '2018-02-24', '2018-02-25', '2018-02-26',
-           '2018-02-27', '2018-02-28', '2018-03-01', '2018-03-02', '2018-03-03', '2018-03-04', '2018-03-05',
-           '2018-03-06', '2018-03-07', '2018-03-08', '2018-03-09', '2018-03-10', '2018-03-11', '2018-03-12',
-           '2018-03-13', '2018-03-14', '2018-03-15', '2018-03-16', '2018-03-17', '2018-03-18', '2018-03-19',
-           '2018-03-20', '2018-03-21', '2018-03-22', '2018-03-23', '2018-03-24', '2018-03-25', '2018-03-26',
-           '2018-03-27', '2018-03-28', '2018-03-29', '2018-03-30', '2018-03-31']
+            '2018-01-08', '2018-01-09', '2018-01-10', '2018-01-11', '2018-01-12', '2018-01-13', '2018-01-14',
+            '2018-01-15', '2018-01-16', '2018-01-17', '2018-01-18', '2018-01-19', '2018-01-20', '2018-01-21', '2018-01-22',
+            '2018-01-23', '2018-01-24', '2018-01-25', '2018-01-26', '2018-01-27', '2018-01-28', '2018-01-29',
+            '2018-01-30', '2018-01-31', '2018-02-01', '2018-02-02', '2018-02-03', '2018-02-04', '2018-02-05',
+            '2018-02-06', '2018-02-07', '2018-02-08', '2018-02-09', '2018-02-10', '2018-02-11', '2018-02-12',
+            '2018-02-13', '2018-02-14', '2018-02-15', '2018-02-16', '2018-02-17', '2018-02-18', '2018-02-19',
+            '2018-02-20', '2018-02-21', '2018-02-22', '2018-02-23', '2018-02-24', '2018-02-25', '2018-02-26',
+            '2018-02-27', '2018-02-28', '2018-03-01', '2018-03-02', '2018-03-03', '2018-03-04', '2018-03-05',
+            '2018-03-06', '2018-03-07', '2018-03-08', '2018-03-09', '2018-03-10', '2018-03-11', '2018-03-12',
+            '2018-03-13', '2018-03-14', '2018-03-15', '2018-03-16', '2018-03-17', '2018-03-18', '2018-03-19',
+            '2018-03-20', '2018-03-21', '2018-03-22', '2018-03-23', '2018-03-24', '2018-03-25', '2018-03-26',
+            '2018-03-27', '2018-03-28', '2018-03-29', '2018-03-30', '2018-03-31']
 
-    x = [7.609366416931152, 4.418840408325195, 4.787491798400879, 4.9972124099731445, 4.584967613220215, 4.394449234008789, 5.998936653137207, 6.375024795532227, 4.8903489112854, 4.477336883544922, 4.983606815338135, 4.787491798400879, 4.304065227508545, 6.040254592895508, 7.587817192077637, 5.176149845123291, 4.477336883544922, 4.8903489112854, 4.934473991394043, 4.875197410583496, 5.849324703216553, 6.278521537780762, 4.8978400230407715, 5.2257466316223145, 4.875197410583496, 5.24174690246582, 4.7004804611206055, 6.115891933441162, 6.514712810516357, 4.744932174682617, 4.905274868011475, 4.955827236175537, 5.036952495574951, 4.770684719085693, 6.079933166503906, 6.388561248779297, 5.0434250831604, 5.105945587158203, 5.1704840660095215, 4.682131290435791, 5.135798454284668, 6.0450053215026855, 6.398594856262207, 4.72738790512085, 4.007333278656006, 4.543294906616211, 5.023880481719971, 4.762174129486084, 6.03308629989624, 7.585280895233154, 4.8978400230407715, 4.465908050537109, 4.653960227966309, 4.394449234008789, 4.934473991394043, 5.828945636749268, 6.548219203948975, 4.969813346862793, 4.9904327392578125, 4.595119953155518, 4.787491798400879, 4.564348220825195, 5.746203422546387, 6.513230323791504, 4.976733684539795, 4.510859489440918, 5.003946304321289, 4.430816650390625, 3.828641414642334, 5.902633190155029, 6.473890781402588, 4.779123306274414, 4.8903489112854, 4.905274868011475, 5.075173854827881, 5.135798454284668, 6.073044300079346, 6.7405195236206055, 5.111987590789795, 4.691348075866699, 4.465908050537109, 5.075173854827881, 4.770684719085693, 6.154858112335205, 6.546785354614258, 4.7004804611206055, 4.174387454986572, 5.068904399871826, 4.543294906616211, 5.817111015319824]
-
-
+    x = [7.609366416931152, 4.418840408325195, 4.787491798400879, 4.9972124099731445, 4.584967613220215, 4.394449234008789, 5.998936653137207, 6.375024795532227, 4.8903489112854, 4.477336883544922, 4.983606815338135, 4.787491798400879, 4.304065227508545, 6.040254592895508, 7.587817192077637, 5.176149845123291, 4.477336883544922, 4.8903489112854, 4.934473991394043, 4.875197410583496, 5.849324703216553, 6.278521537780762, 4.8978400230407715, 5.2257466316223145, 4.875197410583496, 5.24174690246582, 4.7004804611206055, 6.115891933441162, 6.514712810516357, 4.744932174682617, 4.905274868011475, 4.955827236175537, 5.036952495574951, 4.770684719085693, 6.079933166503906, 6.388561248779297, 5.0434250831604, 5.105945587158203, 5.1704840660095215, 4.682131290435791, 5.135798454284668, 6.0450053215026855, 6.398594856262207, 4.72738790512085, 4.007333278656006,
+         4.543294906616211, 5.023880481719971, 4.762174129486084, 6.03308629989624, 7.585280895233154, 4.8978400230407715, 4.465908050537109, 4.653960227966309, 4.394449234008789, 4.934473991394043, 5.828945636749268, 6.548219203948975, 4.969813346862793, 4.9904327392578125, 4.595119953155518, 4.787491798400879, 4.564348220825195, 5.746203422546387, 6.513230323791504, 4.976733684539795, 4.510859489440918, 5.003946304321289, 4.430816650390625, 3.828641414642334, 5.902633190155029, 6.473890781402588, 4.779123306274414, 4.8903489112854, 4.905274868011475, 5.075173854827881, 5.135798454284668, 6.073044300079346, 6.7405195236206055, 5.111987590789795, 4.691348075866699, 4.465908050537109, 5.075173854827881, 4.770684719085693, 6.154858112335205, 6.546785354614258, 4.7004804611206055, 4.174387454986572, 5.068904399871826, 4.543294906616211, 5.817111015319824]
 
     full_record = np.round(np.expm1(x))
 
-    response = predict(URL, model_stats=model_stats, day_list=days, uckey='magazinelock,1,3G,g_f,2,pt,1004,icc,2,11',
-                       age='2', si='1', network='3G', gender='g_f',
-                       media='', ip_location='', records_hour_price_list=[(full_record, 11, 2)])
+    response = _predict(URL, model_stats=model_stats, day_list=days, uckey='magazinelock,1,3G,g_f,2,pt,1004,icc,2,11',
+                        age='2', si='1', network='3G', gender='g_f',
+                        media='', ip_location='', records_hour_price_list=[(full_record, 11, 2)])
 
     # pred = response[0][0]
     # true = full_record[79 :89]

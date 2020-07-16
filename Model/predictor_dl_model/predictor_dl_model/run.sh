@@ -1,15 +1,41 @@
 #!/bin/bash
 
-#Preparing data and save the results as <config.pipeline.tmp_table_name> 
+#Preparing ts data and save the results as <config.pipeline.time_series.ts_tmp_table_name> 
 if false
 then
-    spark-submit pipeline/main.py config.yml [1]
+    # spark-submit pipeline/main_ts.py config.yml   
+    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 20 --executor-cores 5 pipeline/main_ts.py config.yml &
+fi
+
+#Preparing clustering
+if false
+then
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 pipeline/main_cluster.py config.yml
+fi
+
+#generating distribution
+if false
+then
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 pipeline/main_distribution.py config.yml
+fi
+
+#generating clusters analysis
+if false
+then
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 pipeline/main_clusters_analysis.py config.yml &
+fi
+
+#Preparing normalization
+if false
+then
+    #spark-submit pipeline/main_norm.py config.yml
+    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 20 --executor-cores 5 pipeline/main_norm.py config.yml
 fi
 
 #Saving tables as <config.pipeline.tfrecords_path>
 if false
 then
-    spark-submit --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main.py config.yml [2]
+    spark-submit --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main_tfrecords.py config.yml
 fi
 
 #Saving tfrecords from hdfs to local drive
