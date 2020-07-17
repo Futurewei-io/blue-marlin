@@ -1,3 +1,21 @@
+# MIT License
+# Copyright (c) 2018 Artur Suilin
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import tensorflow as tf
 
 import tensorflow.contrib.cudnn_rnn as cudnn_rnn
@@ -232,6 +250,9 @@ def calc_loss(predictions, true_y, additional_mask=None):
     """
     # Take into account NaN's in true values
     mask = tf.is_finite(true_y)
+    # Take into account zero's in true values (due to sparse issue)
+    mask_nonzero = tf.not_equal(true_y, tf.constant(0, dtype=tf.float32))
+    mask = tf.logical_and(mask, mask_nonzero)
     # Fill NaNs by zeros (can use any value)
     true_y = tf.where(mask, true_y, tf.zeros_like(true_y))
     # Assign zero weight to NaNs

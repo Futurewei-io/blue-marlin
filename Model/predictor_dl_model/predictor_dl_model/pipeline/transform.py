@@ -17,10 +17,11 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, explode, avg, stddev, size
-from pyspark.sql.types import IntegerType, StringType, MapType, ArrayType, FloatType, BooleanType
 import math
 import statistics
+
+from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, explode, avg, stddev, size
+from pyspark.sql.types import IntegerType, StringType, MapType, ArrayType, FloatType, BooleanType
 
 
 def _list_to_map(count_array):
@@ -38,9 +39,11 @@ def add_count_map(df):
     df = df.withColumn('count_map', list_to_map_udf(df.count_array))
     return df
 
+# This method replace zeros with nan and inject nans for non existing days
+
 
 def calculate_time_series(df, day_list):
-    def _count_maplist_to_normlized_value_list(ts_list_map):
+    def _helper(ts_list_map):
         ts_map = {}
         result = []
         for item_map in ts_list_map:
@@ -56,25 +59,25 @@ def calculate_time_series(df, day_list):
             if count == 0:
                 count = float('nan')
 
-            if math.isnan(count):
-                result.append(count)
-            else:
-                result.append(math.log(count + 1))
+            result.append(count)
 
         return result
 
-    _udf = udf(_count_maplist_to_normlized_value_list, ArrayType(FloatType()))
+    _udf = udf(_helper, ArrayType(IntegerType()))
     df = df.withColumn('ts', _udf(df.ts_list_map))
     return df
 
+
 def calculate_page_popularity(df):
-    df = df.withColumn('page_popularity',udf(lambda x: statistics.median(x), FloatType())(df.ts_n))
+    df = df.withColumn('page_popularity', udf(
+        lambda x: statistics.median(x), FloatType())(df.ts_n))
     return df
 
 
+# uph is uckey+price_cat+hour, in newer version the hour has been remove because count is aggregated on hour
 def add_uph(df):
-    df = df.withColumn('uph', udf(lambda x, y, z: ','.join(
-        [x, str(y), str(z)]))(df.uckey, df.price_cat, df.hour))
+    df = df.withColumn('uph', udf(lambda x, y: ','.join(
+        [x, str(y)]))(df.uckey, df.price_cat))
     return df
 
 
@@ -92,25 +95,50 @@ def clean_data(df, limit):
     return df
 
 
-def replace_with_median(df):
+def replace_ts_with_median(df, replace_zero):
     def _helper(ts):
         result = []
-        median = statistics.median([_ for _ in ts if not math.isnan(_)])
+        num_list = [_ for _ in ts if not math.isnan(_) and _ != 0]
+        median = 0
+        if len(num_list) > 0:
+            median = statistics.median(num_list)
+        median = int(median)
         for i in ts:
             if math.isnan(i):
+                result.append(median)
+            if i == 0 and replace_zero:
                 result.append(median)
             else:
                 result.append(i)
         return result
-    _udf = udf(_helper, ArrayType(FloatType()))
-    df = df.withColumn('ts_n', _udf(df.ts))
+    _udf = udf(_helper, ArrayType(IntegerType()))
+    df = df.withColumn('ts_cured', _udf(df.ts))
+    df = df.drop('ts')
+    df = df.withColumnRenamed('ts_cured', 'ts')
     return df
 
+def replace_nan_with_zero(df):
+    def _helper(ts):
+        result = []
+        for i in ts:
+            if math.isnan(i):
+                result.append(0)
+            else:
+                result.append(i)
+        return result
+    _udf = udf(_helper, ArrayType(IntegerType()))
+    df = df.withColumn('ts_zeroed', _udf(df.ts))
+    df = df.drop('ts')
+    df = df.withColumnRenamed('ts_zeroed', 'ts')
+    return df
 
 def add_feature_udf(i):
     def add_feature(uckey):
         features = uckey.split(',')
-        return features[i]
+        if i < len(features):
+            return features[i]
+        else:
+            return ''
     return udf(add_feature, StringType())
 
 

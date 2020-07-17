@@ -1,3 +1,21 @@
+# MIT License
+# Copyright (c) 2018 Artur Suilin
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import tensorflow as tf
 
 from feeder import VarFeeder
@@ -118,7 +136,6 @@ class InputPipe:
         # Convert masked (see above) or NaN lagged hits to zeros
         lag_zeros = tf.zeros_like(lagged_hit)
         lagged_hit = tf.where(lag_mask | tf.is_nan(lagged_hit), lag_zeros, lagged_hit)
-
         # Split for train and test
         x_hits, y_hits = tf.split(cropped_hit, [self.train_window, self.predict_window], axis=0)
 
@@ -172,8 +189,6 @@ class InputPipe:
         zeros_x = tf.reduce_sum(tf.to_int32(tf.equal(x_hits, 0.0)))
         keep = zeros_x <= self.max_train_empty
         return keep
-
-
 
     def make_features(self, x_hits, y_hits, dow, lagged_hits, pf_age, pf_si, pf_network, pf_gender, page_ix, pf_price_cat,
     page_popularity, quarter_autocorr):

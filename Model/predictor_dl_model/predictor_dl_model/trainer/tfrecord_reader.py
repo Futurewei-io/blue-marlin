@@ -1,3 +1,22 @@
+# Copyright 2019, Futurewei Technologies
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+#                                                 * "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
 import tensorflow as tf
 from feeder import VarFeeder
 import os
@@ -18,61 +37,81 @@ log = logging.getLogger()
 
 SHUFFLE_BUFFER = 100
 
+def fill_isolated_zeros(x_in):
+    # x_out = x_in
+    for i in range(x_in.shape[0]):
+        ind = np.where(x_in[i,:]!=0)
+        s, e = ind[0][0], ind[0][-1]
+        ind_zero = np.where(x_in[i,s:e]==0)
+        if ind_zero:
+            for j in ind_zero[0]:
+                ind_here = s + j
+                prev = max(s, ind_here-1)
+                post = min(e, ind_here+1)
+                if x_in[i,prev]!=0 and x_in[i,post]!=0:
+                    x_in[i, ind_here] = (x_in[i,prev] + x_in[i,post]) / 2
+                    # x_out[i, ind_here] = (x_in[i,prev] + x_in[i,post]) / 2
+    return
 
 def __data_parser(serialized_example):
 
     features = tf.parse_single_example(serialized_example,
-                                       features={'uph': tf.FixedLenFeature([], tf.string),
-                                                 'price_cat_0_n': tf.FixedLenFeature([], tf.float32),
+                                       features={'page_ix': tf.FixedLenFeature([], tf.string),
                                                  'price_cat_1_n': tf.FixedLenFeature([], tf.float32),
                                                  'price_cat_2_n': tf.FixedLenFeature([], tf.float32),
                                                  'price_cat_3_n': tf.FixedLenFeature([], tf.float32),
-                                                 'hour': tf.FixedLenFeature([], tf.int64),
+                                                 # 'hour': tf.FixedLenFeature([], tf.int64),
                                                  'g_g_m_n': tf.FixedLenFeature([], tf.float32),
                                                  'g_g_f_n': tf.FixedLenFeature([], tf.float32),
                                                  'g_g_x_n': tf.FixedLenFeature([], tf.float32),
+                                                 'g__n': tf.FixedLenFeature([], tf.float32),
+                                                 'a__n': tf.FixedLenFeature([], tf.float32),
                                                  'a_1_n': tf.FixedLenFeature([], tf.float32),
                                                  'a_2_n': tf.FixedLenFeature([], tf.float32),
                                                  'a_3_n': tf.FixedLenFeature([], tf.float32),
                                                  'a_4_n': tf.FixedLenFeature([], tf.float32),
+                                                 'a_5_n': tf.FixedLenFeature([], tf.float32),
+                                                 'a_6_n': tf.FixedLenFeature([], tf.float32),
                                                  't_3G_n': tf.FixedLenFeature([], tf.float32),
                                                  't_4G_n': tf.FixedLenFeature([], tf.float32),
-                                                 't_5G_n': tf.FixedLenFeature([], tf.float32),
-                                                 'si_1_n': tf.FixedLenFeature([], tf.float32),
-                                                 'si_2_n': tf.FixedLenFeature([], tf.float32),
-                                                 'si_3_n': tf.FixedLenFeature([], tf.float32),
-                                                 'dow_sin': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-                                                 'dow_cos': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+                                                 't_UNKNOWN_n': tf.FixedLenFeature([], tf.float32),
+                                                 't_WIFI_n': tf.FixedLenFeature([], tf.float32),
+                                                 't_2G_n': tf.FixedLenFeature([], tf.float32),
+                                                 'si_vec_n': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+                                                 # 'dow_sin': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+                                                 # 'dow_cos': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
                                                  'ts_n': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-                                                 'page_popularity_n': tf.FixedLenFeature([], tf.float32),
+                                                 'p_n': tf.FixedLenFeature([], tf.float32),
                                                  })
 
-    uckey = tf.cast(features['uph'], tf.string)
-    price_cat_0 = tf.cast(features['price_cat_0_n'], tf.float32)
+    uckey = tf.cast(features['page_ix'], tf.string)
     price_cat_1 = tf.cast(features['price_cat_1_n'], tf.float32)
     price_cat_2 = tf.cast(features['price_cat_2_n'], tf.float32)
     price_cat_3 = tf.cast(features['price_cat_3_n'], tf.float32)
-    hour = tf.cast(features['hour'], tf.float32)
+    # hour = tf.cast(features['hour'], tf.float32)
     gender_x = tf.cast(features['g_g_x_n'], tf.float32)
     gender_f = tf.cast(features['g_g_f_n'], tf.float32)
     gender_m = tf.cast(features['g_g_m_n'], tf.float32)
+    gender_no = tf.cast(features['g__n'], tf.float32)
+    age_no = tf.cast(features['a__n'], tf.float32)
     age_1 = tf.cast(features['a_1_n'], tf.float32)
     age_2 = tf.cast(features['a_2_n'], tf.float32)
     age_3 = tf.cast(features['a_3_n'], tf.float32)
     age_4 = tf.cast(features['a_4_n'], tf.float32)
+    age_5 = tf.cast(features['a_5_n'], tf.float32)
+    age_6 = tf.cast(features['a_6_n'], tf.float32)
     t_3G = tf.cast(features['t_3G_n'], tf.float32)
     t_4G = tf.cast(features['t_4G_n'], tf.float32)
-    t_5G = tf.cast(features['t_5G_n'], tf.float32)
-    si_1 = tf.cast(features['si_1_n'], tf.float32)
-    si_2 = tf.cast(features['si_2_n'], tf.float32)
-    si_3 = tf.cast(features['si_3_n'], tf.float32)
+    t_2G =tf.cast(features['t_2G_n'], tf.float32)
+    t_UNKNOWN =tf.cast(features['t_UNKNOWN_n'], tf.float32)
+    t_WIFI =tf.cast(features['t_WIFI_n'], tf.float32)
+    si = tf.cast(features['si_vec_n'], tf.float32)
     #r = tf.cast(features['r'], tf.float32)
     hits = tf.cast(features['ts_n'], tf.float32)
-    page_popularity =  tf.cast(features['page_popularity_n'], tf.float32)
+    page_popularity =  tf.cast(features['p_n'], tf.float32)
 
-    return hour, gender_f, gender_m, gender_x, hits, price_cat_0, price_cat_1, price_cat_2, \
-        price_cat_3, age_1, age_2, age_3, age_4, t_3G, \
-        t_4G, t_5G, si_1, si_2, si_3, uckey, page_popularity
+    return uckey, price_cat_1, price_cat_2,price_cat_3, gender_no, gender_f, gender_m, gender_x, age_no,age_1, age_2, age_3, age_4,age_5, age_6, \
+           t_2G, t_3G,t_4G,t_UNKNOWN, t_WIFI, si,hits,page_popularity
 
 def holiday_norm(day):
     return math.sin(day), math.cos(day)
@@ -91,7 +130,7 @@ def lag_indexes(tf_stat)-> List[pd.Series]:
 
     def lag(offset):
         dates = date_range - offset
-        return pd.Series(data=base_index.loc[dates].fillna(-1).astype(np.int16).values, index=date_range)
+        return pd.Series(data=base_index[dates].fillna(-1).astype(np.int16).values, index=date_range)
 
     return [lag(pd.DateOffset(months=m)) for m in (1, 2)]
 
@@ -121,7 +160,7 @@ def run(cfg):
     # lagged_ix = numpy.ones((duration, 4), dtype=float)
     # lagged_ix = np.where(lagged_ix == 1, -1, lagged_ix)
     lagged_ix = np.stack(lag_indexes(tf_stat), axis=-1)
-    quarter_autocorr = numpy.ones((batch_size,), dtype=float)
+    # quarter_autocorr = numpy.ones((batch_size,), dtype=float)
 
     date_list = tf_stat['days']
     dow =get_dow(date_list)
@@ -140,18 +179,20 @@ def run(cfg):
     with tf.Session() as sess:
 
         x = sess.run(next_el)
-        page_indx = list(x[19])
+        quarter_autocorr = numpy.ones((x[0].size,), dtype=float)
+        page_indx = list(x[0])
 
+        fill_isolated_zeros(x[21])
         tensors = dict(
-            hits=pd.DataFrame(x[4], index=page_indx, columns=date_list),
+            hits=pd.DataFrame(x[21], index=page_indx, columns=date_list),
             lagged_ix=lagged_ix,
             page_ix=page_indx,
-            pf_age=pd.DataFrame(x[9:13], columns=page_indx, index = (1,2,3,4)).T,
-            pf_si=pd.DataFrame(x[16:19], columns=page_indx, index=(1,2,3)).T,
-            pf_network=pd.DataFrame(x[13:16], columns=page_indx, index=('3G','4G','5G')).T,
-            pf_price_cat=pd.DataFrame(x[5:9], columns=page_indx, index=('pc0','pc1','pc2','pc3')).T,
-            pf_gender=pd.DataFrame(x[1:4], columns=page_indx, index= ('f','m','x')).T,
-            page_popularity=x[20],
+            pf_age=pd.DataFrame(x[8:15], columns=page_indx, index = (1,2,3,4,5,6,7)).T,
+            pf_si=pd.DataFrame(x[20], index = page_indx ),
+            pf_network=pd.DataFrame(x[15:20], columns=page_indx, index=('2G','3G','4G', 'UNKNOWN','WIFI')).T,
+            pf_price_cat=pd.DataFrame(x[1:4], columns=page_indx, index=('pc1','pc2','pc3')).T,
+            pf_gender=pd.DataFrame(x[4:8], columns=page_indx, index= ('none','f','m','x')).T,
+            page_popularity=x[22],
             # page_popularity = quarter_autocorr,
             quarter_autocorr= quarter_autocorr,
             dow=pd.DataFrame(dow).T,
@@ -177,7 +218,7 @@ if __name__ == '__main__':
     with open(args.config_file, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
-    holidays = cfg['pipeline']['holidays']
+    holidays = cfg['pipeline']['normalization']['holidays']
     cfg = cfg['tfrecorder_reader']
     cfg['holidays'] = holidays
 
