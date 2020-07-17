@@ -1,0 +1,15 @@
+factdata: 'modified_ready_factdata_06162020'
+distribution: 'pipeline_distribution_tmp_07082020'
+uckey_attrs: ['m', 'si', 't', 'g', 'a', 'pm', 'r']
+price_cats: ['h0', 'h1', 'h2', 'h3']
+bucket_id_max: 1000
+bucket_size: 1
+bucket_step: 1
+es_host: '10.213.37.41'
+es_port: '9200'
+es_predictions_index: 'predictions_dlpredictor_07022020_3'
+es_predictions_type: 'doc'
+es_model_index: 'model_stats'
+es_model_type: 'stat'
+holiday_list: ['2019-11-09', '2019-11-10', '2019-11-11', '2019-11-25', '2019-11-26', '2019-11-27','2019-11-28', '2019-12-24','2019-12-25', '2019-12-26','2019-12-31', '2020-01-01', '2020-01-02', '2020-01-19','2020-01-20', '2020-01-21', '2020-01-22', '2020-01-23',  '2020-01-24',  '2020-01-25', '2020-02-08']
+

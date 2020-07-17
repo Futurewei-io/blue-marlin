@@ -1,9 +1,40 @@
+# Copyright 2019, Futurewei Technologies
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+#                                                 * "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
+"""
+This file is to test the accuracy rate of the prediction.
+For a sample uckey, it reads the predeicted values from ES and calcualte the Mean Square Error.
+"""
+# Reza
+
 from imscommon.es.ims_esclient import ESClient
 from pyspark import SparkContext, SparkConf, Row
 from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list
 from pyspark.sql import HiveContext
 from pyspark.sql.types import IntegerType, StringType
 import math
+
+#TODO: This file needs modifications. 
+# - Select a sample of uckeys
+# - Get the predicted values from ES
+# - Get the real values from Hive
+# - Calculate MSE 
 
 # read es
 es_host = '10.193.217.111'
@@ -63,28 +94,6 @@ while True:
     # statistics
     found_items = 0
     total_error = 0
-
-    # for row in df.collect():
-    #     uckey = row['uckey']
-    #     day = row['day']
-    #     hour = row['hour']
-    #     for item in row['count_array']:
-    #         parts = item.split(':')
-    #         h = parts[0]
-    #         count = int(parts[1])
-    #         key=(uckey,day,hour,h)
-    #         if key in es_records:
-    #             # do not count real 0
-    #             # if count == 0:
-    #             #     continue
-    #             found_items+=1
-    #             pcount = es_records[key] # predicted count
-    #             error = abs(pcount-count)/(count+1)
-    #             print('real:{}, predicted:{}, error:{}, uckey:{}, hour:{}, price_cat:{}'.format(count,pcount, error, uckey, hour, h))
-    #             total_error += error
-
-    # print('found_items',found_items)
-    # print('avg_error',total_error/found_items)
 
     df_collect = df.collect()
     for row in df_collect:
