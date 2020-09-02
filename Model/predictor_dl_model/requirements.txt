@@ -76,7 +76,7 @@ setuptools-git==1.2
 six==1.13.0
 TBB==0.1
 tensorboard==1.10.0
-tensorflow==1.10.0
+tensorflow==1.15.2
 termcolor==1.1.0
 terminado==0.8.2
 testpath==0.4.4
