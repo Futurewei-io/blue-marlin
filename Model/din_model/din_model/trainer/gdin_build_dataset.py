@@ -1,6 +1,25 @@
-'''
+# Copyright 2020, Futurewei Technologies
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+#                                                 * "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
+"""
 The script reads the data from tfrecord and generates the dataset for the trainer.
-'''
+"""
 import numpy as np
 import os
 import pandas as pd
@@ -15,7 +34,6 @@ import json
 
 
 random.seed(1234)
-# cutting_date = pd.datetime.datetime(2020, 3,15)
 
 def __data_parser(serialized_example):
 
@@ -50,7 +68,6 @@ def __data_parser(serialized_example):
 
 def read_files(csv_location, columns_name):
     names = []
-    # csv_location = '/Users/fvaseghi/Desktop/persona416'
 
     for file in os.listdir(csv_location):
         if file.startswith("part"):
@@ -103,12 +120,11 @@ def run(cfg):
     sess=tf.Session()
     length = cfg['pipeline']['length']
     keyword_set = set()
-    category_set = set()
     ucdoc_lst = []
     label = []
     stats = cfg['pipeline']['stats']
     with open(stats, 'rb') as f:
-        ucdoc_num = pickle.load(f)['distinct_did_count']
+        ucdoc_num = pickle.load(f)['distinct_records_count']
     for i in range(ucdoc_num):
         x = sess.run(next_el)
         log = list(x[0:9] )
@@ -124,7 +140,6 @@ def run(cfg):
         ## training set
         keyword_int_train = keyword_int[indicing:]
         click_counts_train = click_counts_list[indicing:]
-        show_counts_train = show_counts_list[indicing:]
 
         ## training dataset
         ucdoc_lst.append(ucdoc)
@@ -143,7 +158,6 @@ def run(cfg):
         ## testing set
         keyword_int_test = keyword_int[:indicing]
         click_counts_test = click_counts_list[:indicing]
-        show_counts_test = show_counts_list[:indicing]
 
         for m in range(len(click_counts_test)):
             for n in range(len(click_counts_test[m])):
@@ -166,12 +180,7 @@ def run(cfg):
 
         ##testing dataset
 
-    # cate_list = pd.DataFrame(list(keyword_set), index= list(keyword_set))
-    # cate_list = np.insert(cate_list, 0, 1)
     cate_list = np.array([x for x in range(30)])
-    # cate_list = np.insert(cate_list, 0,1)
-
-    #user_count, item_count, cate_count = len(set(did_lst)), len(uniq_adv), len(cate_list.drop_duplicates())
     user_count, item_count , cate_count = len(set(ucdoc_lst)) , 30, 30
 
     with open('label_gdin_30.pkl', 'wb') as f:

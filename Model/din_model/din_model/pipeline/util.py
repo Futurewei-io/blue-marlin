@@ -18,12 +18,37 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import os
+import yaml
+import argparse
 import pickle
+import os
 
 from pyspark import SparkContext, SQLContext
 from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import udf, col
+from pyspark.sql import HiveContext
+
+
+def load_config(description):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('config_file')
+    args = parser.parse_args()
+    # Load config file
+    with open(args.config_file, 'r') as ymlfile:
+        cfg = yaml.safe_load(ymlfile)
+    sc = SparkContext.getOrCreate()
+    sc.setLogLevel(cfg['log']['level'])
+    hive_context = HiveContext(sc)
+    return sc, hive_context, cfg
+
+
+def load_batch_config(cfg):
+    cfg_clean = cfg['pipeline']['main_clean']
+    cfg_input = cfg_clean['data_input']
+    start_date = cfg_clean['conditions']['starting_date']
+    end_date = cfg_clean['conditions']['ending_date']
+    load_minutes = cfg_input['load_logs_in_minutes']
+    return start_date, end_date, load_minutes
 
 
 def drop_table(hive_context, table_name):
@@ -101,7 +126,7 @@ def read_ad_keywords_list(ad_keywords_list_file_name):
 
 
 # generate keywords table on demand from a keywords list.
-def generate_add_keywords(ad_keywords_table_name):
+def generate_add_keywords(keywords_table):
     # generate json keyword rows, create df and save to table.
     ad_keywords_list_file_name = "/data/ad_keywords_list.txt"
     ad_keywords_list = read_ad_keywords_list(ad_keywords_list_file_name)
@@ -112,11 +137,11 @@ def generate_add_keywords(ad_keywords_table_name):
         keyword_rows.append(keyword_dict)
     # transform the keywords to df and save to hive table.
     sc = SparkContext.getOrCreate()
-    sqlContext = SQLContext(sc)
-    df_keywords = sqlContext.read.json(sc.parallelize(keyword_rows))
+    sql_context = SQLContext(sc)
+    df_keywords = sql_context.read.json(sc.parallelize(keyword_rows))
     df_keywords = add_index(df_keywords, "keyword",
                             "keyword_index", drop_column=False)
-    write_to_table(df_keywords, ad_keywords_table_name)
+    write_to_table(df_keywords, keywords_table)
     return df_keywords
 
 
@@ -124,3 +149,8 @@ def save_pickle_file(python_object, file_path):
     file_output = open(file_path, 'wb')
     pickle.dump(python_object, file_output)
     file_output.close()
+
+
+def print_batching_info(process, batch_number, time_start, time_end):
+    print(process + ': batch ' + str(batch_number) + 
+         ' is processed in time range ' + time_start + ' - ' + time_end)

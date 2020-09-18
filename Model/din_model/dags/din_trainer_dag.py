@@ -1,3 +1,23 @@
+# Copyright 2020, Futurewei Technologies
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+#                                                 * "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
+
 from os.path import join as path_join
 from airflow import DAG
 import datetime as dt
@@ -38,9 +58,7 @@ class CommandsBuilder(object):
         self._commands = commands
 
     def build(self):
-        # prefix = ''
         commands = ' ; '.join(self._commands)
-        # return '{} bash --login -c \'{}\''.format(prefix, commands)
         return commands
 
 
@@ -128,10 +146,6 @@ build = sshOperator('build_dataset', CommandsBuilder(init_commands + build_comma
 train = sshOperator('train', CommandsBuilder(init_commands + train_commands).build())
 save_model = sshOperator('save_model',
                          CommandsBuilder(init_commands + save_model_commands).build())
-
-# tensorflow = sshOperator('tensorflow', CommandsBuilder(init_commands + tensorflow_commands).build())
-
-# rest_client = sshOperator('rest_client', CommandsBuilder(init_commands + rest_client_commands).build())
 
 # build
 build >> train >> save_model  # >> tensorflow >> rest_client
