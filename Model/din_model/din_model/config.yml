@@ -6,13 +6,13 @@ pipeline:
       persona_table_name: "ads_persona_0520"
       clicklog_table_name: "ads_clicklog_0520"
       showlog_table_name: "ads_showlog_0520"
-      load_logs_in_minutes: 14400 #1440/day
-      ad_keywords_table_name: "din_ad_keywords_08212020" #if this keywords table name is changed, set the below to True.
-      create_ad_keywords_table: True #Set to True for the first run, then keep False to use the existing table.
+      load_logs_in_minutes: 144000 #1440/day
+      keywords_table: "din_ad_keywords_08212020" #if this keywords table name is changed, set the below to True.
+      create_keywords: False # set True for first run, then keep False to use the created table.
     data_output:
-      persona_output_table_name: 'din_persona_08282020'
-      clicklog_output_table_name: 'din_clicklog_08282020'
-      showlog_output_table_name: 'din_showlog_08282020'
+      persona_output_table: 'din_persona_09172020'
+      clicklog_output_table: 'din_clicklog_09172020'
+      showlog_output_table: 'din_showlog_09172020'
     conditions: {
       'new_slot_id_list': [  
         '06',
@@ -64,7 +64,7 @@ pipeline:
         'Huawei Magazine',
         'Huawei Magazine',
         'Huawei Magazine',
-        'Huawei Brower',
+        'Huawei Browser',
         'Huawei Video',
         'Huawei Video',
         'Huawei Video',
@@ -103,18 +103,31 @@ pipeline:
     }
   main_logs:
     interval_time_in_seconds: 86400 # group logs in interval time.
-    logs_output_table_name: 'din_logs_08282020'
+    logs_output_table_name: 'din_logs_09172020'
   main_trainready:
-    trainready_output_table_name: 'din_trainready_08282020'
+    trainready_output_table: 'din_trainready_09172020'
   tfrecords:
-    tfrecords_statistics_path: 'din.tfrecord_statistics.08282020.pkl'
-    tfrecords_hdfs_path: 'din.tfrecord.08282020' # it is hdfs location for tfrecords, over-writes the existing files
+    tfrecords_statistics_path: 'din.tfrecord_statistics.09172020.pkl'
+    tfrecords_hdfs_path: 'din.tfrecord.09172020' # it is hdfs location for tfrecords, over-writes the existing files
+  forecasting:
+    generate_testing_datasets: False # set to True for the first run.
+    history_ucdocs_table_name: 'din_history_ucdocs_09172020_gdin'
+    testing_ucdocs_table_name: 'din_testing_ucdocs_09172020_gdin'
+    length: 30
+    cutting_date: '2020-03-20'
+    impressions_ratio: [0.1, 0.2, 0.3] # take ratios of keywords' testing impressions as simulated queries.
+    random_testing_number: 10 # the total number of random testing repeated.
+
+predictor:
+  url: 'http://10.193.217.105:8501/v1/models/gdin:predict'
+  tfrecords_statistics_path: 'din.tfrecord_statistics.08282020.pkl'
+  tfrecords_hdfs_path: 'din.tfrecord.08282020' # it is hdfs location for tfrecords, over-writes the existing files
   length: 6
   cutting_date: 1584748800
   tfrecord_location: '/home/faezeh/din.tfrecord.08042020'
   stats: '/home/faezeh/din.tf_statistics.08042020.pkl'
-predictor:
-  url: 'http://10.193.217.105:8501/v1/models/gdin:predict'
+
+
 
 
 

@@ -1,4 +1,4 @@
-# Copyright 2020, Futurewei Technologies
+# Copyright 2019, Futurewei Technologies
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -23,15 +23,15 @@ from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from datetime import timedelta
 
 default_args = {
-    'owner': 'din_model',
+    'owner': 'dl-predictor',
     'depends_on_past': False,
-    'start_date': dt.datetime(2020, 7, 22),
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'start_date': dt.datetime(2020, 9, 21),
+    'retries': 0  # ,
+    # 'retry_delay': timedelta(minutes=5),
 }
 
 dag = DAG(
-    'din_model_integration',
+    'dl_pre_processing',
     default_args=default_args,
     schedule_interval=None,
 
@@ -44,28 +44,30 @@ def sparkOperator(
         **kwargs
 ):
     return SparkSubmitOperator(
-        application='/home/airflow/airflow/din_model/pipeline/{}'.format(file),
-        application_args=['/home/airflow/airflow/din_model/config.yml'],
+        application='/home/airflow/airflow/predictor_dl_model/pipeline/{}'.format(file),
+        application_args=['/home/airflow/airflow/predictor_dl_model/config.yml'],
         conn_id='spark_default',
-        executor_memory='32G',
-        conf={'spark.driver.maxResultSize': '4g'},
+        conf={'spark.driver.maxResultSize': '8g'},
         driver_memory='32G',
         executor_cores=5,
-        num_executors=20,
+        num_executors=32,
+        executor_memory='16G',
         task_id=task_id,
         dag=dag,
         **kwargs
     )
 
 
-clean = sparkOperator('main_clean.py', 'din_clean')
-logs = sparkOperator('main_logs.py', 'din_logs')
-region_adding = sparkOperator('main_logs_with_regions.py', 'din_add_region')
-trainready = sparkOperator('main_trainready.py', 'din_trainready')
+main_ts = sparkOperator('main_ts.py',
+                        'main_ts',
+                        py_files='/home/airflow/airflow/predictor_dl_model/pipeline/transform.py')
+main_cluster = sparkOperator('main_cluster.py', 'main_cluster')
+main_distribution = sparkOperator('main_distribution.py', 'main_distribution')
+main_norm = sparkOperator('main_norm.py',
+                          'main_norm',
+                          py_files='/home/airflow/airflow/predictor_dl_model/pipeline/transform.py')
+main_tfrecords = sparkOperator('main_tfrecords.py',
+                               'main_tfrecords',
+                               jars='/home/airflow/airflow/din_model/spark-tensorflow-connector_2.11-1.15.0.jar')
 
-tfrecords = sparkOperator(
-    'main_tfrecords.py',
-    'din_tfrecords',
-    jars='/home/airflow/airflow/din_model/spark-tensorflow-connector_2.11-1.15.0.jar')
-
-clean >> logs >> region_adding >> trainready >> tfrecords
+main_ts >> main_cluster >> main_distribution >> main_norm >> main_tfrecords

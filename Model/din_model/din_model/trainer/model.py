@@ -20,7 +20,6 @@ class Model(object):
 
     hidden_units = 128
 
-    user_emb_w = tf.get_variable("user_emb_w", [user_count, hidden_units])
     item_emb_w = tf.get_variable("item_emb_w", [item_count, hidden_units // 2])
     item_b = tf.get_variable("item_b", [item_count],
                              initializer=tf.constant_initializer(0.0))
@@ -66,7 +65,6 @@ class Model(object):
         hist_j =attention(j_emb, h_emb, self.sl)
     #-- attention end ---
     
-    # hist_j = tf.layers.batch_normalization(inputs = hist_j)
     hist_j = tf.layers.batch_normalization(inputs = hist_j, reuse=True)
     hist_j = tf.reshape(hist_j, [-1, hidden_units], name='hist_bn')
     hist_j = tf.layers.dense(hist_j, hidden_units, name='hist_fcn', reuse=True)
@@ -122,7 +120,6 @@ class Model(object):
     #-- attention end ---
     
     hist_sub = tf.layers.batch_normalization(inputs = hist_sub, name='hist_bn', reuse=tf.AUTO_REUSE)
-    # print hist_sub.get_shape().as_list() 
     hist_sub = tf.reshape(hist_sub, [-1, hidden_units])
     hist_sub = tf.layers.dense(hist_sub, hidden_units, name='hist_fcn', reuse=tf.AUTO_REUSE)
 
@@ -131,9 +128,7 @@ class Model(object):
     din_sub = tf.concat([u_emb_sub, item_emb_sub], axis=-1)
     din_sub = tf.layers.batch_normalization(inputs=din_sub, name='b1', reuse=True)
     d_layer_1_sub = tf.layers.dense(din_sub, 80, activation=tf.nn.sigmoid, name='f1', reuse=True)
-    #d_layer_1_sub = dice(d_layer_1_sub, name='dice_1_sub')
     d_layer_2_sub = tf.layers.dense(d_layer_1_sub, 40, activation=tf.nn.sigmoid, name='f2', reuse=True)
-    #d_layer_2_sub = dice(d_layer_2_sub, name='dice_2_sub')
     d_layer_3_sub = tf.layers.dense(d_layer_2_sub, 1, activation=None, name='f3', reuse=True)
     d_layer_3_sub = tf.reshape(d_layer_3_sub, [-1, predict_ads_num])
     self.logits_sub = tf.sigmoid(item_b[:predict_ads_num] + d_layer_3_sub)

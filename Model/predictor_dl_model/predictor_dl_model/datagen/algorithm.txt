@@ -1,8 +1,0 @@
-1. The data gets generated for 1000 users.
-2. Each user has scpecific profile.
-3. Each user has specific ineterst.
-4. Each user as a specific level of activity.
-5. Each day has a specific level of activity.
-6. Whole year traffic has a pattern.
-7. Each day traffic has a pattern.
-8. Set of (si,t,m) has specific pattern.

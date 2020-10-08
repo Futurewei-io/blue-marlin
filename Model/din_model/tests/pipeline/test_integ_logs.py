@@ -1,3 +1,22 @@
+# Copyright 2020, Futurewei Technologies
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+#                                                 * "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
 import unittest
 
 from pyspark import SparkContext, SparkConf, Row
@@ -39,14 +58,8 @@ class TestCleanClickLog(TestBase):
                 self.assertTrue(
                     False, '{} {} not in show_log'.format(column, item))
 
-    def test_if_all_click_dids_are_in_show(self):
-        self.__if_all_click_items_are_in_show('did')
-
     def test_if_all_click_slot_ids_are_in_show(self):
         self.__if_all_click_items_are_in_show('slot_id')
-
-    def test_if_all_click_advt_ids_are_in_show(self):
-        self.__if_all_click_items_are_in_show('adv_id')
 
     def test_interval_starting_time(self):
         pass

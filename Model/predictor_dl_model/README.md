@@ -19,9 +19,12 @@ pip install -r requirements.txt
 3.  cd predictor_dl_model
 4.  pip install -r requirements.txt (to install required packages)
 5.  python setup install (to install predictor_dl_model package)
-3.	Follow the steps in ~/code/predictor_dl_model/predictor_dl_model/datagen/README.md to generate data
+3.	Follow the steps in ~/code/predictor_dl_model/datagen/README.md to generate data
 4.	Go to directory ~/code/predictor_dl_model/predictor_dl_model
-5.	Run run.sh 
+5.	Run run.sh or each script individually
 
 ### Documentation
 Documentation is provided through comments in config.yml and README files
+
+###note
+saved_model_cli show --dir <model_dir>/<version> --all

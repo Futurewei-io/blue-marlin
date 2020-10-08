@@ -22,43 +22,36 @@ import argparse
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from util import load_df, save_pickle_file
+from din_model.pipeline.util import load_config, load_df, save_pickle_file
 
 
-def generate_tf_statistics(df, tfrecords_statistics_path):
+def generate_tf_statistics(df, tf_statis_path):
     tfrecords_statistics = {}
     tfrecords_statistics['distinct_records_count'] = df.count()
-    save_pickle_file(tfrecords_statistics, tfrecords_statistics_path)
+    save_pickle_file(tfrecords_statistics, tf_statis_path)
 
 
-def save_tfrecords(trainready_table_name, tfrecords_hdfs_path, tfrecords_statistics_path):
-    command = """select uckey_index, media_index, media_category_index, net_type_index, gender_index, age_index, 
-    region_id_index, interval_starting_time, keyword_indexes as keywords, keyword_indexes_click_counts as click_counts, 
-    keyword_indexes_show_counts as show_counts from {}""".format(trainready_table_name)
+def save_tfrecords(hive_context, trainready_table,
+                   tfrecords_hdfs_path, tf_statis_path):
+    command = """select uckey_index, media_index, media_category_index, 
+                 net_type_index, gender_index, age_index, region_id_index, 
+                 interval_starting_time, keyword_indexes as keywords, 
+                 keyword_indexes_click_counts as click_counts, 
+                 keyword_indexes_show_counts as show_counts from {}""".format(trainready_table)
     df = hive_context.sql(command)
-    generate_tf_statistics(df, tfrecords_statistics_path)
-    df.write.format("tfrecords").option("recordType", "Example").mode('overwrite').save(tfrecords_hdfs_path)
+    generate_tf_statistics(df, tf_statis_path)
+    df.write.format("tfrecords").option("recordType",
+                                        "Example").mode('overwrite').save(tfrecords_hdfs_path)
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='generate tf records')
-    parser.add_argument('config_file')
-    args = parser.parse_args()
-
-    # Load config file
-    with open(args.config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
-
-    sc = SparkContext()
-    hive_context = HiveContext(sc)
-    sc.setLogLevel(cfg['log']['level'])
-
-    # save table as tfrecords
-    cfg_pipeline = cfg['pipeline']
-    trainready_table_name = cfg_pipeline['main_trainready']['trainready_output_table_name']
-    tfrecords_hdfs_path = cfg_pipeline['tfrecords']['tfrecords_hdfs_path']
-    tfrecords_statistics_path = cfg_pipeline['tfrecords']['tfrecords_statistics_path']
-    save_tfrecords(trainready_table_name, tfrecords_hdfs_path, tfrecords_statistics_path)
-
+    sc, hive_context, cfg = load_config(description="generate tf records")
+    cfgp = cfg['pipeline']
+    trainready_table = cfgp['main_trainready']['trainready_output_table']
+    tfrecords_hdfs_path = cfgp['tfrecords']['tfrecords_hdfs_path']
+    tf_statis_path = cfgp['tfrecords']['tfrecords_statistics_path']
+    # save selected columns of train ready table as tfrecords.
+    save_tfrecords(hive_context, trainready_table,
+                   tfrecords_hdfs_path, tf_statis_path)
     sc.stop()

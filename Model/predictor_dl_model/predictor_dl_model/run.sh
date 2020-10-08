@@ -1,35 +1,42 @@
 #!/bin/bash
 
+#Preparing the data by filtering reliable si, deleting region ids from uckey, remapping ips and recalculating bucket-ids
+if false
+then
+    # spark-submit pipeline/main_filter_si_region_bucket.py config.yml
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_filter_si_region_bucket.py config.yml
+fi
+
 #Preparing ts data and save the results as <config.pipeline.time_series.ts_tmp_table_name> 
 if false
 then
     # spark-submit pipeline/main_ts.py config.yml   
-    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 20 --executor-cores 5 pipeline/main_ts.py config.yml &
+    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_ts.py config.yml
 fi
 
 #Preparing clustering
 if false
 then
-    spark-submit --master yarn --num-executors 20 --executor-cores 5 pipeline/main_cluster.py config.yml
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_cluster.py config.yml
 fi
 
 #generating distribution
 if false
 then
-    spark-submit --master yarn --num-executors 20 --executor-cores 5 pipeline/main_distribution.py config.yml
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_distribution.py config.yml
 fi
 
 #generating clusters analysis
 if false
 then
-    spark-submit --master yarn --num-executors 10 --executor-cores 5 pipeline/main_clusters_analysis.py config.yml &
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 pipeline/main_clusters_analysis.py config.yml 
 fi
 
 #Preparing normalization
 if false
 then
     #spark-submit pipeline/main_norm.py config.yml
-    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 20 --executor-cores 5 pipeline/main_norm.py config.yml
+    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_norm.py config.yml
 fi
 
 #Saving tables as <config.pipeline.tfrecords_path>

@@ -17,6 +17,9 @@ pip install -r requirements.txt
     6. Go to directory ~/code/din_model/din_model
     7. Run run.sh (Make sure flags are set to true)(If the GPU machine is not as the same as Spark Client, then move tfrecords to the trainer machine)
 
+### Run Using Airflow
+Refer to AIRFLOW.md
+
 ### Documentation
 More documentation is provided through comments in config.yml and README files
 
