@@ -3,14 +3,20 @@
 #Preparing the data by filtering reliable si, deleting region ids from uckey, remapping ips and recalculating bucket-ids
 if false
 then
+    # simple call
     # spark-submit pipeline/main_filter_si_region_bucket.py config.yml
+
+    # cluster customized call
     spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_filter_si_region_bucket.py config.yml
 fi
 
 #Preparing ts data and save the results as <config.pipeline.time_series.ts_tmp_table_name> 
 if false
 then
+    # simple call
     # spark-submit pipeline/main_ts.py config.yml   
+    
+    # cluster customized call
     spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_ts.py config.yml
 fi
 
@@ -27,10 +33,11 @@ then
 fi
 
 #generating clusters analysis
-if false
-then
-    spark-submit --master yarn --num-executors 10 --executor-cores 5 pipeline/main_clusters_analysis.py config.yml 
-fi
+#if false
+#then
+    # Analysis step NOT PART OF PIPELIE
+    # spark-submit --master yarn --num-executors 10 --executor-cores 5 pipeline/main_clusters_analysis.py config.yml 
+#fi
 
 #Preparing normalization
 if false
@@ -56,20 +63,14 @@ then
 fi
 
 #Training the model
-if true
+if false
 then
     python trainer/tfrecord_reader.py config.yml
     python trainer/trainer.py config.yml 
 fi
 
 # Saving the model
-if true
-then
-    python trainer/save_model.py --data_dir=data/vars --ckpt_dir=data/cpt/s32 --saved_dir=data/vars --model_version=1
-fi
-
-# Saving the model in elasticsearch
 if false
 then
-    python pipeline/pickle_to_es.py config.yml
+    python trainer/save_model.py --data_dir=data/vars --ckpt_dir=data/cpt/s32 --saved_dir=data/vars --model_version=1
 fi

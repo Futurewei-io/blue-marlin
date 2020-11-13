@@ -16,6 +16,7 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+
 import json
 import math
 import statistics
@@ -154,7 +155,7 @@ def generate_ucdoc(traffic_dist):
                 hour_counts.append({hour_index: count_array})
             day_hour_counts.append({day: hour_counts})
 
-        # TODO: Fix uckey length, This is tmp code
+        # UCKey length is always 8
         while len(uckey.split(',')) < 8:
             uckey += ','
 

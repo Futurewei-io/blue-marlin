@@ -5,8 +5,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="predictor_dl_model", # Replace with your own username
-    version="1.0.0",
-    author="Reza Adibniar",
+    version="1.6.0",
+    author="Reza Adibnia",
     author_email="radibnia@futurewei.com",
     description="All the packages required for running predictor pipeline",
     long_description=long_description,
@@ -15,9 +15,9 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=['data','datagen']),
     license="Apache License 2.0",
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2",
         "License :: Apache License 2.0",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=2.7',
 )

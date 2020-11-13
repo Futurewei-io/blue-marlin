@@ -30,12 +30,13 @@ from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect
 from pyspark.sql.types import IntegerType, StringType, MapType, ArrayType, FloatType, BooleanType
 from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
+from util import resolve_placeholder
 
 
 import transform as transform
 
 
-def _save_as_table(df, table_name, hive_context, create_table):
+def __save_as_table(df, table_name, hive_context, create_table):
 
     if create_table:
         command = """
@@ -93,7 +94,7 @@ def agg_ts(mlist):
 
 def agg_on_uckey_price_cat(df):
 
-    column_names = ['ts', 'a', 'g', 't', 'si', 'r']
+    column_names = ['ts', 'a', 'g', 't', 'si', 'r', 'ipl']
     agg_exprs = [collect_list(col).alias(col) for col in column_names]
     df = df.groupBy('uckey', 'price_cat').agg(*agg_exprs)
 
@@ -151,7 +152,7 @@ def run(hive_context, cluster_size_cfg, input_table_name, pre_cluster_table_name
 
     # Read factdata table
     command = """
-    select ts,price_cat,uckey,a,g,t,si,r from {}
+    select ts, price_cat, uckey, a, g, t, si, r, ipl from {}
     """.format(input_table_name)
 
     # DataFrame[uckey: string, price_cat: string, ts: array<int>, a: string, g: string, t: string, si: string, r: string]
@@ -182,7 +183,7 @@ def run(hive_context, cluster_size_cfg, input_table_name, pre_cluster_table_name
                               number_of_virtual_clusters).cast('int'))
 
     if create_pre_cluster_table:
-        _save_as_table(df, pre_cluster_table_name, hive_context, True)
+        __save_as_table(df, pre_cluster_table_name, hive_context, True)
 
     # change the uckey of sparse to cn
     df = df.withColumn('new_uckey', udf(lambda uckey, cn, sparse: str(
@@ -209,7 +210,7 @@ def run(hive_context, cluster_size_cfg, input_table_name, pre_cluster_table_name
     df = df.filter(udf(lambda p_n, ts: not is_spare(datapoints_th_clusters, -
                                                     sys.maxsize-1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
-    _save_as_table(df, output_table_name, hive_context, True)
+    __save_as_table(df, output_table_name, hive_context, True)
 
 
 if __name__ == "__main__":
@@ -220,7 +221,8 @@ if __name__ == "__main__":
 
     # Load config file
     with open(args.config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        resolve_placeholder(cfg)
 
     cfg_log = cfg['log']
     cfg = cfg['pipeline']
