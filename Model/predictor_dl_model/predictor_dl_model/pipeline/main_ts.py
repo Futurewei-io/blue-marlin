@@ -27,6 +27,7 @@ from pyspark import SparkContext, SparkConf, Row
 from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list, explode, sum
 from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
+from util import resolve_placeholder
 
 import transform as transform
 
@@ -50,7 +51,8 @@ def __save_as_table(df, table_name, hive_context, create_table):
             g string,
             t string,
             si string,
-            r string
+            r string,
+            ipl string
             )
             """.format(table_name)
 
@@ -63,7 +65,8 @@ def __save_as_table(df, table_name, hive_context, create_table):
               'g',
               't',
               'si',
-              'r'
+              'r',
+              'ipl'
               ).write.format('hive').option("header", "true").option("encoding", "UTF-8").mode('append').insertInto(table_name)
 
 
@@ -95,7 +98,7 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
 
         # Read factdata table
         command = """
-        select count_array,day,hour,uckey from {} where bucket_id between {} and {}
+        select count_array, day, hour, uckey from {} where bucket_id between {} and {}
         """.format(factdata_table_name, str(start_bucket), str(end_bucket))
 
         if len(conditions) > 0:
@@ -136,6 +139,7 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
         df = df.withColumn('a', transform.add_feature_udf(4)(df.uckey))
         df = df.withColumn('si', transform.add_feature_udf(1)(df.uckey))
         df = df.withColumn('r', transform.add_feature_udf(7)(df.uckey))
+        df = df.withColumn('ipl', transform.add_feature_udf(8)(df.uckey))
         df = df.withColumn('t', transform.add_feature_udf(2)(df.uckey))
         df = df.withColumn('g', transform.add_feature_udf(3)(df.uckey))
 
@@ -151,7 +155,8 @@ if __name__ == "__main__":
 
     # Load config file
     with open(args.config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        resolve_placeholder(cfg)
 
     cfg_log = cfg['log']
     cfg = cfg['pipeline']['time_series']
@@ -165,10 +170,10 @@ if __name__ == "__main__":
     output_table_name = cfg['output_table_name']
     bucket_size = cfg['bucket_size']
     bucket_step = cfg['bucket_step']
-    factdata_table_name = cfg['factdata_table_name']
+    input_table_name = cfg['input_table_name']
     conditions = cfg['conditions']
 
-    run(hive_context, conditions, factdata_table_name,
+    run(hive_context, conditions, input_table_name,
         yesterday, prepare_past_days, output_table_name, bucket_size, bucket_step)
 
     sc.stop()

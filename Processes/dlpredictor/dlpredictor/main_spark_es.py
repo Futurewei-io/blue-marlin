@@ -17,36 +17,48 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-# -*- coding: UTF-8 -*-
-import os
-import random
-import sys
-import ast
-import json
-import time
-import yaml
 import argparse
-
-from pyspark import SparkContext, SparkConf, Row
-from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list, create_map, sum as sum_agg, struct
-from pyspark.sql.types import IntegerType, StringType, ArrayType, MapType, FloatType, StructField, StructType
-from pyspark.sql import HiveContext
-from imscommon.model.ucdoc import UCDoc
-from imscommon.model.ucday import UCDay
-from imscommon.model.uchour import UCHour
-from dlpredictor.prediction.forecaster import Forecaster
-from dlpredictor.prediction.ims_predictor_util import convert_records_map_to_list
-from dlpredictor.log import *
-from dlpredictor.util.sparkesutil import *
-from dlpredictor import transform
-from itertools import chain
+import re
+# -*- coding: UTF-8 -*-
+import sys
 from datetime import datetime, timedelta
 
+import yaml
+from pyspark import SparkContext
+from pyspark.sql import HiveContext
+from pyspark.sql.functions import udf, expr, collect_list, struct
+from pyspark.sql.types import StringType, ArrayType, MapType, FloatType, StructField, StructType
 
-# [{14: [u'1:3']}, {13: [u'1:3']}, {11: [u'1:3']}, {15: [u'1:5']}, {22: [u'1:8']}, {23: [u'1:6']}, {19: [u'1:1']}, {18: [u'1:1']}, {12: [u'1:5']}, {17: [u'1:5']}, {20: [u'1:3']}, {21: [u'1:21']}]
+from dlpredictor import transform
+from dlpredictor.log import *
+from dlpredictor.prediction.forecaster import Forecaster
+from dlpredictor.util.sparkesutil import *
+
+
+def resolve_placeholder(in_dict):
+    stack = []
+    for key in in_dict.keys():
+        stack.append((in_dict, key))
+    while len(stack) > 0:
+        (_dict, key) = stack.pop()
+        value = _dict[key]
+        if type(value) == dict:
+            for _key in value.keys():
+                stack.append((value, _key))
+        elif type(value) == str:
+            z = re.findall('\{(.*?)\}', value)
+            if len(z) > 0:
+                new_value = value
+                for item in z:
+                    if item in in_dict and type(in_dict[item]) == str:
+                        new_value = new_value.replace('{'+item+'}', in_dict[item])
+                _dict[key] = new_value
 
 
 def sum_count_array(hour_counts):
+    '''
+    [{14: [u'1:3']}, {13: [u'1:3']}, {11: [u'1:3']}, {15: [u'1:5']}, {22: [u'1:8']}, {23: [u'1:6']}, {19: [u'1:1']}, {18: [u'1:1']}, {12: [u'1:5']}, {17: [u'1:5']}, {20: [u'1:3']}, {21: [u'1:21']}]
+    '''
     result_map = {}
     for item in hour_counts:
         for _, v in item.items():
@@ -58,13 +70,14 @@ def sum_count_array(hour_counts):
 
     result = []
     for key, value in result_map.items():
-        result.append(key+":"+str(value))
+        result.append(key + ":" + str(value))
     return result
-
-# ca1 = [u'1:9']
 
 
 def add_count_arrays(ca1, ca2):
+    '''
+    ca1 = [u'1:9']
+    '''
     result_map = {}
     for i in ca1+ca2:
         key, value = i.split(':')
@@ -76,10 +89,11 @@ def add_count_arrays(ca1, ca2):
         result.append(key+":"+str(value))
     return result
 
-# [{u'2019-11-02': [u'1:9']}]
-
 
 def sum_day_count_array(day_count_arrays):
+    '''
+    [{u'2019-11-02': [u'1:9']}]
+    '''
     result_map = {}
     for day_count_array in day_count_arrays:
         for item in day_count_array:
@@ -111,7 +125,7 @@ def __save_as_table(df, table_name, hive_context, create_table):
         hive_context.sql(command)
 
 
-def run(cfg, yesterday, model_name, model_version, serving_url):
+def run(cfg, yesterday, serving_url):
 
     # os.environ[
     #     'PYSPARK_SUBMIT_ARGS'] = '--jars /home/reza/eshadoop/elasticsearch-hadoop-6.5.2/dist/elasticsearch-hadoop-6.5.2.jar pyspark-shell'
@@ -134,12 +148,13 @@ def run(cfg, yesterday, model_name, model_version, serving_url):
     # Reading the max bucket_id
     bucket_size = cfg['bucket_size']
     bucket_step = cfg['bucket_step']
-    factdata = cfg['factdata']
+    factdata = cfg['factdata_table']
     distribution_table = cfg['distribution_table']
     norm_table = cfg['norm_table']
     traffic_dist = cfg['traffic_dist']
+    model_stat_table = cfg['model_stat_table']
 
-    model_stats = get_model_stats(cfg, model_name, model_version)
+    model_stats = get_model_stats(hive_context, model_stat_table)
 
     # Read dist
     command = """
@@ -163,13 +178,11 @@ def run(cfg, yesterday, model_name, model_version, serving_url):
         g__n, g_g_f_n, g_g_m_n, g_g_x_n,
         price_cat_1_n, price_cat_2_n, price_cat_3_n,
         si_vec_n,
-        r_vec_n
+        r_vec_n,
+        ipl_vec_n
         FROM {}
         """.format(norm_table)
     df_norm = hive_context.sql(command)
-    # df_norm = df_norm.groupBy('cluster_uckey', 'a__n', 'a_1_n', 'a_2_n', 'a_3_n', 'a_4_n', 'a_5_n', 'a_6_n', 't_UNKNOWN_n',
-    #                           't_3G_n', 't_4G_n', 't_WIFI_n', 't_2G_n', 'g__n', 'g_g_f_n', 'g_g_m_n', 'g_g_x_n', 'si_vec_n').count().drop('count')
-
 
     # create day_list from yesterday for train_window
     duration = model_stats['model']['duration']
@@ -274,7 +287,7 @@ def run(cfg, yesterday, model_name, model_version, serving_url):
                  'cluster_uckey', 'price_cat'], how='inner')
 
     predictor_udf = udf(transform.predict_daily_uckey(days=day_list,
-        serving_url=serving_url, forecaster=forecaster, model_stats=model_stats, columns=df.columns), MapType(StringType(), FloatType()))
+                                                      serving_url=serving_url, forecaster=forecaster, model_stats=model_stats, columns=df.columns), MapType(StringType(), FloatType()))
 
     df = df.withColumn('day_prediction_map',
                        predictor_udf(struct([df[name] for name in df.columns])))
@@ -312,15 +325,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Prepare data')
     parser.add_argument('config_file')
     parser.add_argument('yesterday')
-    parser.add_argument('model_name')
-    parser.add_argument('model_version')
     parser.add_argument('serving_url')
     args = parser.parse_args()
 
     # Load config file
     try:
         with open(args.config_file, 'r') as ymlfile:
-            cfg = yaml.load(ymlfile)
+            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+            resolve_placeholder(cfg)
             logger_operation.info(
                 "Successfully open {}".format(args.config_file))
     except IOError as e:
@@ -330,4 +342,4 @@ if __name__ == '__main__':
         logger_operation.error("Unexpected error:{}".format(sys.exc_info()[0]))
         raise
 
-    run(cfg, args.yesterday, args.model_name, args.model_version, args.serving_url)
+    run(cfg, args.yesterday, args.serving_url)

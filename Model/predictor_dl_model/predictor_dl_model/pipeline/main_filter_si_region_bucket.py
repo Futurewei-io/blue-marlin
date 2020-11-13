@@ -27,6 +27,7 @@ from pyspark import SparkContext, SparkConf, Row
 from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list, explode, sum, array, split
 from pyspark.sql.types import BooleanType, IntegerType, StringType
 from pyspark.sql import HiveContext
+from util import resolve_placeholder
 import hashlib
 
 
@@ -42,7 +43,7 @@ def __save_as_table(df, table_name, hive_context, create_table):
         command = """
             CREATE TABLE IF NOT EXISTS {}
             (
-            uckey string, count_array array<string>, hour int, day string, old_bkid int 
+            uckey string, count_array array<string>, hour int, day string, old_bkid int
             ) PARTITIONED BY (bucket_id int)
             """.format(table_name)
 
@@ -58,16 +59,38 @@ def __save_as_table(df, table_name, hive_context, create_table):
 
 
 def drop_region(df):
-    new_uckey = udf(lambda uckey: ','.join([v for i, v in enumerate(uckey.split(',')) if i != 6]))
-    df = df.withColumn('_uckey', new_uckey(df.uckey)).drop('uckey').withColumnRenamed('_uckey', 'uckey')
+    new_uckey = udf(lambda uckey: ','.join(
+        [v for i, v in enumerate(uckey.split(',')) if i != 6]))
+    df = df.withColumn('_uckey', new_uckey(df.uckey)).drop(
+        'uckey').withColumnRenamed('_uckey', 'uckey')
     return df
 
 
 def modify_ipl(df, mapping_df):
-    df = df.withColumn('ipl', split(df['uckey'], ',').getItem(6).cast(IntegerType()))
+    df = df.withColumn('ipl', split(
+        df['uckey'], ',').getItem(7).cast(IntegerType()))
     df = df.join(mapping_df, df.ipl == mapping_df.ipl_new, how='left')
-    new_uckey = udf(lambda arr: ','.join(list(arr[0].split(','))[:-1] + ['' if x is None else x for x in arr[-1:]]))
+    new_uckey = udf(lambda arr: ','.join(list(arr[0].split(','))[
+                    :-1] + ['' if x is None else x for x in arr[-1:]]))
     df = df.withColumn('uckey', new_uckey(array(df.uckey, df.ipl_old)))
+    return df
+
+
+def _udf_map_r(arr):
+    uckey = list(arr[0].split(','))
+    uckey_to_r = uckey[:-2]
+    uckey_ipl = uckey[-1]
+    new_r = arr[1]
+    uckey_new = ','.join(uckey_to_r + ['' if new_r is None else new_r] + [uckey_ipl])
+    return uckey_new
+
+
+def modify_residency(df, mapping_df):
+    df = df.withColumn('r', split(
+        df['uckey'], ',').getItem(6).cast(IntegerType()))
+    df = df.join(mapping_df, df.r == mapping_df.r_new, how='left')
+    new_uckey = udf(_udf_map_r, StringType())
+    df = df.withColumn('uckey', new_uckey(array(df.uckey, df.r_old)))
     return df
 
 
@@ -84,19 +107,24 @@ def assign_new_bucket_id(df, n):
 def run(hive_context, conditions, factdata_table_name, output_table_name, region_mapping_table, init_start_bucket, bucket_size, bucket_step, new_bucket_size, new_si_set):
 
     # ts will be counts from yesterday-(past_days) to yesterday
-    mapping_df = hive_context.sql('SELECT * FROM {}'.format(region_mapping_table))
-    mapping_df = mapping_df.withColumnRenamed('old', 'ipl_old').withColumnRenamed('new', 'ipl_new')
+    mapping_df = hive_context.sql(
+        'SELECT * FROM {}'.format(region_mapping_table))
+    mapping_df_region = mapping_df.withColumn(
+        'r_old', mapping_df["old"]).withColumn('r_new', mapping_df["new"])
+    mapping_df_ipl = mapping_df.withColumnRenamed(
+        'old', 'ipl_old').withColumnRenamed('new', 'ipl_new')
+
     mapping_df.cache()
 
     start_bucket = init_start_bucket
     first_round = True
+
     while True:
 
         end_bucket = min(bucket_size, start_bucket + bucket_step)
 
         if start_bucket > end_bucket:
             break
-
         # Read factdata table
         command = """
         SELECT count_array,day,hour,uckey,bucket_id FROM {} WHERE bucket_id BETWEEN {} AND {}
@@ -114,13 +142,16 @@ def run(hive_context, conditions, factdata_table_name, output_table_name, region
         _udf = udf(lambda x: x.split(',')[1] in new_si_set, BooleanType())
         df = df.filter(_udf(df.uckey))
 
-        df = drop_region(df)
+        # remove region from uckey
+        # df = drop_region(df)
 
-        df = modify_ipl(df, mapping_df)
+        df = modify_ipl(df, mapping_df_ipl)
+        df = modify_residency(df, mapping_df_region)
 
         df = assign_new_bucket_id(df, new_bucket_size)
 
         __save_as_table(df, output_table_name, hive_context, first_round)
+        print('Processed ' + str(start_bucket-1) + ' buckets.')
 
         first_round = False
 
@@ -132,7 +163,8 @@ if __name__ == "__main__":
 
     # Load config file
     with open(args.config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        resolve_placeholder(cfg)
 
     #  spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G main_filter_si_region_bucket.py &
 
@@ -145,7 +177,7 @@ if __name__ == "__main__":
 
     cfg_filter = cfg['pipeline']['filter']
 
-    factdata_table_name = cfg_filter['factdata_table_name']
+    factdata_table_name = cfg['factdata_table_name']
     output_table_name = cfg_filter['output_table_name']
     region_mapping_table = cfg_filter['region_mapping_table']
     init_start_bucket = cfg_filter['init_start_bucket']

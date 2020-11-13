@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='dlpredictor',
-    version='2.0.0',
+    version='1.6.0',
     author='Reza Adibnia',
     author_email="reza.adibnia@futurewei.com",
     packages=find_packages(),
@@ -21,5 +21,5 @@ setup(
         "License :: Apache License 2.0",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=2.7',
 )

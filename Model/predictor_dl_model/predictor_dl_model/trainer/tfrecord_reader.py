@@ -32,6 +32,8 @@ from typing import Tuple
 import pickle
 from predictor_dl_model.pipeline.util import get_dow
 from typing import Tuple, Dict, Collection, List
+from pyhive import hive
+import json
 
 log = logging.getLogger()
 
@@ -78,8 +80,6 @@ def __data_parser(serialized_example):
                                                  't_WIFI_n': tf.FixedLenFeature([], tf.float32),
                                                  't_2G_n': tf.FixedLenFeature([], tf.float32),
                                                  'si_vec_n': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-                                                 # 'dow_sin': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-                                                 # 'dow_cos': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
                                                  'ts_n': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
                                                  'p_n': tf.FixedLenFeature([], tf.float32),
                                                  })
@@ -88,7 +88,6 @@ def __data_parser(serialized_example):
     price_cat_1 = tf.cast(features['price_cat_1_n'], tf.float32)
     price_cat_2 = tf.cast(features['price_cat_2_n'], tf.float32)
     price_cat_3 = tf.cast(features['price_cat_3_n'], tf.float32)
-    # hour = tf.cast(features['hour'], tf.float32)
     gender_x = tf.cast(features['g_g_x_n'], tf.float32)
     gender_f = tf.cast(features['g_g_f_n'], tf.float32)
     gender_m = tf.cast(features['g_g_m_n'], tf.float32)
@@ -106,9 +105,9 @@ def __data_parser(serialized_example):
     t_UNKNOWN =tf.cast(features['t_UNKNOWN_n'], tf.float32)
     t_WIFI =tf.cast(features['t_WIFI_n'], tf.float32)
     si = tf.cast(features['si_vec_n'], tf.float32)
-    #r = tf.cast(features['r'], tf.float32)
     hits = tf.cast(features['ts_n'], tf.float32)
     page_popularity =  tf.cast(features['p_n'], tf.float32)
+
 
     return uckey, price_cat_1, price_cat_2,price_cat_3, gender_no, gender_f, gender_m, gender_x, age_no,age_1, age_2, age_3, age_4,age_5, age_6, \
            t_2G, t_3G,t_4G,t_UNKNOWN, t_WIFI, si,hits,page_popularity
@@ -135,9 +134,13 @@ def lag_indexes(tf_stat)-> List[pd.Series]:
     return [lag(pd.DateOffset(months=m)) for m in (1, 2)]
 
 def run(cfg):
+    conn = hive.Connection(host='10.213.37.46', username='hive', password='hive', auth='CUSTOM')
+    cursor = conn.cursor()
+    cursor.execute('select * from dlpm_11092020_model_stat')
+    stat_model = cursor.fetchone()
+    model_info= json.loads(stat_model[0])
+    stat_info = json.loads(stat_model[1])
 
-    with open(cfg['tf_statistics_path'], 'rb') as f:
-        tf_stat = pickle.load(f)
 
     names = []
     tfrecord_location = cfg['tfrecords_local_path']
@@ -159,10 +162,10 @@ def run(cfg):
 
     # lagged_ix = numpy.ones((duration, 4), dtype=float)
     # lagged_ix = np.where(lagged_ix == 1, -1, lagged_ix)
-    lagged_ix = np.stack(lag_indexes(tf_stat), axis=-1)
+    lagged_ix = np.stack(lag_indexes(model_info), axis=-1)
     # quarter_autocorr = numpy.ones((batch_size,), dtype=float)
 
-    date_list = tf_stat['days']
+    date_list = model_info['days']
     dow =get_dow(date_list)
 
     holiday_list = cfg['holidays']
@@ -197,7 +200,7 @@ def run(cfg):
             quarter_autocorr= quarter_autocorr,
             dow=pd.DataFrame(dow).T,
             holiday=pd.DataFrame(holiday).T)
-        
+
         data_len = tensors['hits'].shape[1]
         plain = dict(
             data_days=data_len - cfg['add_days'],

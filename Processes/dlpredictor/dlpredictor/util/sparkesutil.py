@@ -84,9 +84,12 @@ def convert_predictions_json_to_sorted_ucdays(predictions):
         ucdays.append(ucday)
     return ucdays
 
-# [{'date': '2020-01-17', 'model': {'name': 's32', 'version': 1},
-# 'stats': {'g_g_m': [0.32095959595959594, 0.4668649491714752], 'g_g_f': [0.3654040404040404, 0.4815635452904544], 'g_g_x': [0.31363636363636366, 0.46398999646418304], 'a_1': [0.198989898989899, 0.3992572317838901], 'a_2': [0.2474747474747475, 0.4315630593164027], 'a_3': [0.295959595959596, 0.45649211860504146], 'a_4': [0.25757575757575757, 0.43731748751040456], 't_3G': [0.0, 1.0], 't_4G': [0.0, 1.0], 'si_1': [0.37424242424242427, 0.4839470491115894], 'si_2': [0.4042929292929293, 0.49077533664980666], 'si_3': [0.22146464646464648, 0.4152500106648333], 'price_cat_0': [0.0, 1.0], 'price_cat_1': [0.3333333333333333, 0.4714243623012701], 'price_cat_2': [0.3333333333333333, 0.47142436230126994], 'price_cat_3': [0.3333333333333333, 0.47142436230126994], 'holiday_stats': [0.044444444444444446, 0.20723493215097805]}}]
-def get_model_stats(cfg, model_name, model_version):
+
+def get_model_stats_from_es(cfg, model_name, model_version):
+    '''
+    [{'date': '2020-01-17', 'model': {'name': 's32', 'version': 1},
+    'stats': {'g_g_m': [0.32095959595959594, 0.4668649491714752], 'g_g_f': [0.3654040404040404, 0.4815635452904544], 'g_g_x': [0.31363636363636366, 0.46398999646418304], 'a_1': [0.198989898989899, 0.3992572317838901], 'a_2': [0.2474747474747475, 0.4315630593164027], 'a_3': [0.295959595959596, 0.45649211860504146], 'a_4': [0.25757575757575757, 0.43731748751040456], 't_3G': [0.0, 1.0], 't_4G': [0.0, 1.0], 'si_1': [0.37424242424242427, 0.4839470491115894], 'si_2': [0.4042929292929293, 0.49077533664980666], 'si_3': [0.22146464646464648, 0.4152500106648333], 'price_cat_0': [0.0, 1.0], 'price_cat_1': [0.3333333333333333, 0.4714243623012701], 'price_cat_2': [0.3333333333333333, 0.47142436230126994], 'price_cat_3': [0.3333333333333333, 0.47142436230126994], 'holiday_stats': [0.044444444444444446, 0.20723493215097805]}}]
+    '''
     es = ESClient(cfg['es_host'], cfg['es_port'],
                   cfg['es_model_index'], cfg['es_model_type'])
     body = {
@@ -104,3 +107,44 @@ def get_model_stats(cfg, model_name, model_version):
         raise Exception(
             'model/version {}/{} not valid'.format(model_name, model_version))
     return doc[0]
+
+
+def get_model_stats(hive_context, model_stat_table):
+    '''
+    return a dict
+    model_stats = {
+        "model": {
+            "name": "s32",
+            "version": 1,
+            "duration": 90,
+            "train_window": 60,
+            "predict_window": 10
+        },
+        "stats": {
+            "g_g_m": [
+                0.32095959595959594,
+                0.4668649491714752
+            ],
+            "g_g_f": [
+                0.3654040404040404,
+                0.4815635452904544
+            ],
+            "g_g_x": [
+                0.31363636363636366,
+                0.46398999646418304
+            ],
+    '''
+    command = """
+            SELECT * FROM {}
+            """.format(model_stat_table)
+    df = hive_context.sql(command)
+    rows = df.collect()
+    if len(rows) != 1:
+        raise Exception('Bad model stat table {} '.format(model_stat_table))
+    model_info = rows[0]['model_info']
+    model_stats = rows[0]['stats']
+    result = {
+        'model': model_info,
+        'stats': model_stats
+    }
+    return result

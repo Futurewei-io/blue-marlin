@@ -19,6 +19,7 @@
 
 import datetime
 import math
+import re
 
 def get_dow(day_list):
     dow_list = []
@@ -30,6 +31,25 @@ def get_dow(day_list):
     sin_list = [math.sin(x / week_period) for x in dow_list]
     cos_list = [math.cos(x / week_period) for x in dow_list]
     return (sin_list, cos_list)
+
+def resolve_placeholder(in_dict):
+    stack = []
+    for key in in_dict.keys():
+        stack.append((in_dict, key))
+    while len(stack) > 0:
+        (_dict, key) = stack.pop()
+        value = _dict[key]
+        if type(value) == dict:
+            for _key in value.keys():
+                stack.append((value, _key))
+        elif type(value) == str:
+            z = re.findall('\{(.*?)\}', value)
+            if len(z) > 0:
+                new_value = value
+                for item in z:
+                    if item in in_dict and type(in_dict[item]) == str:
+                        new_value = new_value.replace('{'+item+'}', in_dict[item])
+                _dict[key] = new_value
 
 
 

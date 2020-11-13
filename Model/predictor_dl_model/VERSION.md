@@ -6,3 +6,7 @@
     b. Remove region
     c. Remaps ip based on ip-mapping table
     d. Recalculate bucket-id
+
+### 1.6
+1. Add residency and IPL features
+2. Add pipeline and product tags to config file. The whole set of tmp tables are named by product_tag and pipeline_tag. The user does not need to review the name of those tables anymore. 

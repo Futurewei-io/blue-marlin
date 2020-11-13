@@ -23,19 +23,18 @@ import argparse
 from pyspark import SparkContext, SparkConf, Row
 from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list, explode
 from pyspark.sql import HiveContext
-
-import predictor_dl_model.pipeline.prepare_data as prepare_data
-import transform as transform
+from util import resolve_placeholder
 
 if __name__ == "__main__":
-    
+
     parser = argparse.ArgumentParser(description='Prepare data')
     parser.add_argument('config_file')
     args = parser.parse_args()
 
     # Load config file
     with open(args.config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        resolve_placeholder(cfg)
 
     cfg_log = cfg['log']
     cfg = cfg['pipeline']

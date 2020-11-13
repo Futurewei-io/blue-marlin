@@ -1,14 +1,15 @@
 log_level: 'INFO'
-factdata: 'factdata_reza_06222020'
-distribution_table: 'pipeline_distribution_tmp_06262020'
-norm_table: 'trainready_tmp_06262020'
-bucket_size: 2
+product_tag: 'dlpm'
+pipeline_tag: '11092020'
+factdata_table: 'factdata_hq_09222020_bucket_0'
+distribution_table: '{product_tag}_{pipeline_tag}_tmp_distribution'
+norm_table: '{product_tag}_{pipeline_tag}_trainready'
+model_stat_table: '{product_tag}_{pipeline_tag}_model_stat'
+bucket_size: 10
 bucket_step: 1
 es_host: '10.213.37.41'
 es_port: '9200'
-es_predictions_index: 'predictions_dlpredictor_07012020_2'
+es_predictions_index: '{product_tag}_{pipeline_tag}_predictions'
 es_predictions_type: 'doc'
-es_model_index: 'model_stats'
-es_model_type: 'stat'
 holiday_list: ['2019-11-09', '2019-11-10', '2019-11-11', '2019-11-25', '2019-11-26', '2019-11-27','2019-11-28', '2019-12-24','2019-12-25', '2019-12-26','2019-12-31', '2020-01-01', '2020-01-02', '2020-01-19','2020-01-20', '2020-01-21', '2020-01-22', '2020-01-23',  '2020-01-24',  '2020-01-25', '2020-02-08']
 traffic_dist: [2.905931696,1.792490513,1.592770122,1.447972838,1.657679249,2.716197324,5.117835031,6.5308568,6.570800879,5.302576393,4.423806671,4.43379269,4.858198522,4.338925504,4.219093269,4.224086279,4.613541043,5.412422608,5.60714999,5.327541442,5.167765129,4.828240463,4.009386858,2.900938686]  

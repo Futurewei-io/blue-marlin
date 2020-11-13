@@ -16,13 +16,7 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import math
-import statistics
 
-import dlpredictor.prediction.ims_predictor_util as ims_predictor_util
-from dlpredictor.util.sparkesutil import *
-from imscommon.model.ucday import UCDay
-from imscommon.model.ucday_hourly import UCDay_Hourly
 from predictor_dl_model.trainer.client_rest_dl2 import predict
 
 
