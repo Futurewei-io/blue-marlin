@@ -9,7 +9,7 @@ certifi==2019.11.28
 cffi==1.13.2
 chardet==3.0.4
 convertdate==2.2.0
-cryptography==2.8
+cryptography==3.2
 cycler==0.10.0
 Cython==0.29.14
 decorator==4.4.1
