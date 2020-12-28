@@ -1,0 +1,7 @@
+int total = 0;
+for (String _: params.days) {
+    if (doc.containsKey(_)) {
+        total += doc[_].value;
+    }
+}
+return total;
