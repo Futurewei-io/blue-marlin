@@ -27,7 +27,7 @@ from elasticsearch import helpers
 This script generates sample tbr documents and pushes to elasticsearch.
 Each document is called tbr-doc.
 
-A tbr-doc contains traffic-browse values. These values are used to calculate tbr-ratio which 
+A tbr-doc contains traffic-behavior values. These values are used to calculate tbr-ratio which 
 explains how traffic is sliced by multi-value traffic features. 
 
 A multi-value traffic feature is a feature that can be mapped to many possible values. This feature is not directly
@@ -63,7 +63,7 @@ IMS Service contains the logic to calculate tbr ration based on tbr values and t
 
 """
 
-es_host = "10.10.10.10"
+es_host = "10.193.217.111"
 es_port = 9200
 es_index = 'tbr_test_10082019'
 es_type = 'doc'

@@ -218,6 +218,7 @@ public class BookingBucketAllocation implements Callable
          */
         if (insideAmount <= 0 || utilVariables.atomicRequestAmount.get() <= 0)
         {
+            //System.out.println("booking bucket allocation "+insideAmount+" , "+utilVariables.atomicRequestAmount.get());
             return 0;
         }
 

@@ -35,17 +35,13 @@ import com.bluemarlin.ims.imsservice.model.Range;
 import com.bluemarlin.ims.imsservice.model.TargetingChannel;
 import com.bluemarlin.ims.imsservice.util.CommonUtil;
 import com.bluemarlin.ims.imsservice.util.TargetingChannelUtil;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -106,14 +102,13 @@ public class InventoryEstimateService extends BaseService
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    private Pair<Impression, Long> aggregateInventory(TargetingChannel targetingChannel, List<Range> ranges) throws JSONException, ESConnectionException, IOException, ExecutionException, InterruptedException
+    private Map<Day, Pair<Impression, Long>> aggregateInventory(TargetingChannel targetingChannel, List<Range> ranges) throws JSONException, ESConnectionException, IOException, ExecutionException, InterruptedException
     {
-        Impression result = new Impression();
 
         if (ranges.size() == 0 || ranges.size() > MAX_TIME_SIZE)
         {
             LOGGER.error("ranges size", ranges.size());
-            return new Pair(result, 0L);
+            return new HashMap<>();
         }
 
         List<Day> sortedDays = Day.buildSortedDays(ranges);
@@ -121,6 +116,10 @@ public class InventoryEstimateService extends BaseService
         Map<Day, Impression> potentialInventory = this.getPotentialInventoryForDays(targetingChannel, new HashSet<>(sortedDays));
         Map<Day, List<BookingBucket>> bookingBucketMap = this.bookingDao.getBookingBuckets(new HashSet<>(sortedDays));
         Map<Day, List<Booking>> bookings = this.bookingDao.getBookings(new HashSet<>(sortedDays));
+
+        LOGGER.debug("potentialInventory  " + potentialInventory.entrySet());
+        LOGGER.debug("bookingBucketMap  " + bookingBucketMap.entrySet());
+        LOGGER.debug("bookings  " + bookings.entrySet());
 
         Map<Day, Future<Long>> futureMap = new HashMap<>();
         for (Day day : sortedDays)
@@ -133,10 +132,14 @@ public class InventoryEstimateService extends BaseService
                 Map<String, Booking> bookingsMapForDay = Booking.buildBookingMap(bookings.get(day));
                 List<BookingBucket> bookingBuckets = bookingBucketMap.get(day);
 
+                //LOGGER.debug("bookingBuckets  "+bookingBuckets.size());
+
                 /**
                  * Filtering the bookingBuckets.
                  */
                 List<BookingBucket> filteredBookingBuckets = filterBookingBuckets(targetingChannel, bookingBuckets, bookingsMapForDay);
+
+                //LOGGER.debug("filteredBookingBuckets  "+filteredBookingBuckets.size());
 
                 long consideredBookedForDay = 0;
                 List<Future<Long>> bookedOnBookingBucketFutures = new ArrayList<>();
@@ -171,20 +174,16 @@ public class InventoryEstimateService extends BaseService
             futureMap.put(day, bookedForDayFuture);
         }
 
-        long consideredBooked = 0;
-        for (Day day : sortedDays)
+        Map<Day, Pair<Impression, Long>> result = new LinkedHashMap<>();
+        for (Map.Entry<Day, Impression> entry : potentialInventory.entrySet())
         {
-            long count = futureMap.get(day).get();
-            consideredBooked += count;
+            Day day = entry.getKey();
+            Impression impression = entry.getValue();
+            Long booked = futureMap.get(day).get();
+            result.put(day, new ImmutablePair<>(impression, booked));
         }
 
-        Impression totalInventory = new Impression();
-        for (Impression impression : potentialInventory.values())
-        {
-            totalInventory = Impression.add(totalInventory, impression);
-        }
-
-        return new Pair(totalInventory, consideredBooked);
+        return result;
     }
 
 
@@ -232,8 +231,7 @@ public class InventoryEstimateService extends BaseService
                 impression = Impression.multiply(impression, ratio);
                 result.put(day, impression);
             }
-        }
-        else
+        } else
         {
             result = predictions;
         }
@@ -265,10 +263,21 @@ public class InventoryEstimateService extends BaseService
     public InventoryResult aggregateInventory(TargetingChannel targetingChannel, List<Range> ranges, double price) throws JSONException, ESConnectionException, IOException, ExecutionException, InterruptedException
     {
         InventoryResult result = new InventoryResult();
-        Pair<Impression, Long> inventoryValue = aggregateInventory(targetingChannel, ranges);
-        long value = inventoryValue.getKey().countImpressions(price, targetingChannel.getPm());
-        long booked = inventoryValue.getValue();
-        value -= booked;
+        Map<Day, Pair<Impression, Long>> inventoryValue = aggregateInventory(targetingChannel, ranges);
+
+        Impression totalInventory = new Impression();
+        long totalBooked = 0;
+        for (Map.Entry<Day, Pair<Impression, Long>> entry : inventoryValue.entrySet())
+        {
+            Impression impression = entry.getValue().getKey();
+            long booked = entry.getValue().getValue();
+
+            totalInventory = Impression.add(totalInventory, impression);
+            totalBooked += booked;
+        }
+
+        long value = totalInventory.countImpressions(price, targetingChannel.getPm());
+        value -= totalBooked;
         if (value < 0)
         {
             LOGGER.info("Estimate impressions < 0");
@@ -276,6 +285,24 @@ public class InventoryEstimateService extends BaseService
         }
         result.setAvailCount(value);
         LOGGER.info("inventory estimate:{}", value);
+        LOGGER.info("inventory service " + value + " " + totalBooked);
+        return result;
+    }
+
+    public Map<Day, Impression.ImpressionShort> aggregateDailyInventory(TargetingChannel targetingChannel, List<Range> ranges, double price) throws JSONException, ESConnectionException, IOException, ExecutionException, InterruptedException
+    {
+        Map<Day, Impression.ImpressionShort> result = new LinkedHashMap<>();
+        Map<Day, Pair<Impression, Long>> inventoryValue = aggregateInventory(targetingChannel, ranges);
+
+        for (Map.Entry<Day, Pair<Impression, Long>> entry : inventoryValue.entrySet())
+        {
+            Impression impression = entry.getValue().getKey();
+            Day day = entry.getKey();
+            long booked = entry.getValue().getValue();
+            impression = Impression.subtractBookedValue(impression, booked);
+            result.put(day, new Impression.ImpressionShort(impression));
+        }
+
         return result;
     }
 
@@ -565,8 +592,7 @@ public class InventoryEstimateService extends BaseService
         if (!(targetingChannel.hasMultiValues()))
         {
             LOGGER.debug("targeting channel has no multi values");
-        }
-        else
+        } else
         {
             LOGGER.debug("targeting channel has multi values");
             tbrRatio = tbrDao.getTBRRatio(targetingChannel);
@@ -580,15 +606,15 @@ public class InventoryEstimateService extends BaseService
     {
         if (CommonUtil.equalNumbers(nominator, denominator))
         {
-            return new Pair(1.0, maxImpression);
+            return new ImmutablePair<>(1.0, maxImpression);
         }
 
         if (nominator == 0)
         {
-            return new Pair(0.0, maxImpression);
+            return new ImmutablePair<>(0.0, maxImpression);
         }
 
-        return new Pair(nominator / denominator, maxImpression);
+        return new ImmutablePair<>(nominator / denominator, maxImpression);
     }
 
 }

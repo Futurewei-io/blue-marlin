@@ -24,6 +24,7 @@ package com.bluemarlin.ims.imsservice.model;
 import com.bluemarlin.ims.imsservice.service.BookingService;
 import com.bluemarlin.ims.imsservice.util.CommonUtil;
 import com.bluemarlin.ims.imsservice.util.IMSLogger;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
@@ -31,8 +32,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.Math.min;
+
 public class Impression implements Serializable
 {
+    static public class ImpressionShort
+    {
+        @JsonProperty("h0")
+        private long h0;
+
+        @JsonProperty("h1")
+        private long h1;
+
+        @JsonProperty("h2")
+        private long h2;
+
+        @JsonProperty("h3")
+        private long h3;
+
+        public ImpressionShort(Impression impression){
+            this.h0 = impression.h0.t;
+            this.h1 = impression.h1.t;
+            this.h2 = impression.h2.t;
+            this.h3 = impression.h3.t;
+        }
+    }
     private static final IMSLogger LOGGER = IMSLogger.instance();
 
     public static final int TOTAL_NUM_OF_PRICE_CATEGORIES = 4;
@@ -124,8 +148,7 @@ public class Impression implements Serializable
         if (price == BookingService.HIGH_PRICE)
         {
             result = this.getTotal();
-        }
-        else
+        } else
         {
             int priceCategory = CommonUtil.determinePriceCat(price, priceModel);
             result = getCountByPriceCategory(priceCategory);
@@ -241,6 +264,25 @@ public class Impression implements Serializable
         item.h1 = new H1(i1.getH1().getT() * r);
         item.h2 = new H2(i1.getH2().getT() * r);
         item.h3 = new H3(i1.getH3().getT() * r);
+        return item;
+    }
+
+    public static Impression subtractBookedValue(Impression i1, long v)
+    {
+        Impression item = new Impression();
+        long[] impValues = new long[]{i1.getH0().getT(), i1.getH1().getT(), i1.getH2().getT(), i1.getH3().getT()};
+
+        long[] hBooked = new long[4];
+        for (int i = 0; i < 4; i++)
+        {
+            hBooked[0] = min(impValues[i], v);
+            v -= hBooked[0];
+        }
+
+        item.h0 = new H0(impValues[0] - hBooked[0]);
+        item.h1 = new H1(impValues[1] - hBooked[1]);
+        item.h2 = new H2(impValues[2] - hBooked[2]);
+        item.h3 = new H3(impValues[3] - hBooked[3]);
         return item;
     }
 

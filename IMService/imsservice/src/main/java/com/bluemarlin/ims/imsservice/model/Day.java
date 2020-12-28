@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Day implements Comparable
+final public class Day implements Comparable
 {
-    private String dayStr;
-    private List<Integer> hours = new ArrayList<>();
+    private final String dayStr;
+    private final List<Integer> hours = new ArrayList<>();
 
     /**
      * Day format is YYYY-MM-DD
@@ -52,10 +52,12 @@ public class Day implements Comparable
     public Day(String dayStr, List<Integer> hours)
     {
         this.dayStr = dayStr;
-        this.hours = hours;
+        for (Integer i : hours){
+            this.hours.add(i.intValue());
+        }
     }
 
-    public String getDayStr()
+    public String toString()
     {
         return dayStr;
     }
