@@ -40,7 +40,7 @@ import java.util.Scanner;
  */
 public class RequestDataConverter
 {
-    private static final String CITY_REGION_FILE_PATH = "data/cured_city_region.txt";
+    private static final String CITY_REGION_FILE_PATH = "data/dummy_city_region.txt";
     private static Map<String, List<Object>> CITY_CODE_REGION_MAP = new HashMap<>();
     private static Map<String, String> CITY_NAME_CITY_CODE_MAP = new HashMap<>();
     private static List<Double> TRAFFIC_ARRAY = new ArrayList<Double>();

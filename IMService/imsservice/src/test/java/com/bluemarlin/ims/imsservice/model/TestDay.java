@@ -15,7 +15,7 @@ public class TestDay {
     public void getDayStr() {
         String dayStr = "20180105";
         Day day = new Day(dayStr);
-        assertEquals("2018-01-05", day.getDayStr());
+        assertEquals("2018-01-05", day.toString());
     }
 
     @Test
@@ -68,7 +68,7 @@ public class TestDay {
         Set<String> exp = new HashSet();
         exp.add("2018-01-05");    exp.add("2018-01-06");   exp.add("");
 
-        assertEquals(exp, Day.getDayStringTreated(days, day3.getDayStr()));
+        assertEquals(exp, Day.getDayStringTreated(days, day3.toString()));
     }
 
     @Test

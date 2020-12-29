@@ -1,0 +1,102 @@
+zookeeper:
+  zookeeper_hosts: "10.213.37.47:2181"
+  gucdocs_table: "/performance-forecasting/ctr-score-generator/din-ucdoc-table"
+  # "din_trainready_09172020"
+  keywords_table: "/performance-forecasting/ctr-score-generator/keywords-table"
+  # "din_ad_keywords_09172020"
+  din_model_tf_serving_url: "/performance-forecasting/ctr-score-generator/din-model-serving-url"
+  # "http://10.193.217.105:8501/v1/models/gdin:predict"
+  din_model_length: "/performance-forecasting/ctr-score-generator/din-model-length"
+  # 30
+  gucdocs_loaded_table: "/performance-forecasting/ctr-score-generator/din-ucdoc-loaded-table"
+  # "din_gucdocs_loaded_09172020"
+mapping:
+  'new_slot_id_list': [
+      '06',
+      '11',
+      '05',
+      '04',
+      '03',
+      '02',
+      '01',
+      'l03493p0r3',
+      'x0ej5xhk60kjwq',
+      'g7m2zuits8',
+      'w3wx3nv9ow5i97',
+      'a1nvkhk62q',
+      'g9iv6p4sjy',
+      'c4n08ku47t',
+      'b6le0s4qo8',
+      'd9jucwkpr3',
+      'p7gsrebd4m',
+      'a8syykhszz',
+      'l2d4ec6csv',
+      'j1430itab9wj3b',
+      's4z85pd1h8',
+      'z041bf6g4s',
+      '71bcd2720e5011e79bc8fa163e05184e',
+      'a47eavw7ex',
+      '68bcd2720e5011e79bc8fa163e05184e',
+      '66bcd2720e5011e79bc8fa163e05184e',
+      '72bcd2720e5011e79bc8fa163e05184e',
+      'f1iprgyl13',
+      'q4jtehrqn2',
+      'm1040xexan',
+      'd971z9825e',
+      'a290af82884e11e5bdec00163e291137',
+      'w9fmyd5r0i',
+      'x2fpfbm8rt',
+      'e351de37263311e6af7500163e291137',
+      'k4werqx13k',
+      '5cd1c663263511e6af7500163e291137',
+      '17dd6d8098bf11e5bdec00163e291137',
+      'd4d7362e879511e5bdec00163e291137',
+      '15e9ddce941b11e5bdec00163e291137'
+  ]
+  # slot_id -> media_category 1 -> 1
+  # media_category -> slot_id 1 -> N
+  'new_slot_id_media_category_list': [
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Magazine',
+      'Huawei Browser',
+      'Huawei Video',
+      'Huawei Video',
+      'Huawei Video',
+      'Huawei Music',
+      'Huawei Music',
+      'Huawei Music',
+      'Huawei Music',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Video 1.0',
+      'Video 2.0',
+      'Tencent Video',
+      'AI assistant',
+      'AI assistant',
+      'AI assistant',
+      'AI assistant',
+      'Huawei Video',
+      'Huawei Video',
+      'Huawei Video',
+      'Video 1.0',
+      'Themes',
+      'Huawei Music',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Huawei Reading',
+      'Honor Reading',
+      'Video 1.0',
+      'Video 2.0',
+      'HiSkytone'
+  ]
+  'media_slot_mapping_table': 'media_slot_mapping'
+  is_gen_media_slot_mapping_table: True #set to False if not necessary.
+  # media_category, array[slot_ids]

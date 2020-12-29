@@ -60,6 +60,7 @@ public class BaseDaoESImp implements BaseDao
     protected String bookingsIndex = "";
     protected String userPredictionsIndex = "";
     protected String bookingBucketsIndex = "";
+    protected String esPredictionsInventoryPath = "";
 
     protected static final IMSLogger LOGGER = IMSLogger.instance();
     protected Properties properties;
@@ -105,6 +106,7 @@ public class BaseDaoESImp implements BaseDao
         bookingsIndex = properties.getProperty("es.bookings.index");
         bookingBucketsIndex = properties.getProperty("es.booking_buckets.index");
         userPredictionsIndex = properties.getProperty("es.user_predictions.index");
+        esPredictionsInventoryPath = properties.getProperty("es.predictions.inventory.path");
     }
 
     public void setESClient(ESClient esclient)

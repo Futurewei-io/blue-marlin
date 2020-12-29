@@ -21,12 +21,7 @@
 
 package com.bluemarlin.ims.imsservice.controller;
 
-import com.bluemarlin.ims.imsservice.model.BookResult;
-import com.bluemarlin.ims.imsservice.model.Booking;
-import com.bluemarlin.ims.imsservice.model.DayImpression;
-import com.bluemarlin.ims.imsservice.model.IMSBookingRequest;
-import com.bluemarlin.ims.imsservice.model.IMSRequestQuery;
-import com.bluemarlin.ims.imsservice.model.InventoryResult;
+import com.bluemarlin.ims.imsservice.model.*;
 import com.bluemarlin.ims.imsservice.service.BookingService;
 import com.bluemarlin.ims.imsservice.service.InventoryEstimateService;
 import com.bluemarlin.ims.imsservice.service.UserEstimateService;
@@ -100,6 +95,37 @@ public class IMSController
 
             String logMessage = String.format("Targeting channel: %s estimate: %d",
                     payload.getTargetingChannel().getQueryKey(), result.getAvailCount());
+            LOGGER.info(logMessage);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error(e.getMessage());
+            return ResponseBuilder.buildError(e);
+        }
+
+        return ResponseBuilder.build(result, HTTP_OK_CODE);
+    }
+
+    /**
+     * This end-point returns daily inventories for a targeting channel considering day period (no price).
+     * The inventory calculation process considers all the bookings.
+     * Targeting Channel is a set of attributes that specify a group of users (audience) plus the media.
+     *
+     * @param payload
+     * @return
+     */
+    @RequestMapping(value = "/api/inventory/daily/count", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity getDailyInventory(@RequestBody IMSRequestQuery payload)
+    {
+        Map<Day, Impression.ImpressionShort> result;
+        try
+        {
+            result = inventoryEstimateService.aggregateDailyInventory(payload.getTargetingChannel(), payload.getDays(),
+                    payload.getPrice());
+
+            String logMessage = String.format("Targeting channel: %s - daily count",
+                    payload.getTargetingChannel().getQueryKey());
             LOGGER.info(logMessage);
         }
         catch (Exception e)

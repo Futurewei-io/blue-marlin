@@ -90,7 +90,7 @@ public class InventoryEstimateDaoESImp extends BaseDaoESImp implements Inventory
             for (int i = 0; i < 4; i++)
             {
                 SumAggregationBuilder aggregationBuilders =
-                        new SumAggregationBuilder("h" + i + "_" + day).field(ES_PREDICTION_DOC_PREFIX + "predictions." + day + ".h" + i);
+                        new SumAggregationBuilder("h" + i + "_" + day).field(String.format(esPredictionsInventoryPath, day) + "h" + i);
                 sourceBuilder = sourceBuilder.aggregation(aggregationBuilders);
             }
         }
@@ -199,7 +199,7 @@ public class InventoryEstimateDaoESImp extends BaseDaoESImp implements Inventory
         {
             Day day = entry.getKey();
             Impression impression = entry.getValue();
-            Day newDay = new Day(day.getDayStr());
+            Day newDay = new Day(day.toString());
             Impression newImpression = Impression.multiply(impression, ratio);
             if (totalMap != null && totalMap.containsKey(day))
             {
@@ -213,7 +213,7 @@ public class InventoryEstimateDaoESImp extends BaseDaoESImp implements Inventory
 
     private Impression getPredictionsForQuery(Day day, BoolQueryBuilder boolQueryBuilder) throws IOException
     {
-        Map<Day, Impression> countMap = getImpressionCountForFullDays(boolQueryBuilder, new HashSet<>(Arrays.asList(day.getDayStr())));
+        Map<Day, Impression> countMap = getImpressionCountForFullDays(boolQueryBuilder, new HashSet<>(Arrays.asList(day.toString())));
         Impression result = new Impression();
         if (countMap.size() > 0)
         {

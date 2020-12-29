@@ -54,7 +54,7 @@ IMS Service contains the logic to calculate unique number of users that match sp
 
 """
 
-es_host = "10.10.10.10"
+es_host = "10.193.217.111"
 es_port = 9200
 es_index = 'ulp_test_10082019'
 es_type = 'doc'

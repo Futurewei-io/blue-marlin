@@ -39,7 +39,7 @@ The first part is related to traffic criteria which includes the following field
 "pm": price model [CPD, CPC, CPT, CPM]
 
 The second part contains predicted inventory amount.
-  "days" : {
+  "predictions" : {
               "2018-01-02" : [
                 {
                   "h2" : 800,
@@ -62,9 +62,9 @@ The second part contains predicted inventory amount.
                 
 """
 
-es_host = "10.10.10.10"
+es_host = "10.193.217.111"
 es_port = 9200
-es_index = 'predictions_test_10082019'
+es_index = 'predictions_test_cd_11202019'
 es_type = 'doc'
 
 value_set = {
@@ -80,8 +80,8 @@ value_set = {
 
 
 def generate_random_count_doc():
-    h1_count = random.randint(1, 100) * 100
-    h2_count = random.randint(1, 100) * 100
+    h1_count = 1 #random.randint(1, 100) * 100
+    h2_count = 1 #random.randint(1, 100) * 100
     count_doc = {'h0': 0, 'h1': h1_count, 'h2': h2_count,
                  'h3': 0, 'total': h1_count + h2_count}
     return count_doc
@@ -115,7 +115,7 @@ def prediction_doc_generator():
     prediction_doc = generate_random_doc_from_value_set()
     one_doc = {'_index': es_index, '_type': es_type, 'uckey': prediction_doc['uckey'], 'ucdoc': prediction_doc}
     prediction_doc['predictions'] = {}
-    days = ['2018-01-0' + str(dt) for dt in range(1, 8)]
+    days = ['2018-11-0' + str(dt) for dt in range(1, 8)]
     for day in days:
         prediction_doc['predictions'][day] = [generate_random_count_doc()
                                        for _ in range(24)]
@@ -136,6 +136,6 @@ def prediction_doc_generator():
 
 if __name__ == "__main__":
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
-    num_of_generated_docs = 1000
+    num_of_generated_docs = 1 #1000
     actions = [prediction_doc_generator() for _ in range(num_of_generated_docs)]
     helpers.bulk(es, actions)

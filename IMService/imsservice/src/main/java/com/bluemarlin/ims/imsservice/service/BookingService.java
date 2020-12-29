@@ -246,7 +246,7 @@ public class BookingService extends BaseService
             {
                 Future bookedForDayFuture = executor.submit((Callable<Object>) () ->
                 {
-                    BookingBucket maxPriorityBB = bookingDao.getMaxBookingBucketPriority(day.getDayStr());
+                    BookingBucket maxPriorityBB = bookingDao.getMaxBookingBucketPriority(day.toString());
                     BookingBucket bookingBucket;
 
                     List<Booking> bookings = bookingDayMap.get(day);
@@ -260,7 +260,7 @@ public class BookingService extends BaseService
                         priority = maxPriorityBB.getPriority() + 1;
                     }
 
-                    bookingBucket = new BookingBucket(day.getDayStr(), booking.getBookingId(), previousBookingIds, priority + 1);
+                    bookingBucket = new BookingBucket(day.toString(), booking.getBookingId(), previousBookingIds, priority + 1);
                     bookingDao.createBookingBucket(bookingBucket);
 
                     /**

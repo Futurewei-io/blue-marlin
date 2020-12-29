@@ -1,0 +1,42 @@
+{
+    "size": 0,
+    "query": {
+       "match": {
+         "kws.game-fishing.b": "4"
+       }
+    },
+    "aggs": {
+        "h1": {
+            "sum": {
+              "script":{
+                "params": {"days":["inventory.2020-07-08.h1","inventory.2020-07-09.h1"]},
+                "source": """
+                  long total = 0;
+                  for (String _ : params.days) {
+                    if (doc.containsKey(_)) {
+                        total += doc[_].value;
+                    }
+                  }
+                  return total;
+                """
+              }
+            }
+        },
+        "h2": {
+            "sum": {
+              "script":{
+                "params": {"days":["inventory.2020-07-08.h2","inventory.2020-07-09.h2"]},
+                "source": """
+                  long total = 0;
+                  for (String _ : params.days) {
+                    if (doc.containsKey(_)) {
+                        total += doc[_].value;
+                    }
+                  }
+                  return total;
+                """
+              }
+            }
+        }
+    }
+}
