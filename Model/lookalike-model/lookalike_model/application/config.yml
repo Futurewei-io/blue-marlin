@@ -1,0 +1,11 @@
+input:
+    log_table : "din_logs_09172020"
+    gucdocs_table: "look_alike_trainready_01112021"
+    keywords_table: "din_ad_keywords_09172020"
+    din_model_tf_serving_url: "http://10.193.217.105:8506/v1/models/lookalike3:predict"
+    din_model_length: 20
+    seeduser_table : "look_alike_seeduser"
+output:
+    gucdocs_loaded_table: "lookalike_loaded_01112021"
+    gucdocs_loaded_table_norm:  "lookalike_loaded_norm_01112021"
+    score_table: "lookalike_similarity"

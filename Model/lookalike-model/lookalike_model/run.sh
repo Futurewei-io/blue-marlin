@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# main_clean: preparing cleaned persona, click and show logs data.
+if false
+then
+    # generate three tables: new persona, new clicklog, new showlog. 
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_clean.py config.yml
+fi
+
+# main_logs: generating union logs and cleaning the logs.
+if false
+then
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_logs.py config.yml 
+fi
+
+# main_trainready: generating the trainready data by grouping the data.
+if false
+then
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_trainready.py config.yml 
+fi
+
+#Saving tables as <config.pipeline.tfrecords_path>
+if false
+then
+    # generate tf records: din tf record in hdfs.
+    # after the tf records folder is generated in hdfs, use 'hadoop fs -copyToLocal' to copy it to local.
+    spark-submit --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main_tfrecords.py config.yml 
+fi

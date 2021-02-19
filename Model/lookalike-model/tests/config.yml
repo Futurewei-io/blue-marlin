@@ -1,0 +1,130 @@
+product_tag: 'lookalike'
+pipeline_tag: 'unittest'
+persona_table_name: 'lookalike_unittest_clean_input_persona'
+showlog_table_name: 'lookalike_unittest_clean_input_showlog'
+clicklog_table_name: 'lookalike_unittest_clean_input_clicklog'
+keywords_table: 'lookalike_unittest_clean_input_keywords'
+log:
+  level: 'WARN' # log level for spark and app
+features:
+  features: [
+              'slot_id',
+              'inter_type_cd',
+              'creat_type_cd',
+              #             'app_name',
+              'package_name',
+              'adv_device_type_cd',
+              'os_ver',
+              'device_name',
+              'os_language',
+              'req_date',
+              'media_busin_id',
+              'plat_income_amt',
+              'site_id',
+              'device_size',
+              'slot_status_cd',
+              'sdk_ver',
+              'screen_resolution',
+              'net_type',
+              'carrier',
+              'req_time',
+              'return_time',
+              'show_id',
+              'show_time',
+              'inside_channel_id',
+              'bill_env',
+              'media_busin_income_amt',
+              'adv_prim_class_cd',
+              'ssp_dsp_channel_id',
+              'adv_bill_mode_cd',
+              'oper_cnt',
+              'etl_time',
+              'show_freq_ctrl_mode',
+              'client_report_event_id',
+              'record_time_msec',
+              'repeat_report_count',
+              'last_report_fail_reason',
+              'position_id',
+              'award_type_cd',
+              'adx_order_id',
+              'content_down_method_cd',
+              'trade_type',
+              'spread_app_id',
+              'spread_app_industry_id',
+              'spread_daily_budget',
+              'adx_deal_cd',
+              'device_id_type_cd',
+              'oaid',
+              'enable_track_flg',
+              'valid_cd',
+              'max_adv_count',
+              'evt_jump_src_cd',
+              'evt_jump_src_fail_cd',
+              'chk_result',
+              'second_agent_id',
+              'adv_valid_period',
+              'first_agent_id',
+              'dynamic_creat_template_id',
+              'goods_lbry_id',
+              'goods_id',
+              'indu_type',
+              'click_success_jump_dst',
+              'evt_uuid',
+              'pay_type_flg',
+              'cuerrency',
+              'cfolder_type_flg',
+              'return_recommend_val',
+              'adx_order_purch_cnt',
+              'total_budget',
+              'cp_id',
+              'media_customize_acct_par1',
+              'teleplay_id',
+              'exp_cnt',
+              'exp_src',
+              'adv_show_contin_duration',
+              'max_show_ratio',
+              'adx_order_total_purch_cnt',
+              'media_receipt_acct',
+              'media_receipt_currency',
+              'service_judge_invalid_rule_code',
+              'realtm_charge_result_rule_code',
+              'plat_actual_cash_income',
+              'daily_show_max_cnt',
+              'slot_size',
+              'test_adv_flg',
+              'app_ver',
+              'adv_type',
+              'adv_prim_id',
+              'order_id',
+              'task_id',
+              'pps_inside_exprmt_ab_tag']
+pipeline:
+  main_clean:  
+    did_bucket_num: 2 # Number of partitions for did
+    load_logs_in_minutes: 1440 #1440/day, original=14400
+    create_keywords: False # set True for first run, then keep False to use the created table.
+    persona_output_table: 'lookalike_unittest_clean_output_persona'
+    showlog_output_table: 'lookalike_unittest_clean_output_showlog'
+    clicklog_output_table: 'lookalike_unittest_clean_output_clicklog'
+    conditions: {
+      'new_slot_id_list': [
+          'abcdef0', 'abcdef1', 'abcdef2', 'abcdef3', 'abcdef4', 
+          'abcdef5', 'abcdef6', 'abcdef7', 'abcdef8', 'abcdef9'
+      ],
+      'new_slot_id_app_name_list': [
+          'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading', 
+          'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading'
+      ],
+      'starting_date': '2020-01-01',
+      'ending_date': '2020-01-11'
+    }
+  main_logs:
+    interval_time_in_seconds: 86400 # default=1 day, group logs in interval time.
+    logs_output_table_name: '{product_tag}_{pipeline_tag}_logs'
+  main_trainready:
+    trainready_output_table: '{product_tag}_{pipeline_tag}_trainready'
+  tfrecords:
+    tfrecords_statistics_path: '{product_tag}_{pipeline_tag}_tfrecord_statistics.pkl'
+    tfrecords_hdfs_path: '{product_tag}_{pipeline_tag}_tfrecord' # it is hdfs location for tfrecords, over-writes the existing files
+  cutting_date: 1584748800
+  length: 10
