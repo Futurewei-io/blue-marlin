@@ -1,0 +1,212 @@
+product_tag: 'lookalike'
+pipeline_tag: '02182021'
+persona_table_name: 'ads_persona_0520'
+showlog_table_name: 'ads_showlog_0520'
+clicklog_table_name: 'ads_clicklog_0520'
+keywords_table: 'din_ad_keywords_02182021' #if this keywords table name is changed, set the below to True.
+log:
+  level: 'WARN' # log level for spark and app
+features:
+  features: [
+              'slot_id',
+              'inter_type_cd',
+              'creat_type_cd',
+              #             'app_name',
+              'package_name',
+              'adv_device_type_cd',
+              'os_ver',
+              'device_name',
+              'os_language',
+              'req_date',
+              'media_busin_id',
+              'plat_income_amt',
+              'site_id',
+              'device_size',
+              'slot_status_cd',
+              'sdk_ver',
+              'screen_resolution',
+              'net_type',
+              'carrier',
+              'req_time',
+              'return_time',
+              'show_id',
+              'show_time',
+              'inside_channel_id',
+              'bill_env',
+              'media_busin_income_amt',
+              'adv_prim_class_cd',
+              'ssp_dsp_channel_id',
+              'adv_bill_mode_cd',
+              'oper_cnt',
+              'etl_time',
+              'show_freq_ctrl_mode',
+              'client_report_event_id',
+              'record_time_msec',
+              'repeat_report_count',
+              'last_report_fail_reason',
+              'position_id',
+              'award_type_cd',
+              'adx_order_id',
+              'content_down_method_cd',
+              'trade_type',
+              'spread_app_id',
+              'spread_app_industry_id',
+              'spread_daily_budget',
+              'adx_deal_cd',
+              'device_id_type_cd',
+              'oaid',
+              'enable_track_flg',
+              'valid_cd',
+              'max_adv_count',
+              'evt_jump_src_cd',
+              'evt_jump_src_fail_cd',
+              'chk_result',
+              'second_agent_id',
+              'adv_valid_period',
+              'first_agent_id',
+              'dynamic_creat_template_id',
+              'goods_lbry_id',
+              'goods_id',
+              'indu_type',
+              'click_success_jump_dst',
+              'evt_uuid',
+              'pay_type_flg',
+              'cuerrency',
+              'cfolder_type_flg',
+              'return_recommend_val',
+              'adx_order_purch_cnt',
+              'total_budget',
+              'cp_id',
+              'media_customize_acct_par1',
+              'teleplay_id',
+              'exp_cnt',
+              'exp_src',
+              'adv_show_contin_duration',
+              'max_show_ratio',
+              'adx_order_total_purch_cnt',
+              'media_receipt_acct',
+              'media_receipt_currency',
+              'service_judge_invalid_rule_code',
+              'realtm_charge_result_rule_code',
+              'plat_actual_cash_income',
+              'daily_show_max_cnt',
+              'slot_size',
+              'test_adv_flg',
+              'app_ver',
+              'adv_type',
+              'adv_prim_id',
+              'order_id',
+              'task_id',
+              'pps_inside_exprmt_ab_tag']
+pipeline:
+  main_clean:  
+    did_bucket_num: 2 # Number of partitions for did
+    load_logs_in_minutes: 14400 #1440/day, original=14400
+    create_keywords: False # set True for first run, then keep False to use the created table.
+    persona_output_table: '{product_tag}_{pipeline_tag}_persona'
+    showlog_output_table: '{product_tag}_{pipeline_tag}_showlog'
+    clicklog_output_table: '{product_tag}_{pipeline_tag}_clicklog'
+    conditions: {
+      'new_slot_id_list': [  
+        '06',
+        '11',
+        '05',
+        '04',
+        '03',
+        '02',
+        '01',
+        'l03493p0r3',
+        'x0ej5xhk60kjwq',
+        'g7m2zuits8',
+        'w3wx3nv9ow5i97',
+        'a1nvkhk62q',
+        'g9iv6p4sjy',
+        'c4n08ku47t',
+        'b6le0s4qo8',
+        'd9jucwkpr3',
+        'p7gsrebd4m',
+        'a8syykhszz',
+        'l2d4ec6csv',
+        'j1430itab9wj3b',
+        's4z85pd1h8',
+        'z041bf6g4s',
+        '71bcd2720e5011e79bc8fa163e05184e',
+        'a47eavw7ex',
+        '68bcd2720e5011e79bc8fa163e05184e',
+        '66bcd2720e5011e79bc8fa163e05184e',
+        '72bcd2720e5011e79bc8fa163e05184e',
+        'f1iprgyl13',
+        'q4jtehrqn2',
+        'm1040xexan',
+        'd971z9825e',
+        'a290af82884e11e5bdec00163e291137',
+        'w9fmyd5r0i',
+        'x2fpfbm8rt',
+        'e351de37263311e6af7500163e291137',
+        'k4werqx13k',
+        '5cd1c663263511e6af7500163e291137',
+        '17dd6d8098bf11e5bdec00163e291137',
+        'd4d7362e879511e5bdec00163e291137',
+        '15e9ddce941b11e5bdec00163e291137'
+      ],
+      'new_slot_id_app_name_list': [
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Magazine',
+        'Huawei Browser',
+        'Huawei Video',
+        'Huawei Video',
+        'Huawei Video',
+        'Huawei Music',
+        'Huawei Music',
+        'Huawei Music',
+        'Huawei Music',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Video 1.0',
+        'Video 2.0',
+        'Tencent Video',
+        'AI assistant',
+        'AI assistant',
+        'AI assistant',
+        'AI assistant',
+        'Huawei Video',
+        'Huawei Video',
+        'Huawei Video',
+        'Video 1.0',
+        'Themes',
+        'Huawei Music',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Huawei Reading',
+        'Honor Reading',
+        'Video 1.0',
+        'Video 2.0',
+        'HiSkytone'
+      ],
+      'starting_date': '2019-12-19', #2019-12-19
+      'ending_date': '2020-04-15' #2020-04-15 #2019-12-23
+    }
+  main_logs:
+    interval_time_in_seconds: 86400 # default=1 day, group logs in interval time.
+    logs_output_table_name: '{product_tag}_{pipeline_tag}_logs'
+  main_trainready:
+    trainready_output_table: '{product_tag}_{pipeline_tag}_trainready'
+  tfrecords:
+    tfrecords_statistics_path: '{product_tag}_{pipeline_tag}_tfrecord_statistics.pkl'
+    tfrecords_hdfs_path: '{product_tag}_{pipeline_tag}_tfrecord' # it is hdfs location for tfrecords, over-writes the existing files
+  cutting_date: 1584748800
+  length: 10
+
+
+
+
+
+
