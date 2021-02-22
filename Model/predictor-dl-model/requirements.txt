@@ -1,0 +1,2 @@
+pyaml==20.4.0
+statistics==1.0.3.5
