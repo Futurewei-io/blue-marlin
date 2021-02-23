@@ -1,0 +1,6 @@
+
+IMService/.gradle/**
+IMService/gradle/**
+IMService/gradle**
+IMService/.idea/**
+**/build/**
