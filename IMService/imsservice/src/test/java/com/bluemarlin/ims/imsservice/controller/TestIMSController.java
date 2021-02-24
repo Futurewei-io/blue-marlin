@@ -73,7 +73,7 @@ public class TestIMSController {
         MvcResult res = mockMvc.perform(get("/ping").accept(
                 MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
-        String content = res.getResponse().getContentAsString();
+        String content = res.toString();
         System.out.println("ping " + content);
     }
 
