@@ -9,11 +9,11 @@
        xmlns:mvc="http://www.springframework.org/schema/c">
 
     <context:component-scan
-            base-package="com.bluemarlin.ims.imsservice.controller"/>
+            base-package="org.apache.bluemarlin.ims.imsservice.controller"/>
     <context:component-scan
-            base-package="com.bluemarlin.ims.imsservice.service"/>
+            base-package="org.apache.bluemarlin.ims.imsservice.service"/>
     <context:component-scan
-            base-package="com.bluemarlin.ims.imsservice.dao"/>
+            base-package="org.apache.bluemarlin.ims.imsservice.dao"/>
 
     <bean id="properties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
         <property name="locations">
@@ -23,31 +23,31 @@
         </property>
     </bean>
 
-    <bean id="inventoryEstimateService" class="com.bluemarlin.ims.imsservice.service.InventoryEstimateService"/>
-    <bean id="bookingService" class="com.bluemarlin.ims.imsservice.service.BookingService"/>
-    <bean id="userEstimateService" class="com.bluemarlin.ims.imsservice.service.UserEstimateService"></bean>
+    <bean id="inventoryEstimateService" class="org.apache.bluemarlin.ims.imsservice.service.InventoryEstimateService"/>
+    <bean id="bookingService" class="org.apache.bluemarlin.ims.imsservice.service.BookingService"/>
+    <bean id="userEstimateService" class="org.apache.bluemarlin.ims.imsservice.service.UserEstimateService"></bean>
 
-    <bean id="inventoryEstimateDao" class="com.bluemarlin.ims.imsservice.dao.inventory.InventoryEstimateDaoESImp">
+    <bean id="inventoryEstimateDao" class="org.apache.bluemarlin.ims.imsservice.dao.inventory.InventoryEstimateDaoESImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 
-    <bean id="bookingDao" class="com.bluemarlin.ims.imsservice.dao.booking.BookingDaoESImp">
+    <bean id="bookingDao" class="org.apache.bluemarlin.ims.imsservice.dao.booking.BookingDaoESImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 
-    <bean id="baseDao" class="com.bluemarlin.ims.imsservice.dao.BaseDaoESImp">
+    <bean id="baseDao" class="org.apache.bluemarlin.ims.imsservice.dao.BaseDaoESImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 
-    <bean id="tbrDao" class="com.bluemarlin.ims.imsservice.dao.tbr.TBRDaoESImp">
+    <bean id="tbrDao" class="org.apache.bluemarlin.ims.imsservice.dao.tbr.TBRDaoESImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 
-    <bean id="userEstimateDao" class="com.bluemarlin.ims.imsservice.dao.users.UserEstimateDaoESImp">
+    <bean id="userEstimateDao" class="org.apache.bluemarlin.ims.imsservice.dao.users.UserEstimateDaoESImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 
-    <bean id="esClient" class="com.bluemarlin.ims.imsservice.esclient.ESRichClientImp">
+    <bean id="esClient" class="org.apache.bluemarlin.ims.imsservice.esclient.ESRichClientImp">
         <constructor-arg ref="properties"></constructor-arg>
     </bean>
 

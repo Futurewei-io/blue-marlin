@@ -19,13 +19,13 @@
  * under the License.
  */
 
-import com.bluemarlin.ims.imsservice.exceptions.ESConnectionException;
-import com.bluemarlin.ims.imsservice.exceptions.FailedLockingException;
-import com.bluemarlin.ims.imsservice.exceptions.NoInventoryExceptions;
-import com.bluemarlin.ims.imsservice.model.BookResult;
-import com.bluemarlin.ims.imsservice.model.InventoryResult;
-import com.bluemarlin.ims.imsservice.model.Range;
-import com.bluemarlin.ims.imsservice.model.TargetingChannel;
+import org.apache.bluemarlin.ims.imsservice.exceptions.ESConnectionException;
+import org.apache.bluemarlin.ims.imsservice.exceptions.FailedLockingException;
+import org.apache.bluemarlin.ims.imsservice.exceptions.NoInventoryExceptions;
+import org.apache.bluemarlin.ims.imsservice.model.BookResult;
+import org.apache.bluemarlin.ims.imsservice.model.InventoryResult;
+import org.apache.bluemarlin.ims.imsservice.model.Range;
+import org.apache.bluemarlin.ims.imsservice.model.TargetingChannel;
 import org.json.JSONException;
 import org.junit.Test;
 

@@ -19,8 +19,8 @@
  * under the License.
  */
 
-import com.bluemarlin.ims.imsservice.model.IMSTimePoint;
-import com.bluemarlin.ims.imsservice.model.Range;
+import org.apache.bluemarlin.ims.imsservice.model.IMSTimePoint;
+import org.apache.bluemarlin.ims.imsservice.model.Range;
 import org.junit.Test;
 
 import java.util.ArrayList;
