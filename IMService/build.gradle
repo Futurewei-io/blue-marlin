@@ -2,7 +2,7 @@ plugins {
     id "io.spring.dependency-management" version "1.0.4.RELEASE"
 }
 
-group 'com.bluemarlin.ims.imsservice'
+group 'org.apache.bluemarlin.ims.imsservice'
 
 def versionName() {
     return '1.0.0.0'
