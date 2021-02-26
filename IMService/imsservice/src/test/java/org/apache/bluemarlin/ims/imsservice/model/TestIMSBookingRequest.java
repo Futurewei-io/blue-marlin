@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -9,10 +27,12 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
-public class TestIMSBookingRequest {
+public class TestIMSBookingRequest
+{
 
     @Test
-    public void getTargetingChannel() {
+    public void getTargetingChannel()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
 
         TargetingChannel tc = new TargetingChannel();
@@ -33,7 +53,8 @@ public class TestIMSBookingRequest {
     }
 
     @Test
-    public void setTargetingChannel() {
+    public void setTargetingChannel()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
 
         TargetingChannel tc = new TargetingChannel();
@@ -54,21 +75,24 @@ public class TestIMSBookingRequest {
     }
 
     @Test
-    public void getPrice() {
+    public void getPrice()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setPrice(10000.1);
         assertEquals(10000.1, bkReq.getPrice(), 0);
     }
 
     @Test
-    public void setPrice() {
+    public void setPrice()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setPrice(1.1);
         assertEquals(1.1, bkReq.getPrice(), 0);
     }
 
     @Test
-    public void getDays() {
+    public void getDays()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r3 = new Range();
         r3.setSt("2018-01-07");
@@ -82,7 +106,8 @@ public class TestIMSBookingRequest {
     }
 
     @Test
-    public void setDays() {
+    public void setDays()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range();
         r1.setSt("2018-01-05");
@@ -108,28 +133,32 @@ public class TestIMSBookingRequest {
     }
 
     @Test
-    public void getRequestCount() {
+    public void getRequestCount()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setRequestCount(2000);
         assertEquals(2000, bkReq.getRequestCount(), 0);
     }
 
     @Test
-    public void setRequestCount() {
+    public void setRequestCount()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setRequestCount(1000);
         assertEquals(1000, bkReq.getRequestCount(), 0);
     }
 
     @Test
-    public void getAdvID() {
+    public void getAdvID()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setAdvID("test_adv_id_200");
         assertEquals("test_adv_id_200", bkReq.getAdvID());
     }
 
     @Test
-    public void setAdvID() {
+    public void setAdvID()
+    {
         IMSBookingRequest bkReq = new IMSBookingRequest();
         bkReq.setAdvID("test_adv_id_100");
         assertEquals("test_adv_id_100", bkReq.getAdvID());

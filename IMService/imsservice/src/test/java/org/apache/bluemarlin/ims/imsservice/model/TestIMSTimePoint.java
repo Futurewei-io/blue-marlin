@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -7,24 +25,28 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class TestIMSTimePoint {
+public class TestIMSTimePoint
+{
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24-16", epochTime.toString());
     }
 
     @Test
-    public void getDate() {
+    public void getDate()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24", epochTime.getDate());
     }
 
     @Test
-    public void setDate() {
+    public void setDate()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24", epochTime.getDate());
@@ -33,7 +55,8 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void getHourIndex() {
+    public void getHourIndex()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals(16, epochTime.getHourIndex(), 0);
@@ -44,7 +67,8 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void setHourIndex() {
+    public void setHourIndex()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals(16, epochTime.getHourIndex(), 0);
@@ -53,7 +77,8 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void incrementHour() {
+    public void incrementHour()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals(16, epochTime.getHourIndex(), 0);
@@ -74,7 +99,8 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void incrementDay() {
+    public void incrementDay()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24", epochTime.getDate());
@@ -96,7 +122,8 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void build() {
+    public void build()
+    {
         IMSTimePoint epochTime = new IMSTimePoint(0);
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range();
@@ -133,14 +160,16 @@ public class TestIMSTimePoint {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void testHashCode() {
+    public void testHashCode()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertNotNull(epochTime.hashCode());
     }
 
     @Test
-    public void testEquals() {
+    public void testEquals()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24", epochTime.getDate());
@@ -175,12 +204,14 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void appendListFromStartToEndHours() {
+    public void appendListFromStartToEndHours()
+    {
 
         List<IMSTimePoint> res = IMSTimePoint.appendListFromStartToEndHours(0, 23, new ArrayList(), new Range());
 
         List<IMSTimePoint> exp = new ArrayList();
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             IMSTimePoint localTempIMSTimePoint = new IMSTimePoint(0);
             localTempIMSTimePoint.setDate(new Range().getEd());
             localTempIMSTimePoint.setHourIndex(i);
@@ -205,7 +236,8 @@ public class TestIMSTimePoint {
         exp = new ArrayList();
         exp.add(epochTime);
         exp.add(epochTime2);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             IMSTimePoint localTempIMSTimePoint = new IMSTimePoint(0);
             localTempIMSTimePoint.setDate(r1.getEd());
             localTempIMSTimePoint.setHourIndex(i);
@@ -216,14 +248,16 @@ public class TestIMSTimePoint {
     }
 
     @Test
-    public void getDateTime() {
+    public void getDateTime()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         assertEquals("2019-11-24T16:00", epochTime.getDateTime().toString());
     }
 
     @Test
-    public void compareTo() {
+    public void compareTo()
+    {
         long epTime = Long.valueOf("1574641835000");   //2019-11-25-12:30:35am GMT = 2019-11-24-4:30:35pm PST
         IMSTimePoint epochTime = new IMSTimePoint(epTime);
         long epTime2 = Long.valueOf("1574645435000");   //2019-11-25-1:30:35pm GMT = 2019-11-24-5:30:35pm PST

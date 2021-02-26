@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -6,10 +24,12 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestTargetingChannel {
+public class TestTargetingChannel
+{
 
     @Test
-    public void addAllAttributeValues() {
+    public void addAllAttributeValues()
+    {
 
         TargetingChannel tc = new TargetingChannel();
         tc.setG(Arrays.asList("g_f"));
@@ -50,7 +70,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void build() {
+    public void build()
+    {
         Map<String, Object> map = new HashMap();
         map.put("gender", "g_f");
         TargetingChannel res = TargetingChannel.build(map);
@@ -78,7 +99,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getAttributeValue() {
+    public void getAttributeValue()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -102,7 +124,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setAttributeValue() {
+    public void setAttributeValue()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -141,7 +164,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getAis() {
+    public void getAis()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -157,7 +181,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setAis() {
+    public void setAis()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -173,7 +198,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getPdas() {
+    public void getPdas()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -185,7 +211,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setPreDefinedAudience() {
+    public void setPreDefinedAudience()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -197,7 +224,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getDms() {
+    public void getDms()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -209,7 +237,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setDeviceModel() {
+    public void setDeviceModel()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -221,7 +250,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getAus() {
+    public void getAus()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -237,7 +267,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setAus() {
+    public void setAus()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -253,7 +284,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setDms() {
+    public void setDms()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -273,7 +305,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setPdas() {
+    public void setPdas()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -289,7 +322,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getR() {
+    public void getR()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -301,7 +335,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setR() {
+    public void setR()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -313,7 +348,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getG() {
+    public void getG()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -325,7 +361,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setG() {
+    public void setG()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -337,7 +374,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getA() {
+    public void getA()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -349,7 +387,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setA() {
+    public void setA()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -361,7 +400,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getT() {
+    public void getT()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -373,7 +413,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setT() {
+    public void setT()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -385,7 +426,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getSi() {
+    public void getSi()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -397,7 +439,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setSi() {
+    public void setSi()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -409,7 +452,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getM() {
+    public void getM()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -421,7 +465,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setM() {
+    public void setM()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -433,7 +478,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getDpc() {
+    public void getDpc()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -445,7 +491,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setDpc() {
+    public void setDpc()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -457,7 +504,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getIpl() {
+    public void getIpl()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -469,7 +517,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setIpl() {
+    public void setIpl()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -481,7 +530,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getExclude_pdas() {
+    public void getExclude_pdas()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -493,7 +543,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setExclude_pdas() {
+    public void setExclude_pdas()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -505,7 +556,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getApps() {
+    public void getApps()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -521,7 +573,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setApps() {
+    public void setApps()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -537,7 +590,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getExclude_apps() {
+    public void getExclude_apps()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -549,7 +603,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setExclude_apps() {
+    public void setExclude_apps()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -561,7 +616,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getPm() {
+    public void getPm()
+    {
         TargetingChannel tc = new TargetingChannel();
         String pm = "CPC";
         tc.setPm(pm);
@@ -570,7 +626,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setPm() {
+    public void setPm()
+    {
         TargetingChannel tc = new TargetingChannel();
         String pm = "CPC";
         tc.setPm(pm);
@@ -579,7 +636,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getIplCityCodes() {
+    public void getIplCityCodes()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -591,7 +649,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setIplCityCodes() {
+    public void setIplCityCodes()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -603,7 +662,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void getResidenceCityNames() {
+    public void getResidenceCityNames()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -615,7 +675,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void setResidenceCityNames() {
+    public void setResidenceCityNames()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<String> val = new ArrayList();
         val.add("123");
@@ -627,14 +688,16 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void convertToList() {
+    public void convertToList()
+    {
         String str = "123-456-789";
         List<String> res = TargetingChannel.convertToList(str);
         assertEquals(Arrays.asList(str).toString(), res.toString());
     }
 
     @Test
-    public void getQueryKey() {
+    public void getQueryKey()
+    {
         TargetingChannel tc = new TargetingChannel();
         assertEquals("none", tc.getQueryKey());
         tc = new TargetingChannel();
@@ -658,7 +721,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void hasMultiValues() {
+    public void hasMultiValues()
+    {
         TargetingChannel tc = new TargetingChannel();
         assertFalse(tc.hasMultiValues());
         tc = new TargetingChannel();
@@ -671,7 +735,8 @@ public class TestTargetingChannel {
     }
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         TargetingChannel tc = new TargetingChannel();
         assertEquals("none", tc.getQueryKey());
         tc = new TargetingChannel();

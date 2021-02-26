@@ -1,22 +1,19 @@
-/**
- * Copyright 2019, Futurewei Technologies
- *
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ *  with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.apache.bluemarlin.ims.imsservice.dao;
@@ -116,6 +113,7 @@ public class BaseDaoESImp implements BaseDao
 
     /**
      * This method returns the base query (only single-value attributes) for a targeting channel.
+     *
      * @param targetingChannel
      * @return
      */
@@ -137,8 +135,8 @@ public class BaseDaoESImp implements BaseDao
      * This method adds an attribute with its possible values to a query as Must operand.
      *
      * @param boolQueryBuilder : query that new attribute appends to
-     * @param list : list of values
-     * @param field : attribute name
+     * @param list             : list of values
+     * @param field            : attribute name
      */
     protected void append(BoolQueryBuilder boolQueryBuilder, List<String> list, String field)
     {
@@ -160,7 +158,7 @@ public class BaseDaoESImp implements BaseDao
 
     /**
      * This method adds an attribute with its possible values to a query as Must or notMust operand.
-     *
+     * <p>
      * If the values are in List then the operand is Must.
      * If the values are in noList then the operand is notMust.
      *
@@ -175,10 +173,10 @@ public class BaseDaoESImp implements BaseDao
     }
 
     /**
-     *  This method adds an attribute with its possible values to a query as Must or notMust operand.
-     *
-     *  If the values are in List then the operand is Must.
-     *  If the values are in noList then the operand is notMust.
+     * This method adds an attribute with its possible values to a query as Must or notMust operand.
+     * <p>
+     * If the values are in List then the operand is Must.
+     * If the values are in noList then the operand is notMust.
      *
      * @param boolQueryBuilder
      * @param list
@@ -238,8 +236,7 @@ public class BaseDaoESImp implements BaseDao
                          * Just get the app name not the postfixes
                          */
                         notInstalledApps.add(appUsage.split("_")[0] + "_type_installed");
-                    }
-                    else
+                    } else
                     {
                         restApps.add(appUsage);
                     }
@@ -300,8 +297,7 @@ public class BaseDaoESImp implements BaseDao
                 boolQueryBuilder.must(rsQuery);
                 boolQueryBuilderRatioMap.put(entry.getKey(), boolQueryBuilder);
             }
-        }
-        else if (!CommonUtil.isEmpty(targetingChannel.getIplCityCodes()))
+        } else if (!CommonUtil.isEmpty(targetingChannel.getIplCityCodes()))
         {
             Map<Double, List<String>> ratioCityCodeRegionMap =
                     RequestDataConverter.buildRatioCityCodeRegionMap(targetingChannel.getIplCityCodes());
@@ -313,8 +309,7 @@ public class BaseDaoESImp implements BaseDao
                 boolQueryBuilder.must(riplQuery);
                 boolQueryBuilderRatioMap.put(entry.getKey(), boolQueryBuilder);
             }
-        }
-        else
+        } else
         {
             BoolQueryBuilder boolQueryBuilder = createBaseQueryForSingleValues(targetingChannel);
             boolQueryBuilderRatioMap.put(1.0, boolQueryBuilder);
@@ -384,8 +379,7 @@ public class BaseDaoESImp implements BaseDao
             if (boolQueryBuilder == null)
             {
                 boolQueryBuilder = createQueryForSingleValues(tc);
-            }
-            else
+            } else
             {
                 BoolQueryBuilder boolQueryBuilder1 = createQueryForSingleValues(tc);
                 boolQueryBuilder.must(boolQueryBuilder1);
@@ -403,8 +397,7 @@ public class BaseDaoESImp implements BaseDao
             if (boolQueryBuilder == null)
             {
                 boolQueryBuilder = createQueryForMultiValuePlusAgeGender(tc);
-            }
-            else
+            } else
             {
                 BoolQueryBuilder boolQueryBuilder1 = createQueryForMultiValuePlusAgeGender(tc);
                 boolQueryBuilder.must(boolQueryBuilder1);
@@ -422,8 +415,7 @@ public class BaseDaoESImp implements BaseDao
             if (boolQueryBuilder == null)
             {
                 boolQueryBuilder = createQueryForAgeGender(tc);
-            }
-            else
+            } else
             {
                 BoolQueryBuilder boolQueryBuilder1 = createQueryForAgeGender(tc);
                 boolQueryBuilder.must(boolQueryBuilder1);

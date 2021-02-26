@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.esclient;
 
 import org.elasticsearch.action.DocWriteResponse;
@@ -18,7 +36,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestESResponse {
+public class TestESResponse
+{
 
     static SearchHit[] DEF_HIT_ARR;
     static SearchHits DEF_HIT;
@@ -30,7 +49,8 @@ public class TestESResponse {
     static ShardSearchFailure[] DEF_SHFAIL;
     static SearchResponse.Clusters DEF_CLUSTER;
 
-    static {
+    static
+    {
         DEF_HIT_ARR = new SearchHit[6];
         DEF_HIT_ARR[0] = new SearchHit(0);
         DEF_HIT_ARR[1] = new SearchHit(1);
@@ -52,13 +72,14 @@ public class TestESResponse {
 
         DEF_PROSHRES = new SearchProfileShardResults(Collections.emptyMap());
 
-        DEF_RESSEC = new SearchResponseSections(DEF_HIT, DEF_AGGR, DEF_SUG, false, false, DEF_PROSHRES,  0);
+        DEF_RESSEC = new SearchResponseSections(DEF_HIT, DEF_AGGR, DEF_SUG, false, false, DEF_PROSHRES, 0);
         DEF_SHFAIL = new ShardSearchFailure[0];
         DEF_CLUSTER = SearchResponse.Clusters.EMPTY;
     }
 
     @Test
-    public void getSourceMap() {
+    public void getSourceMap()
+    {
         SearchResponse srchResp = new SearchResponse(DEF_RESSEC, "id1", 1, 1, 1, 1, DEF_SHFAIL, DEF_CLUSTER);
         ESResponse esResp = new ESResponse(srchResp, Collections.emptyMap());
         Map<String, Object> res = esResp.getSourceMap();
@@ -80,7 +101,8 @@ public class TestESResponse {
     }
 
     @Test
-    public void getSearchHits() {
+    public void getSearchHits()
+    {
         SearchResponse srchResp = new SearchResponse(DEF_RESSEC, "id1", 1, 1, 1, 1, DEF_SHFAIL, DEF_CLUSTER);
         ESResponse esResp = new ESResponse(srchResp, Collections.emptyMap());
         SearchHits res = esResp.getSearchHits();
@@ -89,7 +111,8 @@ public class TestESResponse {
     }
 
     @Test
-    public void getSearchResponse() {
+    public void getSearchResponse()
+    {
         SearchResponse srchResp = new SearchResponse(DEF_RESSEC, "id1", 1, 1, 1, 1, DEF_SHFAIL, DEF_CLUSTER);
         ESResponse esResp = new ESResponse(srchResp, Collections.emptyMap());
         SearchResponse res = esResp.getSearchResponse();
@@ -101,7 +124,8 @@ public class TestESResponse {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getUpdateResponse() {
+    public void getUpdateResponse()
+    {
         SearchResponse srchResp = new SearchResponse(DEF_RESSEC, "id1", 1, 1, 1, 1, DEF_SHFAIL, DEF_CLUSTER);
         ESResponse esResp = new ESResponse(srchResp, Collections.emptyMap());
         UpdateResponse res = esResp.getUpdateResponse();
@@ -112,7 +136,8 @@ public class TestESResponse {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void testUpdateResponse() {
+    public void testUpdateResponse()
+    {
         Index idx = new Index("idxName", "idxUuid");
         ShardId shardId = new ShardId(idx, 0);
         UpdateResponse updRes = new UpdateResponse(shardId, "doc", "id", 1L, DocWriteResponse.Result.NOT_FOUND);

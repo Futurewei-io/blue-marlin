@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.esclient;
 
 import org.apache.bluemarlin.ims.imsservice.dao.booking.TestBookingDaoESImp;
@@ -24,7 +42,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestESRichClientImp {
+public class TestESRichClientImp
+{
 
     static InputStream DEF_INPUT = TestBookingDaoESImp.class.getClassLoader().getResourceAsStream("db-test.properties");
     static Properties DEF_PROP;
@@ -33,11 +52,15 @@ public class TestESRichClientImp {
     static List<Range> DEF_RANGES;
     static TargetingChannel DEF_TC;
 
-    static {
+    static
+    {
         DEF_PROP = new Properties();
-        try {
+        try
+        {
             DEF_PROP.load(DEF_INPUT);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -62,23 +85,28 @@ public class TestESRichClientImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void search() throws IOException {
+    public void search() throws IOException
+    {
         ESRichClientImp esRCI = new ESRichClientImp(DEF_PROP);
         SearchRequest sReq = new SearchRequest("");
         ESResponse res = esRCI.search(sReq);
         assertNotNull(res);
         assertNotNull(res.getSearchResponse());
-        try {
+        try
+        {
             sReq = new SearchRequest("test");
             res = esRCI.search(sReq);
             assertNotNull(res);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             assertNotNull(e);
         }
     }
 
     @Test
-    public void update() throws IOException {
+    public void update() throws IOException
+    {
         ESRichClientImp esRCI = new ESRichClientImp(DEF_RHLCLIENT);
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
@@ -112,23 +140,28 @@ public class TestESRichClientImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void searchScroll() throws IOException {
+    public void searchScroll() throws IOException
+    {
 
         ESRichClientImp esRCI = new ESRichClientImp(DEF_RHLCLIENT);
         SearchScrollRequest ssReq = new SearchScrollRequest();
         assertNotNull(ssReq);
         System.out.println(ssReq);
-        try {
+        try
+        {
             ESResponse res = esRCI.searchScroll(ssReq);
             assertNull(res);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             assertNotNull(e);
         }
 
     }
 
     @Test
-    public void index() throws IOException {
+    public void index() throws IOException
+    {
         ESRichClientImp esRCI = new ESRichClientImp(DEF_RHLCLIENT);
         Booking bk1 = new Booking(DEF_TC, DEF_RANGES, DEF_PRICE, "advid100", 2);
         Map sourceMap = CommonUtil.convertToMap(bk1);
@@ -141,7 +174,8 @@ public class TestESRichClientImp {
     }
 
     @Test
-    public void delete() throws IOException {
+    public void delete() throws IOException
+    {
         ESRichClientImp esRCI = new ESRichClientImp(DEF_RHLCLIENT);
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");

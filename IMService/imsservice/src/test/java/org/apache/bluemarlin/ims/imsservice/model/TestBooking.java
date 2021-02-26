@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -6,11 +24,13 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestBooking {
+public class TestBooking
+{
 
 
     @Test
-    public void bookingWithMap() {
+    public void bookingWithMap()
+    {
         Map source = new HashMap(), query = new HashMap();
         source.put("days", Arrays.asList("20180105"));
         source.put("bk_id", "test_MockBookingId");
@@ -30,11 +50,12 @@ public class TestBooking {
         assertEquals(100D, bk.getPrice(), 0);
         assertEquals(37D, bk.getAmount(), 0);
         assertEquals("test_MockAdvId", bk.getAdvId());
-     }
+    }
 
 
     @Test
-    public void extractNumber() {
+    public void extractNumber()
+    {
         Object obj = null;
         Number num = Booking.extractNumber(obj);
         assertNull(num);
@@ -59,7 +80,8 @@ public class TestBooking {
     }
 
     @Test
-    public void buildBookingMap() {
+    public void buildBookingMap()
+    {
 
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
@@ -95,7 +117,8 @@ public class TestBooking {
     }
 
     @Test
-    public void extractBookingIds() {
+    public void extractBookingIds()
+    {
         TargetingChannel tc1 = new TargetingChannel();
 
         List<Range> ranges = new ArrayList<>();
@@ -113,7 +136,8 @@ public class TestBooking {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getId() {
+    public void getId()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -124,7 +148,8 @@ public class TestBooking {
     }
 
     @Test
-    public void getDays() {
+    public void getDays()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -140,7 +165,8 @@ public class TestBooking {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getBookingId() {
+    public void getBookingId()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -151,7 +177,8 @@ public class TestBooking {
     }
 
     @Test
-    public void getAdvId() {
+    public void getAdvId()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -162,7 +189,8 @@ public class TestBooking {
     }
 
     @Test
-    public void getPrice() {
+    public void getPrice()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -173,7 +201,8 @@ public class TestBooking {
     }
 
     @Test
-    public void getAmount() {
+    public void getAmount()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
         ranges.add(r1);
@@ -184,7 +213,8 @@ public class TestBooking {
     }
 
     @Test
-    public void getQuery() {
+    public void getQuery()
+    {
         TargetingChannel tc = new TargetingChannel();
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");

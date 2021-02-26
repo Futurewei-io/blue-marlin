@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -9,7 +27,8 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
-public class TestRange {
+public class TestRange
+{
 
     /*
     List<Range> ranges = new ArrayList<>();
@@ -22,7 +41,8 @@ public class TestRange {
     */
 
     @Test
-    public void getLength() throws ParseException {
+    public void getLength() throws ParseException
+    {
         Range r1 = new Range();
         r1.setSt("2018-01-07");
         r1.setEd("2018-01-07");
@@ -30,7 +50,8 @@ public class TestRange {
     }
 
     @Test
-    public void testGetLength() {
+    public void testGetLength()
+    {
         String st = "2018-01-07", ed = "2018-01-07";
         assertEquals(1, Range.getLength(st, ed), 0);
 
@@ -41,7 +62,8 @@ public class TestRange {
     }
 
     @Test
-    public void getSt() {
+    public void getSt()
+    {
         Range r1 = new Range();
         assertNull(r1.getSt());
 
@@ -56,7 +78,8 @@ public class TestRange {
     }
 
     @Test
-    public void setSt() {
+    public void setSt()
+    {
         Range r1 = new Range();
         assertNull(r1.getSt());
 
@@ -71,7 +94,8 @@ public class TestRange {
     }
 
     @Test
-    public void getEd() {
+    public void getEd()
+    {
         Range r1 = new Range();
         assertNull(r1.getEd());
 
@@ -86,7 +110,8 @@ public class TestRange {
     }
 
     @Test
-    public void setEd() {
+    public void setEd()
+    {
         Range r1 = new Range();
         assertNull(r1.getEd());
 
@@ -101,7 +126,8 @@ public class TestRange {
     }
 
     @Test
-    public void getSh() {
+    public void getSh()
+    {
         Range r1 = new Range();
         assertNull(r1.getSh());
 
@@ -117,7 +143,8 @@ public class TestRange {
     }
 
     @Test
-    public void setSh() {
+    public void setSh()
+    {
         Range r1 = new Range();
         assertNull(r1.getSh());
 
@@ -133,7 +160,8 @@ public class TestRange {
     }
 
     @Test
-    public void getEh() {
+    public void getEh()
+    {
         Range r1 = new Range();
         assertNull(r1.getEh());
 
@@ -149,7 +177,8 @@ public class TestRange {
     }
 
     @Test
-    public void setEh() {
+    public void setEh()
+    {
         Range r1 = new Range();
         assertNull(r1.getEh());
 
@@ -165,7 +194,8 @@ public class TestRange {
     }
 
     @Test
-    public void normalize() {
+    public void normalize()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range();
         r1.setSt("2018-01-07");
@@ -195,7 +225,8 @@ public class TestRange {
     }
 
     @Test
-    public void getDays() {
+    public void getDays()
+    {
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range();
         r1.setSt("2018-01-07");
@@ -229,7 +260,8 @@ public class TestRange {
     }
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         Range r1 = new Range();
         r1.setSt("2018-01-07");
         r1.setEd("2018-01-07");
