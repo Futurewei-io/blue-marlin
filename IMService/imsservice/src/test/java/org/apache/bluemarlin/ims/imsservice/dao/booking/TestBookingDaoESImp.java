@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.dao.booking;
 
 import org.apache.bluemarlin.ims.imsservice.esclient.ESClient;
@@ -15,7 +33,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestBookingDaoESImp {
+public class TestBookingDaoESImp
+{
 
     static InputStream DEF_INPUT = TestBookingDaoESImp.class.getClassLoader().getResourceAsStream("db-test.properties");
     static Properties DEF_PROP;
@@ -26,11 +45,15 @@ public class TestBookingDaoESImp {
     static ESClient DEF_ESCLI;
     static TargetingChannel DEF_TC;
 
-    static {
+    static
+    {
         DEF_PROP = new Properties();
-        try {
+        try
+        {
             DEF_PROP.load(DEF_INPUT);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -58,14 +81,16 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void removeBooking() throws IOException, BookingNotFoundException {
+    public void removeBooking() throws IOException, BookingNotFoundException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         Booking bk1 = new Booking(DEF_TC, DEF_RANGES, DEF_PRICE, "remove_advId", 2);
         String res = bkDaoImp.createBooking(bk1);
         List<Booking> resArr = bkDaoImp.getBookings("remove_advId");
         if (resArr.size() == 0) assertNotNull("removeBooking size is 0 ", res);
-        else {
+        else
+        {
             String bkId = resArr.get(0).getBookingId();
             bkDaoImp.removeBooking(bkId);
             assertNotNull("removeBooking id ", bkId);
@@ -76,7 +101,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void createBooking() throws IOException {
+    public void createBooking() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         Booking bk1 = new Booking(DEF_TC, DEF_RANGES, DEF_PRICE, DEF_ADVID, 2);
@@ -90,7 +116,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getBookings() throws IOException {
+    public void getBookings() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         List<Booking> res = bkDaoImp.getBookings(DEF_ADVID);
@@ -110,11 +137,13 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getBooking() throws IOException {
+    public void getBooking() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         List<Booking> resArr = bkDaoImp.getBookings(DEF_ADVID);
-        for (Booking bk : resArr) {
+        for (Booking bk : resArr)
+        {
             String bkId = bk.getBookingId();
             assertNotNull(bkDaoImp.getBooking(bkId));
         }
@@ -124,7 +153,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getBookingBuckets() throws IOException {
+    public void getBookingBuckets() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         List<Day> sortedDays = Day.buildSortedDays(DEF_RANGES);
@@ -161,7 +191,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void createBookingBucket() throws IOException {
+    public void createBookingBucket() throws IOException
+    {
         String day = "20180105", bookingId = "test_bkid_1";
         List<String> prvBkOrder = new ArrayList();
         BookingBucket bb1 = new BookingBucket(day, bookingId, prvBkOrder, 1);
@@ -172,14 +203,18 @@ public class TestBookingDaoESImp {
     }
 
     @Test
-    public void lockBooking() {
+    public void lockBooking()
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         boolean res = bkDaoImp.lockBooking();
-        try {
+        try
+        {
             if (res) assertTrue(res);
             else throw new Exception();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             assertFalse(String.valueOf(e), res);
         }
     }
@@ -188,7 +223,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void unlockBooking() throws IOException {
+    public void unlockBooking() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         bkDaoImp.unlockBooking();
@@ -199,7 +235,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getMaxBookingBucketPriority() throws IOException {
+    public void getMaxBookingBucketPriority() throws IOException
+    {
         BookingDaoESImp bkDaoImp = new BookingDaoESImp(DEF_PROP);
         bkDaoImp.setESClient(DEF_ESCLI);
         String day = "20181107";
@@ -208,7 +245,8 @@ public class TestBookingDaoESImp {
     }
 
     @Test
-    public void updateBookingBucketWithAllocatedAmount() throws IOException {
+    public void updateBookingBucketWithAllocatedAmount() throws IOException
+    {
         String day = "20180105", bookingId = "test_bkid_1";
         List<String> prvBkOrder = new ArrayList();
         BookingBucket bb1 = new BookingBucket(day, bookingId, prvBkOrder, 1);
@@ -226,7 +264,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void findBookingBucketsWithAllocatedBookingId() throws IOException {
+    public void findBookingBucketsWithAllocatedBookingId() throws IOException
+    {
         String day = "20181107", bookingId = "test_bkid_1";
         List<String> prvBkOrder = new ArrayList();
         BookingBucket bb1 = new BookingBucket(day, bookingId, prvBkOrder, 1);
@@ -241,7 +280,8 @@ public class TestBookingDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void removeBookingBucket() throws IOException {
+    public void removeBookingBucket() throws IOException
+    {
         String day = "20180105", bookingId = "test_bkid_1";
         List<String> prvBkOrder = new ArrayList();
         BookingBucket bb1 = new BookingBucket(day, bookingId, prvBkOrder, 1);

@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -8,10 +26,12 @@ import java.util.List;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
-public class TestImpression {
+public class TestImpression
+{
 
     @Test
-    public void getTotal() {
+    public void getTotal()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -31,7 +51,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getValueForHIndex() {
+    public void getValueForHIndex()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -60,7 +81,8 @@ public class TestImpression {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void countImpressions() {
+    public void countImpressions()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -87,7 +109,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getH1() {
+    public void getH1()
+    {
         H1 h1 = new H1();
         h1.setH("11");
         h1.setT((long) 1);
@@ -97,7 +120,8 @@ public class TestImpression {
     }
 
     @Test
-    public void setH1() {
+    public void setH1()
+    {
         H1 h1 = new H1();
         h1.setH("11");
         h1.setT((long) 1);
@@ -111,7 +135,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getH0() {
+    public void getH0()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -120,7 +145,8 @@ public class TestImpression {
     }
 
     @Test
-    public void setH0() {
+    public void setH0()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -134,7 +160,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getH2() {
+    public void getH2()
+    {
         H2 h2 = new H2();
         h2.setH("22");
         h2.setT((long) 2);
@@ -143,7 +170,8 @@ public class TestImpression {
     }
 
     @Test
-    public void setH2() {
+    public void setH2()
+    {
         H2 h2 = new H2();
         h2.setH("22");
         h2.setT((long) 2);
@@ -157,7 +185,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getH3() {
+    public void getH3()
+    {
         H3 h3 = new H3();
         h3.setH("33");
         h3.setT((long) 3);
@@ -166,7 +195,8 @@ public class TestImpression {
     }
 
     @Test
-    public void setH3() {
+    public void setH3()
+    {
         H3 h3 = new H3();
         h3.setH("33");
         h3.setT((long) 3);
@@ -183,7 +213,8 @@ public class TestImpression {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getH_index() {
+    public void getH_index()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -201,7 +232,8 @@ public class TestImpression {
     }
 
     @Test
-    public void setH_index() {
+    public void setH_index()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -221,7 +253,8 @@ public class TestImpression {
     }
 
     @Test
-    public void adjustPositive() {
+    public void adjustPositive()
+    {
         H0 h0 = new H0();
         h0.setH("-00");
         h0.setT((long) -0);
@@ -244,12 +277,16 @@ public class TestImpression {
         assertEquals(exp.toString(), imp.getHs().toString());
         imp.adjustPositive();
         exp = new ArrayList();
-        for (int i = 0; i < 4; i++) exp.add(0D);
+        for (int i = 0; i < 4; i++)
+        {
+            exp.add(0D);
+        }
         assertEquals(exp.toString(), imp.getHs().toString());
     }
 
     @Test
-    public void getHs() {
+    public void getHs()
+    {
         H0 h0 = new H0();
         h0.setH("00");
         h0.setT((long) 0);
@@ -272,7 +309,8 @@ public class TestImpression {
     }
 
     @Test
-    public void add() {
+    public void add()
+    {
         Double[] dayCnt = new Double[]{1D, 2D, 3D, 4D};
         Impression i1 = new Impression(dayCnt);
         double[] dayCnt2 = new double[]{10D, 11D, 12D, 13D};
@@ -286,7 +324,8 @@ public class TestImpression {
     }
 
     @Test
-    public void subtract() {
+    public void subtract()
+    {
         Double[] dayCnt = new Double[]{1D, 2D, 3D, 4D};
         Impression i1 = new Impression(dayCnt);
         double[] dayCnt2 = new double[]{10D, 11D, 12D, 13D};
@@ -300,7 +339,8 @@ public class TestImpression {
     }
 
     @Test
-    public void multiply() {
+    public void multiply()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 5.5};
         Impression i1 = new Impression(dayCnt);
 
@@ -317,7 +357,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getCountByPriceCategory() {
+    public void getCountByPriceCategory()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 4.4};
         Impression i1 = new Impression(dayCnt);
         assertEquals(1, i1.getCountByPriceCategory(0), 0);
@@ -328,7 +369,8 @@ public class TestImpression {
     }
 
     @Test
-    public void getIndividualHistogramCountByPriceCategory() {
+    public void getIndividualHistogramCountByPriceCategory()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 4.4};
         Impression i1 = new Impression(dayCnt);
 
@@ -340,7 +382,8 @@ public class TestImpression {
     }
 
     @Test
-    public void adjustValue() {
+    public void adjustValue()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 4.4};
         Impression i1 = new Impression(dayCnt);
         assertEquals(10, i1.getCountByPriceCategory(3), 0);
@@ -352,7 +395,8 @@ public class TestImpression {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void testToString() {
+    public void testToString()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 4.4};
         Impression i1 = new Impression(dayCnt);
         String exp = "{{h:1,t:h0}{h:2,t:h1}{h:3,t:h2}{h:4,t:h3}}";

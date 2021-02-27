@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.controller;
 
 
@@ -38,7 +56,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = {TestContext.class, IMSController.class})
 
 @WebAppConfiguration
-public class TestIMSController {
+public class TestIMSController
+{
 
     private MockMvc mockMvc;
 
@@ -64,12 +83,14 @@ public class TestIMSController {
     private IMSController imsCtrl;
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         mockMvc = MockMvcBuilders.standaloneSetup(imsCtrl).build();
     }
 
     @Test
-    public void ping() throws Exception {
+    public void ping() throws Exception
+    {
         MvcResult res = mockMvc.perform(get("/ping").accept(
                 MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
@@ -78,7 +99,8 @@ public class TestIMSController {
     }
 
     @Test
-    public void getInventory() throws Exception {
+    public void getInventory() throws Exception
+    {
         IMSRequestQuery payload = new IMSRequestQuery();
         TargetingChannel tc = new TargetingChannel();
         tc.setG(Arrays.asList("g_f"));
@@ -106,7 +128,8 @@ public class TestIMSController {
     }
 
     @Test
-    public void getUserEstimate() throws Exception {
+    public void getUserEstimate() throws Exception
+    {
         IMSRequestQuery payload = new IMSRequestQuery();
         TargetingChannel tc = new TargetingChannel();
         tc.setG(Arrays.asList("g_f"));
@@ -134,7 +157,8 @@ public class TestIMSController {
     }
 
     @Test
-    public void book() throws Exception {
+    public void book() throws Exception
+    {
         IMSBookingRequest payload = new IMSBookingRequest();
         TargetingChannel tc = new TargetingChannel();
         tc.setG(Arrays.asList("g_f"));
@@ -164,11 +188,13 @@ public class TestIMSController {
 
 
     @Test
-    public void removeBooking() {
+    public void removeBooking()
+    {
     }
 
     @Test
-    public void getAdvID() throws Exception {
+    public void getAdvID() throws Exception
+    {
         String dummyId = "advid100";
 
         MvcResult res = mockMvc.perform(get("/api/{advId}/bookings", dummyId).accept(
@@ -177,7 +203,8 @@ public class TestIMSController {
     }
 
     @Test
-    public void getBookingById() throws Exception {
+    public void getBookingById() throws Exception
+    {
         TargetingChannel tc1 = new TargetingChannel();
         List<Range> ranges = new ArrayList<>();
         Range r1 = new Range("2018-01-05", "2018-01-05", "0", "23");
@@ -193,7 +220,8 @@ public class TestIMSController {
     }
 
     @Test
-    public void chart() throws Exception {
+    public void chart() throws Exception
+    {
         IMSRequestQuery payload = new IMSRequestQuery();
         TargetingChannel tc = new TargetingChannel();
         tc.setG(Arrays.asList("g_f"));

@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.model;
 
 import org.junit.Test;
@@ -7,10 +25,12 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class TestDayImpression {
+public class TestDayImpression
+{
 
     @Test
-    public void getDate() {
+    public void getDate()
+    {
         Double[] dayCnt = new Double[4];
         dayCnt[0] = 0.0;
         dayCnt[1] = 1.1;
@@ -21,7 +41,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void setDate() {
+    public void setDate()
+    {
         Double[] dayCnt = new Double[4];
         dayCnt[0] = 0.0;
         dayCnt[1] = 1.1;
@@ -34,7 +55,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void getHours() {
+    public void getHours()
+    {
         Double[] dayCnt = new Double[4];
         dayCnt[0] = 24.0;
         dayCnt[1] = 25.1;
@@ -48,14 +70,16 @@ public class TestDayImpression {
         H2 h2t = new H2(dayCnt[2] / 24.0);
         H3 h3t = new H3(dayCnt[3] / 24.0);
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             exp.add(imp);
         }
         assertEquals(exp.toString(), di.getHours().toString());
     }
 
     @Test
-    public void setHours() {
+    public void setHours()
+    {
         Double[] dayCnt = new Double[4];
         dayCnt[0] = 47.0;
         dayCnt[1] = 48.1;
@@ -88,7 +112,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void initAggregate() {
+    public void initAggregate()
+    {
         Double[] dayCnt = new Double[]{24.1, 25.2, 26.3, 27.4};
         DayImpression di = new DayImpression(dayCnt);
         double[] agrCnt = new double[]{19.0, 20.0, 30.0, 40.0};
@@ -102,7 +127,8 @@ public class TestDayImpression {
         H2 h2t = new H2(0);
         H3 h3t = new H3(0);
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 23; i++) {
+        for (int i = 0; i < 23; i++)
+        {
             exp.add(imp);
         }
 
@@ -113,7 +139,8 @@ public class TestDayImpression {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void countImpressions() {
+    public void countImpressions()
+    {
         Double[] dayCnt = new Double[]{24.1, 25.2, 26.3, 27.4};
         DayImpression di = new DayImpression(dayCnt);
         double price = 100D;
@@ -129,7 +156,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void add() {
+    public void add()
+    {
         Double[] dayCnt = new Double[]{1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8};
         DayImpression di = new DayImpression(dayCnt);
         Double[] dayCnt2 = new Double[]{20.5, 20.6, 20.7, 20.8};
@@ -143,7 +171,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void buildEmptyDayImpression() {
+    public void buildEmptyDayImpression()
+    {
         DayImpression res = DayImpression.buildEmptyDayImpression("2018-01-05");
 
         DayImpression exp = new DayImpression();
@@ -154,7 +183,8 @@ public class TestDayImpression {
         H2 h2t = new H2(0);
         H3 h3t = new H3(0);
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             hrs.add(imp);
         }
         exp.setHours(hrs);
@@ -163,7 +193,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void subtract() {
+    public void subtract()
+    {
         Double[] dayCnt = new Double[]{49D, 60D, 23D, 56D};
         DayImpression di = new DayImpression(dayCnt);
         Double[] dayCnt2 = new Double[]{1D, 2D, 3D, 4D};
@@ -180,7 +211,8 @@ public class TestDayImpression {
         H2 h2t = new H2(h2a.getT() - h2b.getT());
         H3 h3t = new H3(h3a.getT() - h3b.getT());
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             hrs.add(imp);
         }
         DayImpression exp = new DayImpression();
@@ -190,7 +222,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void multiply() {
+    public void multiply()
+    {
         Double[] dayCnt = new Double[]{10D, 20D, 30D, 40D};
         DayImpression di = new DayImpression(dayCnt);
         DayImpression res = DayImpression.multiply(di, 2);
@@ -202,7 +235,8 @@ public class TestDayImpression {
         H2 h2a = new H2(30D / 24.0), h2t = new H2(h2a.getT() * 2);
         H3 h3a = new H3(40D / 24.0), h3t = new H3(h3a.getT() * 2);
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             hrs.add(imp);
         }
         DayImpression exp = new DayImpression();
@@ -211,7 +245,8 @@ public class TestDayImpression {
     }
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         Double[] dayCnt = new Double[]{10D, 20D, 30D, 40D};
         DayImpression di = new DayImpression(dayCnt);
         List<Impression> hrs = new ArrayList();
@@ -220,7 +255,8 @@ public class TestDayImpression {
         H2 h2t = new H2(30D / 24.0);
         H3 h3t = new H3(40D / 24.0);
         Impression imp = new Impression(h0t, h1t, h2t, h3t);
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 24; i++)
+        {
             hrs.add(imp);
         }
         DayImpression exp = new DayImpression();

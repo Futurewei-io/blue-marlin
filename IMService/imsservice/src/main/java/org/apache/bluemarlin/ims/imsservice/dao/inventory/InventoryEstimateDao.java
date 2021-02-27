@@ -1,22 +1,19 @@
-/**
- * Copyright 2019, Futurewei Technologies
- *
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ *  with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.apache.bluemarlin.ims.imsservice.dao.inventory;
@@ -40,6 +37,7 @@ public interface InventoryEstimateDao extends BaseDao
 
     /**
      * This method returns the most current hourly prediction for a targeting channel.
+     *
      * @param targetingChannel
      * @param tbrRatio
      * @return
@@ -53,6 +51,7 @@ public interface InventoryEstimateDao extends BaseDao
     /**
      * This method returns the inventory result of the following query
      * TC1 and TC2 and TC3 and ... TCn
+     *
      * @param day
      * @param tcs
      * @return
@@ -64,6 +63,7 @@ public interface InventoryEstimateDao extends BaseDao
     /**
      * This method returns the inventory result of the following query
      * (TC1 or TC2 or TC3 or ...) and (Bn1 and Bn2 ...)
+     *
      * @param day
      * @param tcs
      * @param bns
@@ -76,6 +76,7 @@ public interface InventoryEstimateDao extends BaseDao
     /**
      * This method returns the inventory result of the following query
      * [(Bm1 or Bm2 or ...) or (~q) ] and (Bn1 and Bn2 ...)
+     *
      * @param day
      * @param bms
      * @param q
@@ -89,6 +90,7 @@ public interface InventoryEstimateDao extends BaseDao
     /**
      * This method returns the inventory result of the following query
      * (TC1 and TC2 and ...) and (~q)
+     *
      * @param day
      * @param tcs
      * @param q
@@ -101,6 +103,7 @@ public interface InventoryEstimateDao extends BaseDao
     /**
      * This method returns the inventory result of the following query
      * [(Bn1 and Bn2 and ...) - (Bm1 or Bm2 ...)] and q
+     *
      * @param day
      * @param bns
      * @param bms
@@ -113,6 +116,7 @@ public interface InventoryEstimateDao extends BaseDao
 
     /**
      * This method returns inventory for each day in an organized form.
+     *
      * @param targetingChannel
      * @param days
      * @return
@@ -133,5 +137,5 @@ public interface InventoryEstimateDao extends BaseDao
      * @throws IOException
      */
     Map<Day, Impression> aggregatePredictionsFullDaysWithRegionRatio(TargetingChannel targetingChannel,
-                                                      Set<Day> days) throws IOException;
+                                                                     Set<Day> days) throws IOException;
 }

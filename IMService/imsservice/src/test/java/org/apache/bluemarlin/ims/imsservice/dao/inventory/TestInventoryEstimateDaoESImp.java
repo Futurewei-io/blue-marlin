@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.dao.inventory;
 
 import org.apache.bluemarlin.ims.imsservice.dao.booking.TestBookingDaoESImp;
@@ -15,7 +33,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestInventoryEstimateDaoESImp {
+public class TestInventoryEstimateDaoESImp
+{
 
     static InputStream DEF_INPUT = TestBookingDaoESImp.class.getClassLoader().getResourceAsStream("db-test.properties");
     static Properties DEF_PROP;
@@ -25,11 +44,15 @@ public class TestInventoryEstimateDaoESImp {
     static List<Range> DEF_RANGES;
     static Day DEF_DAY;
 
-    static {
+    static
+    {
         DEF_PROP = new Properties();
-        try {
+        try
+        {
             DEF_PROP.load(DEF_INPUT);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -59,7 +82,8 @@ public class TestInventoryEstimateDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getHourlyPredictions() throws IOException {
+    public void getHourlyPredictions() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         DayImpression res = invEstImp.getHourlyPredictions(DEF_TC, 1.0);
@@ -67,7 +91,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void getPredictions_SIGMA_TCs_PI_BNs() throws IOException {
+    public void getPredictions_SIGMA_TCs_PI_BNs() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> tcs = new ArrayList(), bns = new ArrayList();
@@ -94,7 +119,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void getPredictions_PI_TCs_DOT_qBAR() throws IOException {
+    public void getPredictions_PI_TCs_DOT_qBAR() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> tcs = new ArrayList();
@@ -113,7 +139,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void getPredictions_PI_BNs_MINUS_SIGMA_BMs_DOT_q() throws IOException {
+    public void getPredictions_PI_BNs_MINUS_SIGMA_BMs_DOT_q() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> bms = new ArrayList(), bns = new ArrayList();
@@ -145,7 +172,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void getPredictions_SIGMA_BMs_PLUS_qBAR_DOT_BNs() throws IOException {
+    public void getPredictions_SIGMA_BMs_PLUS_qBAR_DOT_BNs() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> bms = new ArrayList(), bns = new ArrayList();
@@ -177,7 +205,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void getPredictions_PI_TCs() throws IOException {
+    public void getPredictions_PI_TCs() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> tcs = new ArrayList(), bns = new ArrayList();
@@ -198,7 +227,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void aggregatePredictionsFullDaysWithRegionRatio() throws IOException {
+    public void aggregatePredictionsFullDaysWithRegionRatio() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<Range> ranges = new ArrayList<>();
@@ -233,7 +263,8 @@ public class TestInventoryEstimateDaoESImp {
     }
 
     @Test
-    public void aggregatePredictionsFullDays() throws IOException {
+    public void aggregatePredictionsFullDays() throws IOException
+    {
         InventoryEstimateDaoESImp invEstImp = new InventoryEstimateDaoESImp(DEF_PROP);
         invEstImp.setESClient(DEF_ESCLI);
         List<Range> ranges = new ArrayList<>();

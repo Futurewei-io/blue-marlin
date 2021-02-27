@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.util;
 
 import org.apache.bluemarlin.ims.imsservice.model.TargetingChannel;
@@ -10,10 +28,12 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class TestCommonUtil {
+public class TestCommonUtil
+{
 
     @Test
-    public void isEmpty() {
+    public void isEmpty()
+    {
         List list = new ArrayList();
         assertTrue(CommonUtil.isEmpty(list));
 
@@ -22,7 +42,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void isBlank() {
+    public void isBlank()
+    {
         String s = null;
         assertTrue(CommonUtil.isBlank(null));
         assertTrue(CommonUtil.isBlank(s));
@@ -33,7 +54,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void sanitize() {
+    public void sanitize()
+    {
         String s = null;
         assertNull(CommonUtil.sanitize(s));
 
@@ -48,14 +70,16 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void dateToDayString() throws ParseException {
+    public void dateToDayString() throws ParseException
+    {
         String s = "2018-11-10";
         Date date = new SimpleDateFormat("yyyy-MM-dd").parse(s);
         assertEquals(s, CommonUtil.DateToDayString(date));
     }
 
     @Test
-    public void dayToDate() throws ParseException {
+    public void dayToDate() throws ParseException
+    {
         String s = "201-765-51";
         Date date = new SimpleDateFormat("yyyy-MM-dd").parse(s);
         assertEquals(date, CommonUtil.dayToDate(s));
@@ -65,7 +89,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void convertToString() {
+    public void convertToString()
+    {
         List list = new ArrayList();
         assertEquals("", CommonUtil.convertToString(list));
 
@@ -75,8 +100,10 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void convertToMap() {
-        class TestObj {
+    public void convertToMap()
+    {
+        class TestObj
+        {
             @JsonProperty("name")
             String name;
             @JsonProperty("age")
@@ -94,7 +121,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void removeStringFromItems() {
+    public void removeStringFromItems()
+    {
         List<String> list = new ArrayList();
         list.add("abc");
         list.add("123");
@@ -119,7 +147,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void determinePriceCatForCPM() {
+    public void determinePriceCatForCPM()
+    {
         double d = 123.456;
         assertEquals(3, (int) CommonUtil.determinePriceCatForCPM(d));
         d = 456789123456D;
@@ -133,7 +162,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void determinePriceCatForCPC() {
+    public void determinePriceCatForCPC()
+    {
         double d = 10.456;
         assertEquals(3, (int) CommonUtil.determinePriceCatForCPC(d), 0);
         d = 005D;
@@ -149,7 +179,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void determinePriceCatForCPD() {
+    public void determinePriceCatForCPD()
+    {
         double d = 10.456;
         assertEquals(3, (int) CommonUtil.determinePriceCatForCPD(d));
         d = 005D;
@@ -165,7 +196,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void determinePriceCatForCPT() {
+    public void determinePriceCatForCPT()
+    {
         double d = 10.456;
         assertEquals(1, (int) CommonUtil.determinePriceCatForCPT(d));
         d = 300000D;
@@ -180,7 +212,8 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void determinePriceCat() {
+    public void determinePriceCat()
+    {
         double p0 = 0.1, p1 = -2;
         TargetingChannel tcp1 = new TargetingChannel();
         tcp1.setPm("CPC");
@@ -207,13 +240,15 @@ public class TestCommonUtil {
     }
 
     @Test
-    public void removeEscapingCharacters() {
+    public void removeEscapingCharacters()
+    {
         String s = " aasd " + "\n" + "ASDFSf safw" + "\"" + "sfdnsd" + "&gt " + "waofes nasdfw " + "\n";
         assertTrue(CommonUtil.removeEscapingCharacters(s).equals(" aasd ASDFSf safwsfdnsd waofes nasdfw "));
     }
 
     @Test
-    public void equalNumbers() {
+    public void equalNumbers()
+    {
         double d1 = 1.0000, d2 = 2.0000;
         assertFalse(CommonUtil.equalNumbers(d1, d2));
         d2 = 1.0001;

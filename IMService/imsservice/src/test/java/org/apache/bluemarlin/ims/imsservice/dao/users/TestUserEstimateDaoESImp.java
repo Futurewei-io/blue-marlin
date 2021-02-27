@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.dao.users;
 
 import org.apache.bluemarlin.ims.imsservice.dao.booking.TestBookingDaoESImp;
@@ -18,7 +36,8 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertNotNull;
 
-public class TestUserEstimateDaoESImp {
+public class TestUserEstimateDaoESImp
+{
 
     static InputStream DEF_INPUT = TestBookingDaoESImp.class.getClassLoader().getResourceAsStream("db-test.properties");
     static Properties DEF_PROP;
@@ -26,11 +45,15 @@ public class TestUserEstimateDaoESImp {
     static ESClient DEF_ESCLI;
     static TargetingChannel DEF_TC;
 
-    static {
+    static
+    {
         DEF_PROP = new Properties();
-        try {
+        try
+        {
             DEF_PROP.load(DEF_INPUT);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -49,7 +72,8 @@ public class TestUserEstimateDaoESImp {
     /**
      * Coverage purpose only. Data not verified.
      */
-    public void getUserCount() throws IOException {
+    public void getUserCount() throws IOException
+    {
         UserEstimateDaoESImp usrEstDaoImp = new UserEstimateDaoESImp(DEF_PROP);
         usrEstDaoImp.setESClient(DEF_ESCLI);
         List<String> days = new ArrayList();

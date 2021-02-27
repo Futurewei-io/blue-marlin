@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.apache.bluemarlin.ims.imsservice.dao.tbr;
 
 import org.apache.bluemarlin.ims.imsservice.dao.booking.TestBookingDaoESImp;
@@ -19,7 +37,8 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestTBRDaoESImp {
+public class TestTBRDaoESImp
+{
 
     static InputStream DEF_INPUT = TestBookingDaoESImp.class.getClassLoader().getResourceAsStream("db-test.properties");
     static Properties DEF_PROP;
@@ -27,11 +46,15 @@ public class TestTBRDaoESImp {
     static ESClient DEF_ESCLI;
     static TargetingChannel DEF_TC;
 
-    static {
+    static
+    {
         DEF_PROP = new Properties();
-        try {
+        try
+        {
             DEF_PROP.load(DEF_INPUT);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -48,7 +71,8 @@ public class TestTBRDaoESImp {
 
 
     @Test
-    public void getTBRRatio() throws ESConnectionException {
+    public void getTBRRatio() throws ESConnectionException
+    {
         TBRDaoESImp tbrDaoImp = new TBRDaoESImp(DEF_PROP);
         tbrDaoImp.setESClient(DEF_ESCLI);
         double res = tbrDaoImp.getTBRRatio(DEF_TC);
@@ -60,7 +84,8 @@ public class TestTBRDaoESImp {
     }
 
     @Test
-    public void getTBRRatio_PI_BNs_DOT_qBAR() throws IOException {
+    public void getTBRRatio_PI_BNs_DOT_qBAR() throws IOException
+    {
         TBRDaoESImp tbrDaoImp = new TBRDaoESImp(DEF_PROP);
         tbrDaoImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> bns = new ArrayList();
@@ -76,7 +101,8 @@ public class TestTBRDaoESImp {
     }
 
     @Test
-    public void getTBRRatio_PI_TCs() throws IOException {
+    public void getTBRRatio_PI_TCs() throws IOException
+    {
         TBRDaoESImp tbrDaoImp = new TBRDaoESImp(DEF_PROP);
         tbrDaoImp.setESClient(DEF_ESCLI);
         List<TargetingChannel> tcs = new ArrayList();
