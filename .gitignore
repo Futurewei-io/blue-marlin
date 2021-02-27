@@ -5,6 +5,7 @@ IMService/gradle/wrapper/gradle-wrapper.properties
 Processes/performance-forecasting/pf-service/gradlew
 **/.idea/**
 **/.gradle/**
+**/build/**
 Processes/performance-forecasting/pf-service/gradle/wrapper/gradle-wrapper.jar
 Processes/performance-forecasting/pf-service/gradle/wrapper/gradle-wrapper.properties
 

@@ -16,13 +16,13 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.dao;
+package org.apache.bluemarlin.pfservice.dao;
 
-import com.bluemarlin.pfservice.config.SystemConfig;
-import com.bluemarlin.pfservice.model.Day;
-import com.bluemarlin.pfservice.model.GraphRequest;
-import com.bluemarlin.pfservice.model.Impression;
-import com.bluemarlin.pfservice.util.CommonUtil;
+import org.apache.bluemarlin.pfservice.config.SystemConfig;
+import org.apache.bluemarlin.pfservice.model.Day;
+import org.apache.bluemarlin.pfservice.model.GraphRequest;
+import org.apache.bluemarlin.pfservice.model.Impression;
+import org.apache.bluemarlin.pfservice.util.CommonUtil;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;

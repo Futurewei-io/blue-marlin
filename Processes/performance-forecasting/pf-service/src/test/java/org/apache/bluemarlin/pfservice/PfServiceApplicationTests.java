@@ -16,41 +16,18 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.model;
+package org.apache.bluemarlin.pfservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-public class Range
+@SpringBootTest
+class PfServiceApplicationTests
 {
-    @JsonProperty("st")
-    private String st;
 
-    @JsonProperty("ed")
-    private String ed;
-
-    @JsonProperty("eh")
-    private String eh;
-
-    @JsonProperty("sh")
-    private String sh;
-
-    public String getSt()
+    @Test
+    void contextLoads()
     {
-        return st;
     }
 
-    public String getEd()
-    {
-        return ed;
-    }
-
-    public String getEh()
-    {
-        return eh;
-    }
-
-    public String getSh()
-    {
-        return sh;
-    }
 }

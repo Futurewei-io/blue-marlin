@@ -16,11 +16,11 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.controllers;
+package org.apache.bluemarlin.pfservice.controllers;
 
-import com.bluemarlin.pfservice.model.GraphRequest;
-import com.bluemarlin.pfservice.model.GraphResponse;
-import com.bluemarlin.pfservice.services.GraphService;
+import org.apache.bluemarlin.pfservice.model.GraphRequest;
+import org.apache.bluemarlin.pfservice.model.GraphResponse;
+import org.apache.bluemarlin.pfservice.services.GraphService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

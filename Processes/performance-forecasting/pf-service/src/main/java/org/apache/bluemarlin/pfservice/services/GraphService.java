@@ -16,13 +16,13 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.services;
+package org.apache.bluemarlin.pfservice.services;
 
-import com.bluemarlin.pfservice.config.SystemConfig;
-import com.bluemarlin.pfservice.dao.DinUCDocDao;
-import com.bluemarlin.pfservice.model.GraphRequest;
-import com.bluemarlin.pfservice.model.GraphResponse;
-import com.bluemarlin.pfservice.model.Impression;
+import org.apache.bluemarlin.pfservice.config.SystemConfig;
+import org.apache.bluemarlin.pfservice.dao.DinUCDocDao;
+import org.apache.bluemarlin.pfservice.model.GraphRequest;
+import org.apache.bluemarlin.pfservice.model.GraphResponse;
+import org.apache.bluemarlin.pfservice.model.Impression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;

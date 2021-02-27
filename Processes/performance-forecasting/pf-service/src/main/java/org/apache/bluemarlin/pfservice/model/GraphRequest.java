@@ -16,31 +16,43 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.model;
+package org.apache.bluemarlin.pfservice.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class GraphResponse
+public class GraphRequest
 {
     @JsonProperty()
-    private List<Integer> clickProbability;
+    private String keyword;
 
-    @JsonProperty()
-    private List<Long> inventories;
+    @JsonProperty("target")
+    private Traffic traffic;
 
-    @JsonProperty()
-    private int size;
+    @JsonProperty("price_category")
+    private int priceCategory = 0;
 
-    public GraphResponse(List<Integer> clickProbability, List<Long> inventories) throws Exception
+    @JsonProperty("ranges")
+    private List<Range> ranges;
+
+    public String getKeyword()
     {
-        if (inventories.size() != clickProbability.size())
-        {
-            throw new Exception("Wrong input for graph!");
-        }
-        this.clickProbability = clickProbability;
-        this.inventories = inventories;
-        this.size = clickProbability.size();
+        return keyword;
+    }
+
+    public Traffic getTraffic()
+    {
+        return traffic;
+    }
+
+    public List<Range> getRanges()
+    {
+        return ranges;
+    }
+
+    public int getPriceCategory()
+    {
+        return priceCategory;
     }
 }

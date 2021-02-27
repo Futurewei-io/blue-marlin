@@ -16,11 +16,11 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.dao;
+package org.apache.bluemarlin.pfservice.dao;
 
-import com.bluemarlin.pfservice.model.Traffic;
-import com.bluemarlin.pfservice.util.BMLogger;
-import com.bluemarlin.pfservice.util.CommonUtil;
+import org.apache.bluemarlin.pfservice.model.Traffic;
+import org.apache.bluemarlin.pfservice.util.BMLogger;
+import org.apache.bluemarlin.pfservice.util.CommonUtil;
 import org.apache.commons.codec.Charsets;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
@@ -31,7 +31,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 

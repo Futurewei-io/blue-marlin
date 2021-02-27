@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.util;
+package org.apache.bluemarlin.pfservice.util;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.json.JSONArray;

@@ -16,43 +16,16 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.model;
+package org.apache.bluemarlin.pfservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.List;
-
-public class GraphRequest
+@SpringBootApplication
+public class PfServiceApplication
 {
-    @JsonProperty()
-    private String keyword;
-
-    @JsonProperty("target")
-    private Traffic traffic;
-
-    @JsonProperty("price_category")
-    private int priceCategory = 0;
-
-    @JsonProperty("ranges")
-    private List<Range> ranges;
-
-    public String getKeyword()
+    public static void main(String[] args)
     {
-        return keyword;
-    }
-
-    public Traffic getTraffic()
-    {
-        return traffic;
-    }
-
-    public List<Range> getRanges()
-    {
-        return ranges;
-    }
-
-    public int getPriceCategory()
-    {
-        return priceCategory;
+        SpringApplication.run(PfServiceApplication.class, args);
     }
 }

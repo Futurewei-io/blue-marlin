@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.config;
+package org.apache.bluemarlin.pfservice.config;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;

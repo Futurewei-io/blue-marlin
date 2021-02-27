@@ -16,9 +16,9 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.model;
+package org.apache.bluemarlin.pfservice.model;
 
-import com.bluemarlin.pfservice.util.BMLogger;
+import org.apache.bluemarlin.pfservice.util.BMLogger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.metrics.ParsedSum;

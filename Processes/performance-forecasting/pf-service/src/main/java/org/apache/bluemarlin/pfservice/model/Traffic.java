@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.model;
+package org.apache.bluemarlin.pfservice.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -16,18 +16,31 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice;
+package org.apache.bluemarlin.pfservice.model;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SpringBootTest
-class PfServiceApplicationTests
+import java.util.List;
+
+public class GraphResponse
 {
+    @JsonProperty()
+    private List<Integer> clickProbability;
 
-    @Test
-    void contextLoads()
+    @JsonProperty()
+    private List<Long> inventories;
+
+    @JsonProperty()
+    private int size;
+
+    public GraphResponse(List<Integer> clickProbability, List<Long> inventories) throws Exception
     {
+        if (inventories.size() != clickProbability.size())
+        {
+            throw new Exception("Wrong input for graph!");
+        }
+        this.clickProbability = clickProbability;
+        this.inventories = inventories;
+        this.size = clickProbability.size();
     }
-
 }

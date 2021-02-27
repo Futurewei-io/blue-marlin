@@ -16,16 +16,41 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice;
+package org.apache.bluemarlin.pfservice.model;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SpringBootApplication
-public class PfServiceApplication
+public class Range
 {
-    public static void main(String[] args)
+    @JsonProperty("st")
+    private String st;
+
+    @JsonProperty("ed")
+    private String ed;
+
+    @JsonProperty("eh")
+    private String eh;
+
+    @JsonProperty("sh")
+    private String sh;
+
+    public String getSt()
     {
-        SpringApplication.run(PfServiceApplication.class, args);
+        return st;
+    }
+
+    public String getEd()
+    {
+        return ed;
+    }
+
+    public String getEh()
+    {
+        return eh;
+    }
+
+    public String getSh()
+    {
+        return sh;
     }
 }

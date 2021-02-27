@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.util;
+package org.apache.bluemarlin.pfservice.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

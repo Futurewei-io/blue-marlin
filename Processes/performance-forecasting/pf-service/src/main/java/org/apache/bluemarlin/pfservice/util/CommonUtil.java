@@ -16,9 +16,9 @@
  *  limitations under the License.
  */
 
-package com.bluemarlin.pfservice.util;
+package org.apache.bluemarlin.pfservice.util;
 
-import com.bluemarlin.pfservice.model.Traffic;
+import org.apache.bluemarlin.pfservice.model.Traffic;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.text.ParseException;

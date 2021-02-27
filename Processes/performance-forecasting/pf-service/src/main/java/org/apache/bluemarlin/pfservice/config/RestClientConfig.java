@@ -17,7 +17,7 @@
  */
 
 
-package com.bluemarlin.pfservice.config;
+package org.apache.bluemarlin.pfservice.config;
 
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
