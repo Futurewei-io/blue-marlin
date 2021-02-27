@@ -2,3 +2,8 @@ IMService/gradlew
 IMService/gradlew.bat
 IMService/gradle/wrapper/gradle-wrapper.jar
 IMService/gradle/wrapper/gradle-wrapper.properties
+Processes/performance-forecasting/pf-service/.gradle/6.7/executionHistory/executionHistory.bin
+**/.gradle/**
+**/.idea/**
+**/build/**
+**/gradle
