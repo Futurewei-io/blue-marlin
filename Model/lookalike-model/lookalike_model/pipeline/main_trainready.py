@@ -24,13 +24,15 @@ import timeit
 
 from pyspark import SparkContext
 from pyspark.sql import functions as fn
-from pyspark.sql.functions import lit, col, udf, collect_list, concat_ws, first, create_map, monotonically_increasing_id
+from pyspark.sql.functions import lit, col, udf, collect_list, concat_ws, first, create_map, monotonically_increasing_id, row_number
 from pyspark.sql.window import Window
-from pyspark.sql.types import IntegerType, ArrayType, StringType
+from pyspark.sql.types import IntegerType, ArrayType, StringType, LongType
 from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
 from util import write_to_table, write_to_table_with_partition, print_batching_info, resolve_placeholder, load_config, load_batch_config, load_df
 from itertools import chain
+
+MAX_USER_IN_BUCKET = 10**9
 
 
 def generate_trainready(hive_context, batch_config,
@@ -194,7 +196,9 @@ def generate_trainready(hive_context, batch_config,
             df = df.withColumn(feature_name, col('metrics_list').getItem(i))
 
         # Add did_index
-        df = df.withColumn('did_index', monotonically_increasing_id())
+        w = Window.orderBy("did_bucket", "did")
+        df = df.withColumn('row_number', row_number().over(w))
+        df = df.withColumn('did_index', udf(lambda x: did_bucket*(MAX_USER_IN_BUCKET) + x, LongType())(col('row_number')))
         df = df.select('age', 'gender', 'did', 'did_index', 'interval_starting_time', 'interval_keywords',
                        'kwi', 'kwi_show_counts', 'kwi_click_counts', 'did_bucket')
 

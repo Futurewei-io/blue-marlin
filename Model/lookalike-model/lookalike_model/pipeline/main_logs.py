@@ -36,8 +36,8 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
     def union_logs(df_clicklog, df_showlog):
         # union click log and show log.
         columns = ['did', 'is_click', 'action_time', 'keyword',
-                   'keyword_index', 'media', 'media_category',
-                   'net_type', 'gender', 'age', 'adv_id', 'day', 'did_bucket']
+                   'keyword_index', 'media', 'net_type', 'gender',
+                   'age', 'adv_id', 'day', 'did_bucket']
 
         df_clicklog = df_clicklog.withColumn('is_click', lit(1))
         df_clicklog = df_clicklog.select(columns)
@@ -81,7 +81,6 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
                         keyword, 
                         keyword_index,                    
                         media, 
-                        media_category, 
                         net_type, 
                         gender, 
                         age, 
@@ -102,9 +101,8 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
             df_logs_batched = transform_action_time(df_logs_batched, interval_time_in_seconds)
 
             columns = ['did', 'is_click', 'action_time', 'keyword',
-                       'keyword_index', 'media', 'media_category',
-                       'net_type', 'gender', 'age', 'adv_id',
-                       'interval_starting_time', 'action_time_seconds',
+                       'keyword_index', 'media', 'net_type', 'gender',
+                       'age', 'adv_id', 'interval_starting_time', 'action_time_seconds',
                        'day', 'did_bucket']
             df_logs_batched = df_logs_batched.select(columns)
 

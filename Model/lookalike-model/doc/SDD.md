@@ -363,14 +363,16 @@ The Lookalike Service builds on the work done on the DIN model.  From the DIN mo
 ##### System Entity Diagram
 
 ```mermaid
-graph LR
+graph TD
  	user("DMP Console")--> A(["API Handler"])
     style user fill:#f9f,stroke:#333,stroke-width:4px
     
     A-->I[["Extended-Audience-Reader"]]
     I---J[("HDFS Extended Audience")]
     
-    A-->B[["Audience-Extender"]]
+    A-->|Asynchronism|A1[["Audience-Extender"]]
+    A1-->A2[["Queue"]]
+    A2-->B[["Audience-Extender-Worker"]]
     
     B-->|step 1|H["Seed-Data-Reader"]
     B-->|step 2|C["Seed-Clustering"]
@@ -529,4 +531,140 @@ Configuration of the Lookalike Service will be stored in Zookeeper.  The configu
 - Hive table name for score table
 - Number of clusters to group existing audience
 - Number of highest similarities to include in average
-- Percentage of user extension, 
+- Percentage of user extension
+
+
+
+# Spark Environment Tuning
+
+Low performance on Spark operations can caused by these factors:
+
+1. Level of Parallelism
+2. Data Locality
+
+
+
+### Level of Parallelism
+
+Spark is about parallel computations. Too low parallelism means the job will be running longer too high parallelism would require a lots of resource. So defining the degree of parallelism depends on the number of cores available in the cluster. **Best way to decide a number of spark partitions in an RDD is to make the number of partitions equal to the number of cores over the cluster.**
+
+There are 2 properties which can be used to increase the level of parallelism -
+
+```
+spark.default.parallelism
+spark.sql.shuffle.partitions
+```
+
+```spark.sql.shuffle.partitions``` is used when you are dealing with spark SQL or dataframe API.
+
+
+
+A right level of Parallelism means that a partition can be fit into a memory of one node. To achieve right level of Parallelism follow these steps:
+
+> a. Identify right about of memory for each executer.
+> b. Partition data so that each partition can be fit into memory of a node.
+> c. Use right number of executers.
+> d. Respect partitions in queries
+
+
+
+### Data Locality
+
+Data locality can have a major impact on the performance of Spark jobs. If data and the code that operates on it are together than computation tends to be fast. But if code and data are separated, one must move to the other. Typically it is faster to ship serialized code from place to place than a chunk of data because code size is much smaller than data. Spark builds its scheduling around this general principle of data locality.
+
+Calling `groupBy()`, `groupByKey()`, `reduceByKey()`, `join()` and similar functions on dataframe results in shuffling data between multiple executors and even machines and finally repartitions data into 200 partitions by default. Pyspark default defines shuffling partition to 200 using `spark.sql.shuffle.partitions` configuration.
+
+
+
+### Experiment 
+
+The project was run on the spark cluster version 2.3 with Java 8.
+
+
+
+#### Spark Environment Settings
+
+The Hadoop cluster has the '600MB' Memory and '200' V-Cores.
+The following command was used for each step of the pipeline.
+
+```shell
+spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict <python-file> config.yml
+```
+
+This command engages %50 of the cluster (110 V-Cores) to carry out the operation.
+
+
+
+#### Elapsed Time
+
+The following is the elapsed time for each step of the pipeline.
+
+
+
+|STEP|INPUT TABLE NAME|TABLE SIZE RECORDS|PARTITIONS|ELAPSED|
+|:-------------| :------------: |:------------: |-------------- |
+|main_clean.py  | ads_cleanlog_0520 |1,036,183|NONE|51mins, 18sec|
+|				| ads_showlog_0520 |44,946,000||
+|				| ads_persona_0520 |380,000||
+|main_logs.py|lookalike_02242021_clicklog|251,271|DAY,DID|4mins, 41sec|
+||lookalike_02242021_showlog|12,165,993||
+|main_trainready.py|lookalike_02242021_logs|12,417,264|DAY,DID|15mins, 0sec|
+
+
+
+#### Debugging for Performance Bottlenecks
+
+One way to find a bottleneck is to measure the elapsed time for an operation.
+
+Use the following code after a specific operation to measure the elapsed time.
+
+```python
+import timeit
+def get_elapsed_time(df):
+	start = timeit.default_timer()
+    df.take(1)
+    end = timeit.default_timer()
+    return end-start
+```
+
+For example in the following pyspark code, the `get_elapsed_time(df)` is called in 2 different places.  Note, that the time measurement is from the beginning of the code up to the place where`get_elapsed_time(df)` is called.
+
+```spark
+ trainready_table_temp
+    batched_round = 1
+    for did_bucket in range(did_bucket_num):
+        command = """SELECT * 
+                        FROM {} 
+                        WHERE 
+                        did_bucket= '{}' """
+        df = hive_context.sql(command.format(trainready_table_temp, did_bucket))
+        df = collect_trainready(df)
+        print(get_elapsed_time(df))
+        
+        df = build_feature_array(df)
+        print(get_elapsed_time(df))
+        
+        for i, feature_name in enumerate(['interval_starting_time', 'interval_keywords', 'kwi', 'kwi_show_counts', 'kwi_click_counts']):
+            df = df.withColumn(feature_name, col('metrics_list').getItem(i))
+
+        # Add did_index
+        df = df.withColumn('did_index', monotonically_increasing_id())
+        df = df.select('age', 'gender', 'did', 'did_index', 'interval_starting_time', 'interval_keywords',
+                       'kwi', 'kwi_show_counts', 'kwi_click_counts', 'did_bucket')
+
+        mode = 'overwrite' if batched_round == 1 else 'append'
+        write_to_table_with_partition(df, trainready_table, partition=('did_bucket'), mode=mode)
+        batched_round += 1
+
+    return
+```
+
+
+
+
+
+
+
+
+
+

@@ -76,21 +76,17 @@ def clean_batched_log(df, df_persona, conditions, df_keywords, did_bucket_num):
     2. Add gender and age from persona table to each record of log
     3. Add keyword to each row by looking to spread-app-id
     """
-    def filter_new_si(df, new_slot_id_list, new_slot_id_app_name_list):
+    def filter_new_si(df, new_slot_id_list):
         """
         This filters logs with pre-defined slot-ids.
         """
         new_si_set = set(new_slot_id_list)
         _udf = udf(lambda x: x in new_si_set, BooleanType())
         df = df.filter(_udf(df.slot_id))
-        slot_map = dict(zip(new_slot_id_list, slot_app_map))
-        _udf_map = udf(lambda x: slot_map[x] if x in slot_map else '', StringType())
-        df = df.withColumn('media_category', _udf_map(df.slot_id))
         return df
 
     new_slot_id_list = conditions['new_slot_id_list']
-    slot_app_map = conditions['new_slot_id_app_name_list']
-    df = filter_new_si(df, new_slot_id_list, slot_app_map)
+    df = filter_new_si(df, new_slot_id_list)
     df = df.join(df_persona, on=['did'], how='inner')
     df = df.join(df_keywords, on=['spread_app_id'], how="inner")
     df = add_day(df)
@@ -112,7 +108,7 @@ def clean_logs(cfg, df_persona, df_keywords, log_table_names):
     starting_time = datetime.strptime(start_date, "%Y-%m-%d")
     ending_time = datetime.strptime(end_date, "%Y-%m-%d")
     columns = ['spread_app_id', 'did', 'adv_id', 'media', 'slot_id', 'device_name', 'net_type', 'price_model',
-               'action_time', 'media_category', 'gender', 'age', 'keyword', 'keyword_index', 'day', 'did_bucket']
+               'action_time', 'gender', 'age', 'keyword', 'keyword_index', 'day', 'did_bucket']
 
     batched_round = 1
     while starting_time < ending_time:
