@@ -38,11 +38,11 @@ random.seed(1234)
 def __data_parser(serialized_example):
 
     features = tf.parse_single_example(serialized_example,
-                                       features={'interval_starting_time': tf.FixedLenSequenceFeature([], tf.int64, allow_missing=True),
-                                                 'keywords' :tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
+                                       features={'interval_starting_time': tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
+                                                 'kwi' :tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
                                                  'did_index': tf.FixedLenFeature([], tf.int64),
-                                                 'click_counts': tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
-                                                 'show_counts': tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
+                                                 'kwi_click_counts': tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
+                                                 'kwi_show_counts': tf.FixedLenSequenceFeature([], tf.string, allow_missing=True),
                                                  # 'media_category_index': tf.FixedLenFeature([], tf.int64),
                                                  # 'net_type_index': tf.FixedLenFeature([], tf.int64),
                                                  'gender': tf.FixedLenFeature([], tf.int64),
@@ -52,11 +52,11 @@ def __data_parser(serialized_example):
 
                                                  })
     did_str = tf.cast(features['did'], tf.string)
-    time_interval = tf.cast(features['interval_starting_time'], tf.int64)
-    keyword = tf.cast(features['keywords'], tf.string)
+    time_interval = tf.cast(features['interval_starting_time'], tf.string)
+    keyword = tf.cast(features['kwi'], tf.string)
     ucdoc = tf.cast(features['did_index'], tf.int64)
-    click_counts = tf.cast(features['click_counts'], tf.string)
-    show_counts = tf.cast(features['show_counts'], tf.string)
+    click_counts = tf.cast(features['kwi_click_counts'], tf.string)
+    show_counts = tf.cast(features['kwi_show_counts'], tf.string)
     # media_category = tf.cast(features['media_category_index'], tf.int64)
     # net_type_index = tf.cast(features['net_type_index'], tf.int64)
     gender = tf.cast(features['gender'], tf.int64)
@@ -129,11 +129,14 @@ def run(cfg):
     with open(stats, 'rb') as f:
         ucdoc_num = pickle.load(f)['distinct_records_count']
     counter = 0
+    mapping=[]
     for i in range(ucdoc_num):
         x = sess.run(next_el)
-        log = list(x[0:7])
-        time_interval, ucdoc, click_counts, show_counts, gender, age, keyword = log[0], log[1], log[2], log[3], log[4], log[5], log[6]
+        log = list(x[0:8])
+        time_interval_s, ucdoc, click_counts, show_counts, gender, age, keyword ,did = log[0], log[1], log[2], log[3], log[4], log[5], log[6], log[7]
+        mapping.append([did,ucdoc])
 
+        time_interval = [int(i) for i in time_interval_s]
         keyword_int = [[int(i) for i in keyword[j].decode().split(",")] for j in range(len(keyword))]
         show_counts_list = str_to_intlist(show_counts)
         click_counts_list = str_to_intlist(click_counts)
@@ -189,15 +192,18 @@ def run(cfg):
     cate_list = np.array([x for x in range(30)])
     user_count, item_count , cate_count = len(set(ucdoc_lst)) , 30, 30
     print(counter)
-    with open('label_gdin_30.pkl', 'wb') as f:
+    mapping = pd.DataFrame(mapping)
+    mapping.to_csv("mapping_pipeline.csv")
+    with open('label_lookalike.pkl', 'wb') as f:
         pickle.dump(label, f, pickle.HIGHEST_PROTOCOL)
         pickle.dump(user_att,f, pickle.HIGHEST_PROTOCOL )
 
-    with open('ad_dataset_gdin_30.pkl', 'wb') as f:
+    with open('ad_dataset_lookalike.pkl', 'wb') as f:
         pickle.dump(train_set, f, pickle.HIGHEST_PROTOCOL)
         pickle.dump(test_set, f, pickle.HIGHEST_PROTOCOL)
         pickle.dump(cate_list, f, pickle.HIGHEST_PROTOCOL)
         pickle.dump((user_count, item_count, cate_count), f, pickle.HIGHEST_PROTOCOL)
+
 
 
 if __name__ == '__main__':
