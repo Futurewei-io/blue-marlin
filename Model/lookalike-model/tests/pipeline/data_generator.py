@@ -1,21 +1,19 @@
-# Copyright 2021, Futurewei Technologies
-#
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-#                                                 * "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+ 
+#  http://www.apache.org/licenses/LICENSE-2.0.html
+
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import sys
 from pyspark.sql.types import StringType, StructField, StructType, IntegerType
 from lookalike_model.pipeline.main_clean import add_did_bucket
@@ -65,6 +63,10 @@ def create_keywords_table (spark, table_name):
     df = create_keywords(spark)
     write_to_table(df, table_name)
 
+# Creates unified log data and writes it to Hive.
+def create_unified_log_table (spark, table_name):
+    df = create_unified_log(spark)
+    write_to_table(df, table_name)
 
 #==========================================
 # Create dataframes for the unit tests
@@ -162,6 +164,20 @@ def create_raw_log (spark):
 def create_cleaned_log (spark):
     data = [
         ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 12:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 13:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 14:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:59:59.00', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:59:59.99', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 16:00:00.00', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 16:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 17:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 18:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 19:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 20:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 21:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 22:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
+        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 23:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
         ('C001', '0000002', '1000', 'splash', 'abcdef1', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-02 12:34:56.78', 'Huawei Browser', 1, 0, 'travel', '1', '2020-01-02', '1', ),
         ('C002', '0000003', '1001', 'native', 'abcdef2', 'ABC-AL00', '4G', 'CPD', '2020-01-03 12:34:56.78', 'Huawei Video', 0, 1, 'travel', '1', '2020-01-03', '1', ),
         ('C010', '0000004', '1001', 'native', 'abcdef3', 'ABC-AL00', '4G', 'CPD', '2020-01-04 12:34:56.78', 'Huawei Music', 1, 1, 'game-avg', '2', '2020-01-04', '1', ),
@@ -221,6 +237,85 @@ def create_keywords(spark):
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
+# Returns a dataframe with a unified log data.
+def create_unified_log (spark):
+
+
+    data = [
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'game-avg', '2', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'game-avg', '2', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'game-avg', '2', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'game-avg', '2', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'reading', '3', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'reading', '3', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-01 12:34:56.78', 'reading', '3', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 1, '2020-01-01 12:34:56.78', 'reading', '3', 'splash', 'WIFI', 0, 0, '1000', 1577836800, 1577910896, '2020-01-01', '1', ),
+        ('0000001', 0, '2020-01-02 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577923200, 1577997296, '2020-01-02', '1', ),
+        ('0000001', 1, '2020-01-02 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 0, 0, '1000', 1577923200, 1577997296, '2020-01-02', '1', ),
+        ('0000001', 0, '2020-01-03 12:34:56.78', 'travel', '1', 'native', '4G', 0, 0, '1001', 1578009600, 1578083696, '2020-01-03', '1', ),
+        ('0000001', 1, '2020-01-03 12:34:56.78', 'travel', '1', 'native', '4G', 0, 0, '1001', 1578009600, 1578083696, '2020-01-03', '1', ),
+        ('0000002', 0, '2020-01-02 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 1, 0, '1000', 1577923200, 1577997296, '2020-01-02', '1', ),
+        ('0000002', 0, '2020-01-02 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 1, 0, '1000', 1577923200, 1577997296, '2020-01-02', '1', ),
+        ('0000002', 0, '2020-01-02 12:34:56.78', 'travel', '1', 'splash', 'WIFI', 1, 0, '1000', 1577923200, 1577997296, '2020-01-02', '1', ),
+        ('0000003', 1, '2020-01-03 12:34:56.78', 'travel', '1', 'native', '4G', 0, 1, '1001', 1578009600, 1578083696, '2020-01-03', '1', ),
+        ('0000003', 1, '2020-01-03 12:34:56.78', 'travel', '1', 'native', '4G', 0, 1, '1001', 1578009600, 1578083696, '2020-01-03', '1', ),
+        ('0000003', 1, '2020-01-03 12:34:56.78', 'travel', '1', 'native', '4G', 0, 1, '1001', 1578009600, 1578083696, '2020-01-03', '1', ),
+    ]
+
+    schema = StructType([
+        StructField('did', StringType(), True),
+        StructField('is_click', IntegerType(), True),
+        StructField('action_time', StringType(), True),
+        StructField('keyword', StringType(), True),
+        StructField('keyword_index', StringType(), True),
+        StructField('media', StringType(), True),
+        StructField('net_type', StringType(), True),
+        StructField('gender', IntegerType(), True),
+        StructField('age', IntegerType(), True),
+        StructField('adv_id', StringType(), True),
+        StructField('interval_starting_time', IntegerType(), True),
+        StructField('action_time_seconds', IntegerType(), True),
+        StructField('day', StringType(), True),
+        StructField('did_bucket', StringType(), True),
+    ])
+
+    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
+# Returns a dataframe with trainready data.
+def create_trainready_data (spark):
+    data = [
+        (0, 0, '0000001', 1000000001, [u'1578009600', u'1577923200', u'1577836800'], [u'travel', u'travel', u'travel,game-avg'], [u'1', u'1', u'1,2'], [u'1:2', u'1:2', u'1:2,2:1'], [u'1:1', u'1:1', u'1:1,2:0'], '1', ),
+        (0, 1, '0000002', 1000000002, [u'1577923200'], [u'travel'], [u'1'], [u'1:2'], [u'1:1'], '1', ),
+        (1, 0, '0000003', 1000000003, [u'1578009600'], [u'travel'], [u'1'], [u'1:2'], [u'1:1'], '1', ),
+        (1, 1, '0000004', 1000000004, [u'1578096000'], [u'game-avg'], [u'2'], [u'2:2'], [u'2:1'], '1', ),
+        (2, 0, '0000005', 1000000005, [u'1578182400'], [u'game-avg'], [u'2'], [u'2:2'], [u'2:1'], '1', ),
+        (2, 1, '0000006', 1, [u'1578268800'], [u'game-avg'], [u'2'], [u'2:2'], [u'2:1'], '0', ),
+        (3, 0, '0000007', 2, [u'1578355200'], [u'reading'], [u'3'], [u'3:2'], [u'3:1'], '0', ),
+        (3, 1, '0000008', 3, [u'1578441600'], [u'reading'], [u'3'], [u'3:2'], [u'3:1'], '0', ),
+        (4, 0, '0000009', 4, [u'1578528000'], [u'reading'], [u'3'], [u'3:2'], [u'3:1'], '0', ),
+        (4, 1, '0000010', 1000000006, [u'1578614400'], [u'reading'], [u'3'], [u'3:2'], [u'3:1'], '1', ),
+    ]
+
+    schema = StructType([
+        StructField('age', IntegerType(), True),
+        StructField('gender', IntegerType(), True),
+        StructField('did', StringType(), True),
+        StructField('did_index', LongType(), True),
+        StructField('interval_starting_time', ArrayType(), True),
+        StructField('interval_keywords', ArrayType(), True),
+        StructField('kwi', ArrayType(), True),
+        StructField('kwi_show_counts', ArrayType(), True),
+        StructField('kwi_click_counts', ArrayType(), True),
+        StructField('did_bucket', StringType(), True),
+    ])
+
+    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
 
 # Prints to screen the code to generate the given data frame.
 def print_df_generator_code (df):
