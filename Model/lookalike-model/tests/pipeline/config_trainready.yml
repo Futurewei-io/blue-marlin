@@ -1,0 +1,26 @@
+product_tag: 'lookalike'
+pipeline_tag: 'unittest'
+log:
+  level: 'ERROR' # log level for spark and app
+pipeline:
+  main_clean:  
+    did_bucket_num: 2 # Number of partitions for did
+    load_logs_in_minutes: 1440 #1440/day, original=14400
+    conditions: {
+      'new_slot_id_list': [
+          'abcdef0', 'abcdef1', 'abcdef2', 'abcdef3', 'abcdef4', 
+          'abcdef5', 'abcdef6', 'abcdef7', 'abcdef8', 'abcdef9'
+      ],
+      'new_slot_id_app_name_list': [
+          'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading', 
+          'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading'
+      ],
+      'starting_date': '2020-01-01',
+      'ending_date': '2020-01-11'
+    }
+  main_logs:
+    interval_time_in_seconds: 86400 # default=1 day, group logs in interval time.
+    logs_output_table_name: 'lookalike_unittest_trainready_input'
+  main_trainready:
+    trainready_output_table: 'lookalike_unittest_trainready_output'
+

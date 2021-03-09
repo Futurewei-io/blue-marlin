@@ -1,21 +1,18 @@
-# Copyright 2021, Futurewei Technologies
-#
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-#                                                 * "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+ 
+#  http://www.apache.org/licenses/LICENSE-2.0.html
+
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 import unittest
 import yaml
@@ -86,14 +83,15 @@ class TestMainLogs(unittest.TestCase):
 
         # Validate the output.
         df = util.load_df(self.hive_context, log_output_table)
+        print(df.sort('action_time_seconds').show(100, False))
         print_df_generator_code(df.sort('did', 'is_click'))
         self.validate_unified_logs(df, create_cleaned_log(self.spark))
 
 
     def validate_unified_logs (self, df, df_log):
         # Verify the column names.
-        columns = ['is_click', 'did', 'adv_id', 'media', 
-            'net_type', 'action_time', 'gender', 'age', 
+        columns = ['is_click', 'did', 'adv_id', 'media', 'action_time_seconds',
+            'net_type', 'action_time', 'gender', 'age', 'interval_starting_time',
             'keyword', 'keyword_index', 'day', 'did_bucket']
         for name in columns:
             self.assertTrue(name in df.columns)
