@@ -72,7 +72,7 @@ def clean_batched_log(df, df_persona, conditions, df_keywords, did_bucket_num):
     df_keywords: keywords-spread-app-id dataframe
 
     This methods:
-    1. Filters right slot-ids and add media-category.
+    1. Filters right slot-ids.
     2. Add gender and age from persona table to each record of log
     3. Add keyword to each row by looking to spread-app-id
     """
@@ -149,12 +149,11 @@ def clean_logs(cfg, df_persona, df_keywords, log_table_names):
         # write_to_table(df_showlog_batched, "ads_showlog_0520_2days", mode='overwrite')
         # write_to_table(df_clicklog_batched, "ads_clicklog_0520_2days", mode='overwrite')
         # return
-
+ 
+        # Node: for mode='append' spark might throw socket closed exception, it was due to bug in spark and does not affect data and table.
         mode = 'overwrite' if batched_round == 1 else 'append'
 
         df_showlog_batched = clean_batched_log(df_showlog_batched, df_persona, conditions, df_keywords, did_bucket_num=did_bucket_num)
-
-        # Node: for mode='append' spark might throw socket closed exception, it was due to bug in spark and does not affect data and table.
         df_showlog_batched = df_showlog_batched.select(columns)
         write_to_table_with_partition(df_showlog_batched, showlog_output_table, partition=('day', 'did_bucket'), mode=mode)
 

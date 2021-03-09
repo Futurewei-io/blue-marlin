@@ -570,7 +570,7 @@ A right level of Parallelism means that a partition can be fit into a memory of 
 
 ### Data Locality
 
-Data locality can have a major impact on the performance of Spark jobs. If data and the code that operates on it are together than computation tends to be fast. But if code and data are separated, one must move to the other. Typically it is faster to ship serialized code from place to place than a chunk of data because code size is much smaller than data. Spark builds its scheduling around this general principle of data locality.
+Data locality can have a major impact on the performance of Spark jobs. If data and the code that operates on it are together, then computation tends to be fast. But if code and data are separated, one must move to the other. Typically it is faster to ship serialized code from place to place than a chunk of data because code size is much smaller than data. Spark builds its scheduling around this general principle of data locality.
 
 Calling `groupBy()`, `groupByKey()`, `reduceByKey()`, `join()` and similar functions on dataframe results in shuffling data between multiple executors and even machines and finally repartitions data into 200 partitions by default. Pyspark default defines shuffling partition to 200 using `spark.sql.shuffle.partitions` configuration.
 
@@ -584,14 +584,14 @@ The project was run on the spark cluster version 2.3 with Java 8.
 
 #### Spark Environment Settings
 
-The Hadoop cluster has the '600MB' Memory and '200' V-Cores.
+The Hadoop cluster has the '600GB' Memory and '200' V-Cores.
 The following command was used for each step of the pipeline.
 
 ```shell
 spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict <python-file> config.yml
 ```
 
-This command engages %50 of the cluster (110 V-Cores) to carry out the operation.
+This command engages 50% of the cluster (110 V-Cores) to carry out the operation.
 
 
 

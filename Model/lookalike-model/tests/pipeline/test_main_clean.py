@@ -113,7 +113,7 @@ class TestMainClean(unittest.TestCase):
     # Testing data look up and cleaning process for clicklog and showlog data.
     def test_clean_logs (self):
         print('*** Running test_clean_logs ***')
-        with open('config.yml', 'r') as ymlfile:
+        with open('pipeline/config_clean.yml', 'r') as ymlfile:
             cfg = yaml.safe_load(ymlfile)
 
         showlog_table = cfg['showlog_table_name']
@@ -157,7 +157,7 @@ class TestMainClean(unittest.TestCase):
     # Testing full data cleaning process for persona, clicklog, and showlog data.
     def test_run (self):
         print('*** Running test_run ***')
-        with open('config.yml', 'r') as ymlfile:
+        with open('pipeline/config_clean.yml', 'r') as ymlfile:
             cfg = yaml.safe_load(ymlfile)
 
         # Create the persona, keywords, clicklog and showlog tables.
@@ -192,11 +192,13 @@ class TestMainClean(unittest.TestCase):
 
         # Validate the cleaned clicklog table.
         df_clicklog = util.load_df(self.hive_context, clicklog_output_table)
+        print_df_generator_code(df_clicklog.sort('did'))
         df_log = create_raw_log(self.spark)
         self.validate_cleaned_log(df_clicklog, conditions, df_persona, df_keywords, df_log, bucket_num)
 
         # Validate the cleaned showlog table.
         df_showlog = util.load_df(self.hive_context, clicklog_output_table)
+        print_df_generator_code(df_showlog.sort('did'))
         df_log = create_raw_log(self.spark)
         self.validate_cleaned_log(df_showlog, conditions, df_persona, df_keywords, df_log, bucket_num)
 
@@ -241,36 +243,35 @@ class TestMainClean(unittest.TestCase):
     def validate_cleaned_log (self, df, conditions, df_persona, df_keywords, df_log, bucket_num):
         # Verify the column names.
         columns = ['spread_app_id', 'did', 'adv_id', 'media', 'slot_id', 'device_name', 
-            'net_type', 'price_model', 'action_time', 'media_category', 'gender', 'age', 
+            'net_type', 'price_model', 'action_time', 'gender', 'age', 
             'keyword', 'keyword_index', 'day', 'did_bucket']
         for name in columns:
             self.assertTrue(name in df.columns)
 
-        # Create a map between slot IDs and app names.
-        slot_id_map = { i: j for (i, j) in zip(conditions['new_slot_id_list'], conditions['new_slot_id_app_name_list']) }
+        # Verify the number of rows.
+        # The raw log count has one entry that will be filtered out so adjusted accordingly.
+        self.assertEqual(df.count(), df_log.count() - 1)
+
+        # Helper method for verifying table joins.
+        def assert_row_value (row, df_match, field_name, join_field):
+            self.assertEqual(row[field_name], df_match.filter(col(join_field) == row[join_field]).collect()[0][field_name])
 
         # Check the row values.
         for row in df.collect():
             self.assertTrue(row['slot_id'] in conditions['new_slot_id_list'])
-            self.assertTrue(row['media_category'] in conditions['new_slot_id_app_name_list'])
             self.assertEqual(row['day'], row['action_time'].split()[0])
             self.assertTrue(int(row['did_bucket']) < bucket_num)
-            self.assertEqual(row['media_category'], slot_id_map[row['slot_id']])
-            self.assert_row_value(row, df_persona, 'gender', 'did')
-            self.assert_row_value(row, df_persona, 'age', 'did')
-            self.assert_row_value(row, df_keywords, 'keyword', 'spread_app_id')
-            self.assert_row_value(row, df_keywords, 'keyword_index', 'spread_app_id')
-            self.assert_row_value(row, df_log, 'adv_id', 'did')
-            self.assert_row_value(row, df_log, 'media', 'did')
-            self.assert_row_value(row, df_log, 'slot_id', 'did')
-            self.assert_row_value(row, df_log, 'device_name', 'did')
-            self.assert_row_value(row, df_log, 'net_type', 'did')
-            self.assert_row_value(row, df_log, 'price_model', 'did')
-            self.assert_row_value(row, df_log, 'action_time', 'did')
-
-    # Helper method for verifying table joins.
-    def assert_row_value (self, row, df_match, field_name, join_field):
-        self.assertEqual(row[field_name], df_match.filter(col(join_field) == row[join_field]).collect()[0][field_name])
+            assert_row_value(row, df_persona, 'gender', 'did')
+            assert_row_value(row, df_persona, 'age', 'did')
+            assert_row_value(row, df_keywords, 'keyword', 'spread_app_id')
+            assert_row_value(row, df_keywords, 'keyword_index', 'spread_app_id')
+            assert_row_value(row, df_log, 'adv_id', 'did')
+            assert_row_value(row, df_log, 'media', 'did')
+            assert_row_value(row, df_log, 'slot_id', 'did')
+            assert_row_value(row, df_log, 'device_name', 'did')
+            assert_row_value(row, df_log, 'net_type', 'did')
+            assert_row_value(row, df_log, 'price_model', 'did')
+            assert_row_value(row, df_log, 'action_time', 'did')
 
 
 # Runs the tests.
