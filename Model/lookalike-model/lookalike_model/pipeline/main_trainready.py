@@ -35,6 +35,11 @@ from itertools import chain
 MAX_USER_IN_BUCKET = 10**9
 
 
+def date_to_timestamp(dt):
+    epoch = datetime.utcfromtimestamp(0)
+    return int((dt - epoch).total_seconds())
+
+
 def generate_trainready(hive_context, batch_config,
                         interval_time_in_seconds,
                         logs_table_name, trainready_table, did_bucket_num):
@@ -48,7 +53,7 @@ def generate_trainready(hive_context, batch_config,
             first('gender').alias('gender'),
             first('did_bucket').alias('did_bucket'),
             fn.sum(col('is_click')).alias('kw_clicks_count'),
-            fn.count(fn.when(col('is_click') == 0, 1).otherwise(0)).alias('kw_shows_count'),
+            fn.sum(fn.when(col('is_click') == 0, 1).otherwise(0)).alias('kw_shows_count'),
         )
 
         df = df.withColumn('kwi_clicks_count', concat_ws(":", col('keyword_index'), col('kw_clicks_count')))
@@ -100,7 +105,7 @@ def generate_trainready(hive_context, batch_config,
             tmp_list = []
             for _dict in attr_map_list:
                 tmp_list.append((_dict['interval_starting_time'], _dict))
-            tmp_list.sort(reverse=True)
+            tmp_list.sort(reverse=True, key=lambda x: x[0])
 
             interval_starting_time = []
             interval_keywords = []
@@ -114,7 +119,6 @@ def generate_trainready(hive_context, batch_config,
                 kwi_show_counts.append(_dict['kwi_show_counts'])
                 kwi_click_counts.append(_dict['kwi_click_counts'])
             return [interval_starting_time, interval_keywords, kwi, kwi_show_counts, kwi_click_counts]
-
         df = df.withColumn('metrics_list', udf(udf_function, ArrayType(ArrayType(StringType())))(col('attr_map_list')))
         return df
 
@@ -135,8 +139,8 @@ def generate_trainready(hive_context, batch_config,
     ending_time = datetime.strptime(end_date, "%Y-%m-%d")
 
     all_intervals = set()
-    st = int(starting_time.strftime("%s"))
-    et = int(ending_time.strftime("%s"))
+    st = date_to_timestamp(starting_time)
+    et = date_to_timestamp(ending_time)
     x = st
     while x < et:
         interval_point = x - x % interval_time_in_seconds

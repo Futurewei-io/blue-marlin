@@ -1,5 +1,5 @@
 product_tag: 'lookalike'
-pipeline_tag: '02242021'
+pipeline_tag: '03042021'
 persona_table_name: 'ads_persona_0520'
 showlog_table_name: 'ads_showlog_0520'
 clicklog_table_name: 'ads_clicklog_0520'
@@ -153,8 +153,8 @@ pipeline:
             'd4d7362e879511e5bdec00163e291137',
             '15e9ddce941b11e5bdec00163e291137'
       ],
-      'starting_date': '2019-12-19', #2019-12-19
-      'ending_date': '2020-04-15' #2020-04-15 #2019-12-23
+      'starting_date': '2019-12-18', #2019-12-18
+      'ending_date': '2020-04-16' #2020-04-15 #2019-12-23
     }
   main_logs:
     interval_time_in_seconds: 86400 # default=1 day, group logs in interval time.

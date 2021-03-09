@@ -49,7 +49,13 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
         return df_unionlog
 
     def transform_action_time(df_logs, interval_time_in_seconds):
-        _udf_time = udf(lambda x: int(datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f').strftime("%s")), IntegerType())
+        
+        def to_timestamp(x):
+            dt = datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f')
+            epoch = datetime.utcfromtimestamp(0)
+            return int((dt - epoch).total_seconds())
+
+        _udf_time = udf(to_timestamp, IntegerType())
         df_logs = df_logs.withColumn('action_time_seconds', _udf_time(col('action_time')))
 
         _udf_interval_time = udf(lambda x: x - x % interval_time_in_seconds, IntegerType())
