@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -70,7 +70,7 @@ def run(cfg):
     url = cfg['input']['din_model_tf_serving_url']
     ##time_interval, did, click_counts, show_counts, media_category, net_type_index, gender, age, keyword
     record = {"did": 0, "show_counts": ['25:3', '29:6,25:2', '29:1,25:2,14:2', '14:1,29:2,25:2',
-                                        '29:1', '26:1,14:2,25:4', '14:1,25:3'], "show_clicks": [], "age": '10', "gender": '3'}
+                                          '29:1', '26:1,14:2,25:4', '14:1,25:3'], "show_clicks": [], "age": '10', "gender": '3'}
     record['show_counts'] = str_to_intlist(record['show_counts'])
     new_keyword = [26, 27, 29]
     response = predict(serving_url=url, record=record, length=length, new_keyword=new_keyword)

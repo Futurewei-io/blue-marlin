@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -14,18 +14,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
 import yaml
 import argparse
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 from pyspark.sql.functions import lit, col, udf
 from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType
-# from rest_client import predict, str_to_intlist
 import requests
 import json
 import argparse
-# from kazoo.client import KazooClient
 from math import sqrt
+
 
 
 def flatten(lst):
@@ -69,6 +69,7 @@ def predict(serving_url, record, length, new_keyword):
     return predictions
 
 
+
 def gen_mappings_media(hive_context, cfg):
     # this function generates mappings between the media category and the slots.
     media_category_list = cfg["mapping"]["new_slot_id_media_category_list"]
@@ -89,7 +90,6 @@ def gen_mappings_media(hive_context, cfg):
     df = hive_context.createDataFrame(media_slot_mapping_rows, schema)
     return df
 
-
 def normalize(x):
     c = 0
     for key, value in x.items():
@@ -100,18 +100,19 @@ def normalize(x):
         result[keyword] = value / C
     return result
 
-
 udf_normalize = udf(normalize, MapType(StringType(), FloatType()))
 
 
 class CTRScoreGenerator:
-    def __init__(self, df_gucdocs, df_keywords, din_model_tf_serving_url, din_model_length):
-        self.df_gucdocs = df_gucdocs
+    def __init__(self, df_did, df_keywords, din_model_tf_serving_url, din_model_length):
+        self.df_did = df_did
         self.df_keywords = df_keywords
         self.din_model_tf_serving_url = din_model_tf_serving_url
         self.din_model_length = din_model_length
-        self.df_gucdocs_loaded = None
+        self.df_did_loaded = None
         self.keyword_index_list, self.keyword_list = self.get_keywords()
+
+
 
     def get_keywords(self):
         keyword_index_list, keyword_list = list(), list()
@@ -124,34 +125,40 @@ class CTRScoreGenerator:
     def run(self):
 
         def predict_udf(din_model_length, din_model_tf_serving_url, keyword_index_list, keyword_list):
-            def __helper(did, keyword_indexes_show_counts, age, gender):
-                keyword_indexes_show_counts = str_to_intlist(keyword_indexes_show_counts)
+            def __helper(did, kwi_show_counts, age, gender):
+                kwi_show_counts = str_to_intlist(kwi_show_counts)
                 record = {'did': did,
-                          'show_counts': keyword_indexes_show_counts,
+                          'show_counts': kwi_show_counts,
                           'a': str(age),
                           'g': str(gender)}
 
                 response = predict(serving_url=din_model_tf_serving_url, record=record,
                                    length=din_model_length, new_keyword=keyword_index_list)
 
-                gucdoc_kw_scores = dict()
+                did_kw_scores = dict()
                 for i in range(len(response)):
                     keyword = keyword_list[i]
                     keyword_score = response[i][0]
-                    gucdoc_kw_scores[keyword] = keyword_score
+                    did_kw_scores[keyword] = keyword_score
 
-                return gucdoc_kw_scores
+                return did_kw_scores
+
 
             return __helper
 
-        self.df_gucdocs_loaded = self.df_gucdocs.withColumn('kws',
+        self.df_did_loaded = self.df_did.withColumn('kws',
                                                             udf(predict_udf(din_model_length=self.din_model_length,
                                                                             din_model_tf_serving_url=self.din_model_tf_serving_url,
                                                                             keyword_index_list=self.keyword_index_list,
                                                                             keyword_list=self.keyword_list),
                                                                 MapType(StringType(), FloatType()))
-                                                            (col('did_index'), col('keyword_indexes_show_counts'),
+                                                            (col('did_index'), col('kwi_show_counts'),
                                                              col('age'), col('gender')))
+
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -161,34 +168,30 @@ if __name__ == "__main__":
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
 
+
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
 
     # load dataframes
-    gucdocs_table, keywords_table, din_tf_serving_url, length = cfg["input"]["gucdocs_table"], cfg["input"][
-        "keywords_table"], cfg["input"]["din_model_tf_serving_url"], cfg["input"]["din_model_length"]
+    did_table, keywords_table, din_tf_serving_url, length = cfg["input"]["did_table"], cfg["input"]["keywords_table"],cfg["input"]["din_model_tf_serving_url"],cfg["input"]["din_model_length"]
 
     command = "SELECT * FROM {}"
-    df_gucdocs = hive_context.sql(command.format(gucdocs_table))
+    df_did = hive_context.sql(command.format(did_table))
     df_keywords = hive_context.sql(command.format(keywords_table))
-    # temporary adding to filter based on active keywords
-    df_keywords = df_keywords.filter((df_keywords.keyword == "video") | (df_keywords.keyword == "shopping") | (df_keywords.keyword == "info") |
-                                     (df_keywords.keyword == "social") | (df_keywords.keyword == "reading") | (df_keywords.keyword == "travel") |
-                                     (df_keywords.keyword == "entertainment"))
-    gucdocs_loaded_table = cfg['output']['gucdocs_loaded_table']
-    gucdocs_loaded_table_norm = cfg['output']['gucdocs_loaded_table_norm']
+    ###### temporary adding to filter based on active keywords
+    df_keywords = df_keywords.filter( (df_keywords.keyword =="video") | (df_keywords.keyword =="shopping") | (df_keywords.keyword == "info") |
+                                      (df_keywords.keyword =="social") | (df_keywords.keyword =="reading") | (df_keywords.keyword =="travel") |
+                                      (df_keywords.keyword =="entertainment") )
+    did_loaded_table = cfg['output']['did_score_table']
+    did_score_table_norm = cfg['output']['did_score_table_norm']
 
-    # create a CTR score generator instance and run to get the loaded gucdocs
-    ctr_score_generator = CTRScoreGenerator(df_gucdocs, df_keywords, din_tf_serving_url, length)
+    # create a CTR score generator instance and run to get the loaded did
+    ctr_score_generator = CTRScoreGenerator(df_did, df_keywords, din_tf_serving_url, length)
     ctr_score_generator.run()
-    df_gucdocs_loaded = ctr_score_generator.df_gucdocs_loaded
+    df_did_loaded = ctr_score_generator.df_did_loaded
+    df_did_loaded_norm = df_did_loaded.withColumn('kws_norm', udf_normalize(col('kws')))
 
-    df_gucdocs_loaded_norm = df_gucdocs_loaded.withColumn('kws_norm', udf_normalize(col('kws')))
-
-    # save the loaded gucdocs to hive table
-    df_gucdocs_loaded.write.option("header", "true").option(
-        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(gucdocs_loaded_table)
-
-    df_gucdocs_loaded_norm.write.option("header", "true").option(
-        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(gucdocs_loaded_table_norm)
+     # save the loaded did to hive table
+    df_did_loaded_norm.write.option("header", "true").option(
+        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(did_score_table_norm)
