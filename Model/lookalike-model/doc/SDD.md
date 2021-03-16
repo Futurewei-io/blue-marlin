@@ -659,12 +659,21 @@ For example in the following pyspark code, the `get_elapsed_time(df)` is called 
     return
 ```
 
+#### Application testing
 
+To run the application test run.sh should be run. By running it, 4 lines of code would be run one after each other.
 
+```shell
+spark-submit --executor-memory 16G --driver-memory 24G  --num-executors 16 --executor-cores 5 --master yarn --conf spark.driver.maxResultSize=8g seed_user_selector.py config.yml "29" ;
+spark-submit --executor-memory 16G --driver-memory 24G  --num-executors 16 --executor-cores 5 --master yarn --conf spark.driver.maxResultSize=8g score_generator.py config.yml ;
+spark-submit --executor-memory 16G --driver-memory 24G  --num-executors 16 --executor-cores 5 --master yarn --conf spark.driver.maxResultSize=8g distance_table_list.py config.yml ;
+spark-submit --executor-memory 16G --driver-memory 24G  --num-executors 16 --executor-cores 5 --master yarn --conf spark.driver.maxResultSize=8g validation.py config.yml "29";
+```
 
+A brief description for run.sh is as following:
 
-
-
-
-
+> a. The first line of the code in the run.sh gets the config.yml and keyword index as an argument, create a list of seed users and write it to a hive table. The number of seed users is configurable and can be changed.  
+> b. The second line gets the config.yml in the argument and trainready table as an input. score_generator.py send the instances to the Rest API and write the responses to the score table.  
+> c. The third line gets the config file in the argument and score table as an input and create a distance table.  
+> d. The last line in the run.sh file gets config file and keywords index in the argument. The validation.py is calculating the number of clicks among the lookalike extended users, in the specific keywords and compare it with the number of click in the random selection.
 

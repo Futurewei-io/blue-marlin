@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -29,17 +29,17 @@ from math import sqrt
 import time
 
 
+
+
 def distance(l1):
     def _distance(l2):
-        dist = sum([l1[el]*l2[el] for el, value in l1.items()])
+        dist = sum([l1[el]*l2[el] for el,value in l1.items()])
         return dist
     return _distance
 
-
 def x(l1):
-    _udf_distance = udf(distance(l1), FloatType())
+    _udf_distance = udf(distance(l1), FloatType() )
     return _udf_distance
-
 
 def run(hive_context, cfg):
     # load dataframes
@@ -53,23 +53,25 @@ def run(hive_context, cfg):
     df_keywords = hive_context.sql(command.format(keywords_table))
     df_seed_user = hive_context.sql(command.format(seeduser_table))
 
-    # creating a tuple of did and kws for seed users
-    df_seed_user = df_seed_user.join(df.select('did', 'kws_norm'), on=['did'], how='left')
+
+    #### creating a tuple of did and kws for seed users
+    df_seed_user = df_seed_user.join(df.select('did','kws_norm'), on=['did'], how='left')
     # df_seed_user = df_seed_user.withColumn("seed_user_list", zip_("did", "kws"))
-    seed_user_list = df_seed_user.select('did', 'kws_norm').collect()
+    seed_user_list = df_seed_user.select('did','kws_norm').collect()
     # seed_user list = [(did1, {k1:0, k2:0.2, ...}), (did2, )]
     # user =
     c = 0
     temp_list = []
     for item in seed_user_list:
 
-        c += 1
-        if c > 850:
+        c+= 1
+        if c > 850 :
             break
-        df = df.withColumn(item[0], x(item[1])(col('kws_norm')))
+        df = df.withColumn(item[0],x(item[1])(col('kws_norm')))
 
     df.write.option("header", "true").option(
         "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(lookalike_score_table)
+
 
 
 if __name__ == "__main__":
