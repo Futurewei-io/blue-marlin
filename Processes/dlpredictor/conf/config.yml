@@ -1,12 +1,18 @@
-log_level: 'INFO'
-product_tag: 'dlpm'
-pipeline_tag: '11092020'
-factdata_table: 'factdata_hq_09222020_bucket_0'
-distribution_table: '{product_tag}_{pipeline_tag}_tmp_distribution'
-norm_table: '{product_tag}_{pipeline_tag}_trainready'
-model_stat_table: '{product_tag}_{pipeline_tag}_model_stat'
+log_level: 'WARN'
+product_tag: 'dlpredictor'
+pipeline_tag: '04212021'
+
+#input tables from dlpm pipeline
+factdata_table: 'factdata_hq_09222020_r_ipl_mapped_11052020' # this looks like dlpm_03182021
+distribution_table: 'dlpm_03182021_tmp_distribution'
+norm_table: 'dlpm_03182021_trainready'
+model_stat_table: 'dlpm_03182021_model_stat'
 bucket_size: 10
 bucket_step: 1
+
+yesterday: '2020-05-31'
+serving_url: 'http://10.193.217.105:8505/v1/models/dlpm6:predict'
+
 es_host: '10.213.37.41'
 es_port: '9200'
 es_predictions_index: '{product_tag}_{pipeline_tag}_predictions'
