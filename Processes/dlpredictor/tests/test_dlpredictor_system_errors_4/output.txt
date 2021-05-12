@@ -1,0 +1,643 @@
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='06' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [0, 0, 0, 0, 0]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='11' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [93731, 103210, 105674, 119492, 96587]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='05' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [3421167, 3668136, 3684237, 4188954, 3218177]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='04' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [1835253, 1774758, 1735974, 955528, 1217105]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [1853575, 1943148, 2098460, 2604409, 1954715]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='03' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [0, 0, 0, 0, 0]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='02' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [1836964, 2006481, 1934551, 2207088, 1835385]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='01' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [1489734, 1620558, 1693939, 1902113, 1568918]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='l03493p0r3' AND T1.price_cat='1'
+        
+Actual DENSE --> [8292774, 8236275, 7020277, 7682913, 7531950]
+Predicted DENSE --> [7299732, 7504733, 6731348, 6870035, 6916847]
+Actual NON-DENSE --> [9105, 8057, 7573, 8210, 8794]
+Predicted NON-DENSE --> [221517, 239556, 247348, 282495, 226237]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='x0ej5xhk60kjwq' AND T1.price_cat='1'
+        
+Actual DENSE --> [12057353, 11950892, 10951819, 13269446, 13520215]
+Predicted DENSE --> [10567279, 11349386, 11713596, 13486928, 12707314]
+Actual NON-DENSE --> [1547034, 1522241, 1232488, 1689075, 1705418]
+Predicted NON-DENSE --> [882112, 953485, 986168, 1122512, 896683]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='g7m2zuits8' AND T1.price_cat='1'
+        
+Actual DENSE --> [116029, 125425, 92370, 88775, 105142]
+Predicted DENSE --> [56772, 54372, 68699, 92370, 111987]
+Actual NON-DENSE --> [21121, 24076, 18657, 18904, 22070]
+Predicted NON-DENSE --> [255618, 276612, 288266, 326418, 261457]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='w3wx3nv9ow5i97' AND T1.price_cat='1'
+        
+Actual DENSE --> [3214226, 2910572, 3034858, 3807755, 3805817]
+Predicted DENSE --> [3048839, 2955249, 2889915, 3260160, 3098684]
+Actual NON-DENSE --> [735604, 1121214, 652504, 905266, 901841]
+Predicted NON-DENSE --> [319526, 345007, 357427, 406783, 325500]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='a1nvkhk62q' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [245092, 264772, 285671, 320493, 244788]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='g9iv6p4sjy' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [2356, 2575, 2333, 2635, 2316]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='c4n08ku47t' AND T1.price_cat='1'
+        
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [8680, 8971, 8345, 7987, 8136]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='b6le0s4qo8' AND T1.price_cat='1'
+        
+Actual DENSE --> [14060002, 13839388, 12062975, 18139387, 18140264]
+Predicted DENSE --> [14233518, 14251789, 14256434, 16329216, 17024777]
+Actual NON-DENSE --> [2001192, 2712032, 1644187, 2638828, 2662881]
+Predicted NON-DENSE --> [970270, 1049814, 1085737, 1238626, 994868]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='d9jucwkpr3' AND T1.price_cat='1'
+        
+Actual DENSE --> [1155419, 1045459, 907435, 1005911, 1098545]
+Predicted DENSE --> [1057201, 1068669, 1008774, 1015907, 1023145]
+Actual NON-DENSE --> [483906, 345093, 278998, 305956, 335315]
+Predicted NON-DENSE --> [210807, 228187, 235341, 267111, 213395]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='p7gsrebd4m' AND T1.price_cat='1'
+        
+Actual DENSE --> [390844, 441047, 426059, 409860, 439932]
+Predicted DENSE --> [423504, 386255, 339929, 367367, 344031]
+Actual NON-DENSE --> [208716, 226484, 224330, 219128, 232896]
+Predicted NON-DENSE --> [95892, 104273, 108043, 123222, 97064]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='a8syykhszz' AND T1.price_cat='1'
+        
+Actual DENSE --> [194441, 135299, 118891, 131634, 130359]
+Predicted DENSE --> [177784, 153569, 136568, 141502, 139336]
+Actual NON-DENSE --> [128784, 101499, 82825, 96568, 96158]
+Predicted NON-DENSE --> [40988, 44576, 46632, 53776, 42139]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='l2d4ec6csv' AND T1.price_cat='1'
+        
+Actual DENSE --> [2439271, 2669685, 2503144, 2927027, 2796458]
+Predicted DENSE --> [1908547, 1592601, 1741300, 1737756, 1895014]
+Actual NON-DENSE --> [314664, 338985, 341460, 419471, 403581]
+Predicted NON-DENSE --> [178600, 192943, 200644, 229610, 182051]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='j1430itab9wj3b' AND T1.price_cat='1'
+        
+Actual DENSE --> [131865, 130439, 127595, 149048, 141773]
+Predicted DENSE --> [144580, 130527, 154404, 157506, 171608]
+Actual NON-DENSE --> [74119, 73497, 63548, 84787, 79874]
+Predicted NON-DENSE --> [38950, 41997, 43358, 49154, 39546]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='s4z85pd1h8' AND T1.price_cat='1'
+        
+Actual DENSE --> [56944, 58617, 59438, 73457, 70038]
+Predicted DENSE --> [67512, 72090, 65504, 73633, 68118]
+Actual NON-DENSE --> [56072, 58662, 55572, 73392, 73351]
+Predicted NON-DENSE --> [34647, 37337, 38228, 43317, 35056]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='z041bf6g4s' AND T1.price_cat='1'
+        
+Actual DENSE --> [2705351, 2800237, 2587313, 3282982, 3336976]
+Predicted DENSE --> [2286874, 2355759, 2592061, 2777357, 2773731]
+Actual NON-DENSE --> [230738, 247935, 222245, 287128, 294036]
+Predicted NON-DENSE --> [162928, 176258, 183260, 208945, 165364]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
+        WHERE T1.si='71bcd2720e5011e79bc8fa163e05184e' AND T1.price_cat='1'
+        
+Actual DENSE --> [656341, 671820, 666647, 622847, 722548]
+Predicted DENSE --> [669522, 525018, 657723, 714327, 622570]
+Actual NON-DENSE --> [5890, 5799, 5563, 4925, 28107]
+Predicted NON-DENSE --> [20866, 22590, 23121, 26243, 20925]
+---------------------------------------------------------
+
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='a47eavw7ex' AND T1.price_cat='1'
+
+Hive Session ID = 8aa53b5f-0bb8-46b7-b197-85215f236265
+Actual DENSE --> [45880059, 43576628, 43429294, 46744416, 37096811]
+Predicted DENSE --> [45438001, 43237532, 47802950, 50297444, 48109266]
+Actual NON-DENSE --> [4801674, 4823159, 3908535, 4722330, 3569295]
+Predicted NON-DENSE --> [1929465, 2077426, 2152481, 2441401, 1959309]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='68bcd2720e5011e79bc8fa163e05184e' AND T1.price_cat='1'
+
+Actual DENSE --> [1525340, 1484526, 1456151, 1421624, 1581307]
+Predicted DENSE --> [1384309, 1467895, 1356414, 1632108, 1316673]
+Actual NON-DENSE --> [135332, 133706, 129143, 125398, 216506]
+Predicted NON-DENSE --> [56287, 61368, 62914, 72288, 57601]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='66bcd2720e5011e79bc8fa163e05184e' AND T1.price_cat='1'
+
+Actual DENSE --> [5180713, 5198144, 4943692, 5130386, 5716150]
+Predicted DENSE --> [5019422, 5300585, 5322708, 5498985, 5473989]
+Actual NON-DENSE --> [931939, 933842, 788201, 881686, 1474547]
+Predicted NON-DENSE --> [479564, 517603, 536087, 609220, 487290]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='72bcd2720e5011e79bc8fa163e05184e' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [0, 0, 0, 0, 0]
+---------------------------------------------------------
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='f1iprgyl13' AND T1.price_cat='1'
+
+Actual DENSE --> [1963850, 2013380, 1747531, 1952099, 3224421]
+Predicted DENSE --> [1795814, 1750992, 1894720, 1842225, 1739207]
+Actual NON-DENSE --> [387753, 406721, 312649, 398602, 637643]
+Predicted NON-DENSE --> [332764, 358162, 373215, 423482, 336739]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='q4jtehrqn2' AND T1.price_cat='1'
+
+Actual DENSE --> [91, 66, 31, 19, 4]
+Predicted DENSE --> [1698007, 389326, 312613, 368910, 470291]
+Actual NON-DENSE --> [12, 14, 2, 1, 0]
+Predicted NON-DENSE --> [195439, 210026, 218257, 248704, 199304]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='m1040xexan' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [8, 12, 9, 10, 9]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='d971z9825e' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [581907, 382760, 400121, 481041, 430654]
+Predicted NON-DENSE --> [75872, 84086, 91176, 105979, 79993]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='a290af82884e11e5bdec00163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [446753, 615934, 589279, 360051, 436883]
+Predicted DENSE --> [569755, 684507, 682811, 880671, 769737]
+Actual NON-DENSE --> [3600578, 2799496, 2960367, 2980851, 2766246]
+Predicted NON-DENSE --> [612938, 679705, 655779, 764987, 616228]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='w9fmyd5r0i' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [624146, 465392, 509011, 507512, 493152]
+Predicted NON-DENSE --> [62606, 66694, 69691, 76977, 61329]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='x2fpfbm8rt' AND T1.price_cat='1'
+
+Actual DENSE --> [14433, 26757, 20455, 12877, 23705]
+Predicted DENSE --> [23032, 19135, 27907, 28808, 25643]
+Actual NON-DENSE --> [256292, 212740, 203855, 207299, 210599]
+Predicted NON-DENSE --> [48094, 52118, 52821, 59758, 48399]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='e351de37263311e6af7500163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [514753, 512017, 378145, 234120, 215637]
+Predicted DENSE --> [433154, 409208, 444423, 540434, 357765]
+Actual NON-DENSE --> [2038603, 1536177, 1560929, 1530150, 1474750]
+Predicted NON-DENSE --> [299619, 327768, 336063, 384141, 296375]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='k4werqx13k' AND T1.price_cat='1'
+
+Actual DENSE --> [15615, 37802, 25452, 15808, 23245]
+Predicted DENSE --> [21217, 10625, 28318, 23461, 18614]
+Actual NON-DENSE --> [132002, 110826, 106350, 105623, 107663]
+Predicted NON-DENSE --> [20692, 22611, 22821, 26429, 20743]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='5cd1c663263511e6af7500163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [38044, 48598, 40569, 27108, 24299]
+Predicted DENSE --> [37770, 31513, 38059, 43606, 45790]
+Actual NON-DENSE --> [373072, 306713, 322229, 306985, 295557]
+Predicted NON-DENSE --> [72159, 77895, 82109, 95166, 74663]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='17dd6d8098bf11e5bdec00163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [0, 0, 0, 0, 0]
+Predicted NON-DENSE --> [0, 0, 0, 0, 0]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='d4d7362e879511e5bdec00163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [0, 0, 0, 0, 0]
+Predicted DENSE --> [0, 0, 0, 0, 0]
+Actual NON-DENSE --> [14450, 11887, 10821, 13354, 10896]
+Predicted NON-DENSE --> [3950, 4307, 4474, 5301, 4154]
+---------------------------------------------------------
+
+        SELECT
+        T1.uckey,
+        T1.price_cat,
+        T1.si,
+        T1.ts,
+        T2.ratio
+        FROM dlpm_03182021_tmp_ts AS T1 INNER JOIN dlpm_03182021_tmp_distribution AS T2
+        ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat
+        WHERE T1.si='15e9ddce941b11e5bdec00163e291137' AND T1.price_cat='1'
+
+Actual DENSE --> [34, 5, 0, 12257, 11238]
+Predicted DENSE --> [24080, 21084, 19717, 18011, 19768]
+Actual NON-DENSE --> [24, 4, 0, 9740, 8856]
+Predicted NON-DENSE --> [8854, 9607, 10067, 11474, 9187]
+---------------------------------------------------------
+
+        
