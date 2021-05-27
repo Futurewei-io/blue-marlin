@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#Preparing the data by filtering reliable si, deleting region ids from uckey, remapping ips and recalculating bucket-ids
+#Preparing the data by filtering reliable si, remapping r, ipl and recalculating bucket-ids
+#This part might be optinal if uckeys have stable slot-id with region data
 if false
 then
     # simple call
     # spark-submit pipeline/main_filter_si_region_bucket.py config.yml
 
-    # cluster customized call
     spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_filter_si_region_bucket.py config.yml
 fi
 
@@ -16,7 +16,6 @@ then
     # simple call
     # spark-submit pipeline/main_ts.py config.yml   
     
-    # cluster customized call
     spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_ts.py config.yml
 fi
 
@@ -73,4 +72,10 @@ fi
 if false
 then
     python trainer/save_model.py --data_dir=data/vars --ckpt_dir=data/cpt/s32 --saved_dir=data/vars --model_version=1
+fi
+
+# Saving the model in elasticsearch
+if false
+then
+    python pipeline/pickle_to_es.py config.yml
 fi
