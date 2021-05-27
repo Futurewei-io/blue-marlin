@@ -8,5 +8,5 @@
     d. Recalculate bucket-id
 
 ### 1.6
-1. Add residency and IPL features
-2. Add pipeline and product tags to config file. The whole set of tmp tables are named by product_tag and pipeline_tag. The user does not need to review the name of those tables anymore. 
+1. Add region and IPL features
+2. Add TAG to config file. The whole set of tmp tables are named by product_tag and pipeline_tag. The user does not need to review the name of those tables anymore. 

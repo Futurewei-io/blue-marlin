@@ -14,27 +14,42 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+
+import json
+import pickle
+from datetime import date
 import yaml
 import argparse
 
-
-def config_to_dict(config_file):
-    with open(config_file, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
-    return cfg
+from elasticsearch import Elasticsearch, helpers
 
 
-def extract_attribute(config_file, *attrs):
-    result = config_to_dict(config_file)
-    for attr in attrs:
-        result = result[attr]
+today = date.today()
+
+def stat_generator(cfg):
+    result = {'_index': es_index, '_type': es_type, '_source': {'date': today, 'model': {
+        'name': cfg['trainer']['name'], 'version': cfg['save_model']['model_version'],'duration':cfg['tfrecorder_reader']['duration'], 'train_window': cfg['save_model']['train_window'], 'predict_window': cfg['trainer']['predict_window']}, 'stats': pk['stats']}}
     return result
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='Prepare data')
+
     parser.add_argument('config_file')
-    parser.add_argument('root')
-    parser.add_argument('child')
     args = parser.parse_args()
-    print(extract_attribute(args.config_file, args.root, args.child))
+
+    with open(args.config_file, 'r') as ymlfile:
+        cfg = yaml.load(ymlfile)
+
+    with open(cfg['pipeline']['tf_statistics_path'], 'rb') as handle:
+        pk = pickle.load(handle)
+
+    es_host = cfg['elastic_search']['es_host']
+    es_port = cfg['elastic_search']['es_port']
+    es_index = cfg['elastic_search']['es_index']
+    es_type = cfg['elastic_search']['es_type']
+
+    es = Elasticsearch([{'host': es_host, 'port': es_port}])
+    action = [stat_generator(cfg)]
+    helpers.bulk(es, action)
