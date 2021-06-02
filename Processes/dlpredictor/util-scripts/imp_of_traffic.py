@@ -24,7 +24,6 @@ Run like this.
 # spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G imp_of_traffic.py
 """
 
-
 import sys
 from datetime import datetime, timedelta
 import yaml
