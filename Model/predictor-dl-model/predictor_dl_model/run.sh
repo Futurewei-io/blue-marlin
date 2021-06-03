@@ -1,7 +1,15 @@
 #!/bin/bash
 
+if true
+then
+    # simple call
+    # spark-submit pipeline/show_config.py config.yml
+
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/show_config.py config.yml
+fi
+
 #Preparing the data by filtering reliable si, remapping r, ipl and recalculating bucket-ids
-#This part might be optinal if uckeys have stable slot-id with region data
+#This part might be optional if uckeys have stable slot-id with region data
 if false
 then
     # simple call

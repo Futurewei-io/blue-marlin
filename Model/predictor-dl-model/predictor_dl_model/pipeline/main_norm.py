@@ -76,7 +76,7 @@ def normalize(mlist):
 
 def run(sc, hive_context, columns, input_table_name, output_table_name, yesterday, prepare_past_days, holidays,
         model_info,
-        model_table):
+        model_table, new_si_list):
     day = datetime.strptime(yesterday, '%Y-%m-%d')
     day_list = []
     for _ in range(0, prepare_past_days):
@@ -151,6 +151,7 @@ def run(sc, hive_context, columns, input_table_name, output_table_name, yesterda
 
     tsf['stats'] = model_stats
     tsf['model_info'] = model_info
+    tsf['si_list'] = new_si_list
 
     df = df.withColumn('ts_n', udf(lambda ts: [math.log(
         count + 1) for count in ts], ArrayType(FloatType()))(df.ts))
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg_log['level'])
 
-    input_table_name = cfg_pipeline['uckey_clustring']['output_table_name']
+    input_table_name = cfg_pipeline['uckey_clustering']['output_table_name']
     columns = cfg_pipeline['normalization']['columns']
     output_table_name = cfg_pipeline['normalization']['output_table_name']
 
@@ -193,7 +194,7 @@ if __name__ == "__main__":
     prepare_past_days = cfg_pipeline['time_series']['prepare_past_days']
     holidays = cfg_pipeline['normalization']['holidays']
     tf_statistics_path = cfg_pipeline['tfrecords']['tf_statistics_path']
-
+    new_si_list = cfg_pipeline['filter']['new_si_list']
     model_table = cfg['save_model']['table']
 
     model_info = {
@@ -207,6 +208,6 @@ if __name__ == "__main__":
     run(sc=sc, hive_context=hive_context, columns=columns,
         input_table_name=input_table_name, output_table_name=output_table_name,
         yesterday=yesterday, prepare_past_days=prepare_past_days, holidays=holidays,
-        model_info=model_info, model_table=model_table)
+        model_info=model_info, model_table=model_table, new_si_list=new_si_list)
 
     sc.stop()

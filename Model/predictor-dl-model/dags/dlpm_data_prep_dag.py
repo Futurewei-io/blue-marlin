@@ -55,6 +55,7 @@ def sparkOperator(
         **kwargs
     )
 
+show_config = sparkOperator('show_config.py', 'show_config')
 
 main_filter_si_region_bucket = sparkOperator('main_filter_si_region_bucket.py', 'main_filter_si_region_bucket')
 
@@ -75,5 +76,5 @@ main_tfrecords = sparkOperator('main_tfrecords.py',
                                jars='/home/airflow/airflow-apps/predictor-dl-model/predictor_dl_model/spark-tensorflow-connector_2.11-1.15.0.jar')
 
 
-main_filter_si_region_bucket >> main_ts >> main_cluster >> main_distribution >> main_norm >> main_tfrecords
+show_config >> main_filter_si_region_bucket >> main_ts >> main_cluster >> main_distribution >> main_norm >> main_tfrecords
 
