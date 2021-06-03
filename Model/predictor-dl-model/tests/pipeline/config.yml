@@ -11,7 +11,7 @@ pipeline:
     bucket_size: 10 # maximum number of buckets to process starting from 0
     bucket_step: 1 # size of bucket batch that is processed in one iteration
     output_table_name: 'unittest_pipeline_ts_10122020' # name of the hive table that keeps cleansed and normalized data before writing it into tfrecords, over-writes the existing table
-  uckey_clustring: # This is done on whole data, not slicing on buckets
+  uckey_clustering: # This is done on whole data, not slicing on buckets
     pre_cluster_table_name: 'unittest_pipeline_pre_cluster_10122020'
     create_pre_cluster_table: True
     output_table_name: 'unittest_pipeline_cluster_10122020'

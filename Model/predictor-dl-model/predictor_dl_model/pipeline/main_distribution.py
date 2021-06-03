@@ -94,8 +94,8 @@ if __name__ == '__main__':
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg_log['level'])
 
-    pre_cluster_table_name = cfg['uckey_clustring']['pre_cluster_table_name']
-    cluster_table_name = cfg['uckey_clustring']['output_table_name']
+    pre_cluster_table_name = cfg['uckey_clustering']['pre_cluster_table_name']
+    cluster_table_name = cfg['uckey_clustering']['output_table_name']
     output_table_name = cfg['distribution']['output_table_name']
     output_detail_table_name = cfg['distribution']['output_detail_table_name']
 

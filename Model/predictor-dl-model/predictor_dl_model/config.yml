@@ -1,12 +1,14 @@
 product_tag: 'dlpm'
-pipeline_tag: '05142021_1500'
+pipeline_tag: '05182021_1500'
 factdata_table_name: 'factdata_hq_09222020'
 
 log:
   level: 'WARN' # log level for spark and app
 
 pipeline:
+  config_table: '{product_tag}_{pipeline_tag}_config'
   filter: # This is for data filtering- si and region
+    percentile: 10     # This is for filtering traffic less than 1/10 of average traffic
     region_mapping_table: 'region_mapping'
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_area_map'
     init_start_bucket: 0
@@ -56,6 +58,7 @@ pipeline:
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_cluster'
     cluster_size:
       number_of_virtual_clusters: 1000
+      cluster_dense_num_ratio_cap: 0.01
       datapoints_min_th: 0.12 #was [0.15]
       datapoints_th_uckeys: 0.12
       datapoints_th_clusters: 0.2
