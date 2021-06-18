@@ -79,7 +79,7 @@ def query_predictions_traffic(cfg, starting_day, ending_day, uckeys):
             "aggs": {
                 "day": {
                     "sum": {
-                        "field": "ucdoc.predictions.{}.hours.total".format(day.strftime('%Y-%m-%d'))
+                        "field": "ucdoc.predictions.{}.hours.h1".format(day.strftime('%Y-%m-%d'))
                     }
                 }
             }
@@ -169,8 +169,8 @@ def run(sc, hive_context, cfg, traffic, target_days):
         T2.ratio 
         FROM {} AS T1 INNER JOIN {} AS T2 
         ON T1.uckey=T2.uckey AND T1.price_cat=T2.price_cat 
-        WHERE T1.si='{}'
-        """.format(cfg['pre_cluster_table'], cfg['dist_table'],  traffic['si'])
+        WHERE T1.si='{}' AND T1.price_cat='{}'
+        """.format(cfg['pre_cluster_table'], cfg['dist_table'],  traffic['si'], traffic['price_cat'])
 
     print(command)
 
@@ -178,30 +178,33 @@ def run(sc, hive_context, cfg, traffic, target_days):
     df.cache()
 
     # The last days of the ts are ['2020-05-27', '2020-05-28', '2020-05-29', '2020-05-30', '2020-05-31'] which are real values
-    uckeys = df.collect()
+    dense_uckeys = df.where('ratio=1').collect()
+    non_dense_uckeys = df.where('ratio!=1').collect()
 
     # Actual Value
-    real_traffic = {}
-    shift = len(target_days)
+    real_traffic_dense = {}
+    real_traffic_non_dense = {}
 
-    for item in uckeys:
-        ts = item['ts'][-shift:]
+    for item in dense_uckeys:
+        ts = item['ts'][-5:]
         uckey = item['uckey']
-        if uckey not in real_traffic:
-            real_traffic[uckey] = ts
-        else:
-            old_ts = real_traffic[uckey]
-            new_ts = []
-            for i in range(len(ts)):
-                v = ts[i] + old_ts[i]
-                new_ts.append(v)
-            real_traffic[uckey] = new_ts
+        price_cat = item['price_cat']
+        real_traffic_dense[(uckey, price_cat)] = ts
+
+    for item in non_dense_uckeys:
+        ts = item['ts'][-5:]
+        uckey = item['uckey']
+        price_cat = item['price_cat']
+        real_traffic_non_dense[(uckey, price_cat)] = ts
 
     # Predicted Value
 
-    predicted_traffic = {}
+    predicted_traffic_dense = {}
+    predicted_traffic_non_dense = {}
 
-    for uckey, ts in real_traffic.items():
+    for key, ts in real_traffic_dense.items():
+        uckey = key[0]
+        price_cat = key[1]
         i = -1
         pts = []
         for day in target_days:
@@ -213,22 +216,44 @@ def run(sc, hive_context, cfg, traffic, target_days):
                 v = query_predictions_traffic(cfg=cfg, starting_day=day, ending_day=day, uckeys=[uckey])
                 pts.append(v)
 
-        predicted_traffic[uckey] = pts
+        predicted_traffic_dense[key] = pts
 
-    real_traffic = agg_uckeys(real_traffic, target_days)
-    predicted_traffic = agg_uckeys(predicted_traffic, target_days)
+    for key, ts in real_traffic_non_dense.items():
+        uckey = key[0]
+        price_cat = key[1]
+        i = -1
+        pts = []
+        for day in target_days:
+            i += 1
+            if ts[i] == 0:
+                # Here is for masking, if actual value is 0 then predicted value is masked (not be considiered in error calculation)
+                pts.append(0)
+            else:
+                v = query_predictions_traffic(cfg=cfg, starting_day=day, ending_day=day, uckeys=[uckey])
+                pts.append(v)
 
-    error = error_m(real_traffic, predicted_traffic)[0]
+        predicted_traffic_non_dense[key] = pts
+
+    real_traffic_dense = agg_uckeys(real_traffic_dense, target_days)
+    predicted_traffic_dense = agg_uckeys(predicted_traffic_dense, target_days)
+    real_traffic_non_dense = agg_uckeys(real_traffic_non_dense, target_days)
+    predicted_traffic_non_dense = agg_uckeys(predicted_traffic_non_dense, target_days)
+
+    dense_error = error_m(real_traffic_dense, predicted_traffic_dense)[0]
+    non_dense_error = error_m(real_traffic_non_dense, predicted_traffic_non_dense)[0]
 
     traffic_json = json.dumps(traffic)
     cfg_json = json.dumps(cfg)
 
     df = hive_context.createDataFrame([(traffic_json,
                                         cfg_json,
-                                        error,
-                                        real_traffic,
-                                        predicted_traffic
-                                        )], ["Traffic", "Config", "Error", "Actual", "Predicted"])
+                                        dense_error,
+                                        non_dense_error,
+                                        real_traffic_dense,
+                                        predicted_traffic_dense,
+                                        real_traffic_non_dense,
+                                        predicted_traffic_non_dense
+                                        )], ["Traffic", "Config", "Dense-Error", "Non-Dense-Error", "Actual-Dense", "Predicted-Dense", "Actual-NON-Dense", "Predicted-NON-Dense"])
 
     __save_as_table(df, cfg['report_table'], hive_context)
 
@@ -251,19 +276,22 @@ if __name__ == "__main__":
 
     cfg = {
         'log_level': 'WARN',
-        'pre_cluster_table': 'dlpm_06092021_1500_tmp_pre_cluster',
-        'dist_table': 'dlpm_06092021_1500_tmp_distribution',
+        'pre_cluster_table': 'dlpm_06012021_1500_tmp_pre_cluster',
+        'dist_table': 'dlpm_06012021_1500_tmp_distribution',
         'uckey_attrs': ['m', 'si', 't', 'g', 'a', 'pm', 'r', 'ipl'],
         'es_host': '10.213.37.41',
         'es_port': '9200',
-        'es_predictions_index': 'dlpredictor_06092021_1500_predictions',
+        'es_predictions_index': 'dlpredictor_05062021_predictions',
         'es_predictions_type': 'doc',
-        'report_table': 'si_only_traffic_prediction_check'
+        'report_table': 'si_traffic_prediction_check'
     }
 
-    target_days = sorted(['2020-06-21', '2020-06-22', '2020-06-23', '2020-06-24', '2020-06-25', '2020-06-26', '2020-06-27', '2020-06-28', '2020-06-29', '2020-06-30'])
+    target_days = sorted(['2020-05-27', '2020-05-28', '2020-05-29', '2020-05-30', '2020-05-31'])
 
-    traffic = {'si': 'd4d7362e879511e5bdec00163e291137', 'version': 2}
+    # This is match with es query.Don't change it.
+    PRICE_CAT = '1'
+
+    traffic = {'si': 'd4d7362e879511e5bdec00163e291137', 'price_cat': PRICE_CAT}
 
     sis = [
         '66bcd2720e5011e79bc8fa163e05184e',

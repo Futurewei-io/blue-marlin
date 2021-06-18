@@ -85,7 +85,9 @@ def predict_daily_uckey(days, serving_url, forecaster, model_stats, columns):
                         break
             model_input_ts.append(imp)
 
-        model_input_ts = replace_with_median(model_input_ts)
+        # remove science 06/21/2021
+        # model_input_ts = replace_with_median(model_input_ts)
+
         ts_n = normalize_ts(model_input_ts)
         ucdoc_attribute_map['ts_n'] = ts_n
 

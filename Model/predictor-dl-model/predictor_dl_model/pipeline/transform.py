@@ -118,7 +118,7 @@ def replace_nan_with_zero(df):
     def _helper(ts):
         result = []
         for i in ts:
-            if math.isnan(i):
+            if i is None or math.isnan(i):
                 result.append(0)
             else:
                 result.append(i)

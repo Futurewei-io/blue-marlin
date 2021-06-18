@@ -141,7 +141,16 @@ def remove_weak_uckeys(df, popularity_th, datapoints_min_th):
     return df
 
 
-def run(hive_context, cluster_size_cfg, input_table_name, 
+def denoise(df):
+    df = df.withColumn('nonzero_p', udf(
+        lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
+            [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
+    df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / 10.0) else 0 for i in ts],
+                                 ArrayType(IntegerType()))(df.ts, df.nonzero_p))
+    return df
+
+
+def run(hive_context, cluster_size_cfg, input_table_name,
         pre_cluster_table_name, output_table_name, percentile, create_pre_cluster_table):
 
     datapoints_th_uckeys = cluster_size_cfg['datapoints_th_uckeys']
@@ -155,25 +164,32 @@ def run(hive_context, cluster_size_cfg, input_table_name,
 
     # Read factdata table
     command = """
-    select ts, price_cat, uckey, a, g, t, si, r, ipl from {}
+    SELECT ts, price_cat, uckey, a, g, t, si, r, ipl FROM {}
     """.format(input_table_name)
 
     # DataFrame[uckey: string, price_cat: string, ts: array<int>, a: string, g: string, t: string, si: string, r: string]
     df = hive_context.sql(command)
 
     # add imp
-    df = df.withColumn('imp', udf(lambda ts: sum(
-        [_ for _ in ts if _]), IntegerType())(df.ts))
+    df = df.withColumn('imp', udf(lambda ts: sum([_ for _ in ts if _]), IntegerType())(df.ts))
 
     # add popularity = mean
-    df = df.withColumn('p', udf(lambda ts: sum(
-        [_ for _ in ts if _])/(1.0*len(ts)), FloatType())(df.ts))
+    df = df.withColumn('p', udf(lambda ts: sum([_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
+
+    # add normalized popularity = mean_n
+    df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
 
     # remove weak uckeys
     df = remove_weak_uckeys(df, popularity_th, datapoints_min_th)
 
+    # replace nan and zero with median
+    df = transform.replace_nan_with_zero(df)
+
+    # denoising uckeys: remove some datapoints of the uckey
+    df = denoise(df)
+
     # add normalized popularity = mean_n
-    df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
+    # df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
 
     df = df.withColumn('sparse', udf(
         is_spare(datapoints_th_uckeys, popularity_norm), BooleanType())(df.p_n, df.ts))
@@ -201,7 +217,7 @@ def run(hive_context, cluster_size_cfg, input_table_name,
 
     # Create a tie breaker column for assigning sparse uckeys from the same si
     # to different virtual clusters.
-    df_sparse = df_sparse.withColumn('tie_breaker', udf(lambda num_clusters: random.randint(0, num_clusters-1))(df_sparse.si_num_cluster))
+    df_sparse = df_sparse.withColumn('tie_breaker', udf(lambda num_clusters: random.randint(0, num_clusters - 1))(df_sparse.si_num_cluster))
 
     # Assign a cluster number to the sparse uckeys based on si and the tie breaker.
     df_sparse = df_sparse.withColumn('cn', dense_rank().over(Window.orderBy('si', 'tie_breaker')))
@@ -221,21 +237,15 @@ def run(hive_context, cluster_size_cfg, input_table_name,
         __save_as_table(df, pre_cluster_table_name, hive_context, True)
 
     # Change the uckey for sparse uckeys their cluster number.
-    df = df.withColumn('uckey', udf(lambda uckey, cn, sparse: str(
-        cn) if sparse else uckey, StringType())(df.uckey, df.cn, df.sparse))
+    df = df.withColumn('uckey', udf(lambda uckey, cn, sparse: str(cn) if sparse else uckey, StringType())(df.uckey, df.cn, df.sparse))
 
     df = agg_on_uckey_price_cat(df)
 
-    # replace nan and zero with median
-    df = transform.replace_nan_with_zero(df)
-
     # add imp
-    df = df.withColumn('imp', udf(lambda ts: sum(
-        [_ for _ in ts if _]), IntegerType())(df.ts))
+    df = df.withColumn('imp', udf(lambda ts: sum([_ for _ in ts if _]), IntegerType())(df.ts))
 
     # add popularity = mean
-    df = df.withColumn('p', udf(lambda ts: sum(
-        [_ for _ in ts if _])/(1.0*len(ts)), FloatType())(df.ts))
+    df = df.withColumn('p', udf(lambda ts: sum([_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
 
     # add normalized popularity = mean_n
     df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
@@ -244,8 +254,8 @@ def run(hive_context, cluster_size_cfg, input_table_name,
                                                     sys.maxsize-1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
     # mean/10 for now, mean = mean of (non zero ts)
-    df = df.withColumn('nonzero_p', udf(lambda ts: 1.0*sum([_ for _ in ts if _ != 0])/(len([_ for _ in ts if _ != 0])), FloatType())(df.ts))
-    
+    df = df.withColumn('nonzero_p', udf(lambda ts: 1.0 * sum([_ for _ in ts if _ != 0])/(len([_ for _ in ts if _ != 0])), FloatType())(df.ts))
+
     df = df.withColumn('ts', udf(lambda ts, nonzero_p: [_ if _ > (nonzero_p/percentile) else 0 for _ in ts], ArrayType(IntegerType()))(df.ts, df.nonzero_p))
 
     __save_as_table(df, output_table_name, hive_context, True)
@@ -281,7 +291,7 @@ if __name__ == "__main__":
         input_table_name=input_table_name,
         pre_cluster_table_name=pre_cluster_table_name,
         output_table_name=output_table_name,
-        percentile=percentile, 
+        percentile=percentile,
         create_pre_cluster_table=create_pre_cluster_table)
 
     sc.stop()

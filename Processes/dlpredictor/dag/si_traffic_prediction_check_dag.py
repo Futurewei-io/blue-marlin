@@ -22,7 +22,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 
 default_args = {
-    'owner': 'dlpredictor',
+    'owner': 'si_traffic_orediction_check',
     'depends_on_past': False,
     'start_date': dt.datetime(2021, 3, 15),
     'retries': 0,
@@ -30,7 +30,7 @@ default_args = {
 }
 
 dag = DAG(
-    'dlpredictor',
+    'si_traffic_orediction_check',
     default_args=default_args,
     schedule_interval=None,
 
@@ -44,8 +44,8 @@ def sparkOperator(
         **kwargs
 ):
         return SparkSubmitOperator(
-                application='/home/airflow/airflow-apps/dlpredictor/dlpredictor/{}'.format(file),
-                application_args=['/home/airflow/airflow-apps/dlpredictor/conf/config.yml'],
+                application='/home/airflow/airflow-apps/dlpredictor/{}'.format(file),
+                application_args=[],
                 conn_id='spark_default',
                 executor_memory='32G',
                 conf={'spark.driver.maxResultSize': '8g'},
@@ -58,18 +58,8 @@ def sparkOperator(
         )
 
 
-show_config = sparkOperator('show_config.py', 'show_config')
+si_traffic_orediction_check = sparkOperator('tests/si_traffic_prediction_ckeck/si_traffic_prediction_check.py',
+        'si_traffic_orediction_check',
+	py_files='/home/airflow/airflow-apps/dlpredictor/dist/dlpredictor-1.6.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/imscommon-2.0.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/predictor_dl_model-1.6.0-py2.7.egg')
 
-dlpredictor = sparkOperator('main_spark_es.py',
-        'dlpredictor',
-	py_files='/home/airflow/airflow-apps/dlpredictor/dist/dlpredictor-1.6.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/imscommon-2.0.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/predictor_dl_model-1.6.0-py2.7.egg',
-	jars='/home/airflow/airflow-apps/dlpredictor/lib/elasticsearch-hadoop-6.8.0.jar')
-
-es_push = sparkOperator('main_es_push.py',
-        'es_push',
-        3,
-        3,
-	py_files='/home/airflow/airflow-apps/dlpredictor/dist/dlpredictor-1.6.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/imscommon-2.0.0-py2.7.egg,/home/airflow/airflow-apps/dlpredictor/lib/predictor_dl_model-1.6.0-py2.7.egg',
-	jars='/home/airflow/airflow-apps/dlpredictor/lib/elasticsearch-hadoop-6.8.0.jar')
-
-show_config >> dlpredictor >> es_push
+si_traffic_orediction_check
