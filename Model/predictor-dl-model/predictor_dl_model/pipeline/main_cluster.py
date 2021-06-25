@@ -141,11 +141,12 @@ def remove_weak_uckeys(df, popularity_th, datapoints_min_th):
     return df
 
 
-def denoise(df):
+def denoise(df, percentile):
     df = df.withColumn('nonzero_p', udf(
         lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
             [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
-    df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / 10.0) else 0 for i in ts],
+    
+    df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / percentile) else 0 for i in ts],
                                  ArrayType(IntegerType()))(df.ts, df.nonzero_p))
     return df
 
@@ -182,11 +183,8 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     # remove weak uckeys
     df = remove_weak_uckeys(df, popularity_th, datapoints_min_th)
 
-    # replace nan and zero with median
+    # replace nan with
     df = transform.replace_nan_with_zero(df)
-
-    # denoising uckeys: remove some datapoints of the uckey
-    df = denoise(df)
 
     # add normalized popularity = mean_n
     # df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
@@ -250,13 +248,10 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     # add normalized popularity = mean_n
     df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
 
-    df = df.filter(udf(lambda p_n, ts: not is_spare(datapoints_th_clusters, -
-                                                    sys.maxsize-1)(p_n, ts), BooleanType())(df.p_n, df.ts))
+    df = df.filter(udf(lambda p_n, ts: not is_spare(datapoints_th_clusters, -sys.maxsize - 1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
-    # mean/10 for now, mean = mean of (non zero ts)
-    df = df.withColumn('nonzero_p', udf(lambda ts: 1.0 * sum([_ for _ in ts if _ != 0])/(len([_ for _ in ts if _ != 0])), FloatType())(df.ts))
-
-    df = df.withColumn('ts', udf(lambda ts, nonzero_p: [_ if _ > (nonzero_p/percentile) else 0 for _ in ts], ArrayType(IntegerType()))(df.ts, df.nonzero_p))
+    # denoising uckeys: remove some datapoints of the uckey
+    df = denoise(df, percentile)
 
     __save_as_table(df, output_table_name, hive_context, True)
 

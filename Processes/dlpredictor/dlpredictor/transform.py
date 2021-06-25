@@ -61,6 +61,14 @@ def normalize_ts(ts):
 
 def predict_daily_uckey(days, serving_url, forecaster, model_stats, columns):
 
+    def _denoise(ts):
+        non_zero_ts = [_ for _ in ts if _ != 0]
+        nonzero_p = 0.0
+        if len(non_zero_ts) > 0:
+            nonzero_p = 1.0 * sum(ts) / len(non_zero_ts)
+
+        return [i if i > (nonzero_p / 10.0) else 0 for i in ts]
+
     def _helper(cols):
         day_list = days[:]
         ucdoc_attribute_map = {}
@@ -87,6 +95,8 @@ def predict_daily_uckey(days, serving_url, forecaster, model_stats, columns):
 
         # remove science 06/21/2021
         # model_input_ts = replace_with_median(model_input_ts)
+
+        model_input_ts = _denoise(model_input_ts)
 
         ts_n = normalize_ts(model_input_ts)
         ucdoc_attribute_map['ts_n'] = ts_n
