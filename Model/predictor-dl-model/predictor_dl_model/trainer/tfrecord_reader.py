@@ -182,7 +182,7 @@ def run(cfg):
         quarter_autocorr = numpy.ones((x[0].size,), dtype=float)
         page_indx = list(x[0])
 
-        fill_isolated_zeros(x[21])
+        # fill_isolated_zeros(x[21])
         tensors = dict(
             hits=pd.DataFrame(x[21], index=page_indx, columns=date_list),
             lagged_ix=lagged_ix,

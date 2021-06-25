@@ -1,5 +1,5 @@
 product_tag: 'dlpm'
-pipeline_tag: '05182021_1500'
+pipeline_tag: '05182021_1500' # IMPORTANT: The pipeline tag has to be changed before each run to prevent record duplication.
 factdata_table_name: 'factdata_hq_09222020'
 
 log:
@@ -61,7 +61,7 @@ pipeline:
       cluster_dense_num_ratio_cap: 0.01
       datapoints_min_th: 0.12 #was [0.15]
       datapoints_th_uckeys: 0.12
-      datapoints_th_clusters: 0.2
+      datapoints_th_clusters: 0.5
       popularity_norm: 0.01
       popularity_th: 4
       median_popularity_of_dense: 1856.2833251953125 # median imp of sparse=False, calculate once
