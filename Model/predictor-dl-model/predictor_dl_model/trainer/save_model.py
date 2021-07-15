@@ -52,7 +52,7 @@ tf.app.flags.DEFINE_string('saved_dir', '/tmp/faezeh', 'directory to save genera
 tf.app.flags.DEFINE_string('ckpt_dir', default='data/cpt/s32', help='checkpint directory')
 tf.app.flags.DEFINE_string('data_dir', 'data/vars', 'input data directory')
 tf.app.flags.DEFINE_boolean('verbose', False, 'verbose or not in creating input data')
-tf.app.flags.DEFINE_boolean('asgd', False, 'turn asgd on and off')
+tf.app.flags.DEFINE_boolean('asgd', True, 'turn asgd on and off')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -76,7 +76,7 @@ def main(_):
                        batch_size=FLAGS.batch_size, n_epoch=1, verbose=False,
                        train_completeness_threshold=0.01, predict_window=FLAGS.predict_window,
                        predict_completeness_threshold=0.0, train_window=FLAGS.train_window,
-                       back_offset=FLAGS.predict_window+1)
+                       back_offset=0)
 
   asgd_decay = 0.99 if FLAGS.asgd else None
 
@@ -90,6 +90,16 @@ def main(_):
               models.append(Model(pipe, build_from_set(FLAGS.hparam_set), is_train=False, seed=1, asgd_decay=asgd_decay, graph_prefix=prefix))
       model = models[FLAGS.target_model]
 
+  if FLAGS.asgd:
+    var_list = model.ema.variables_to_restore()
+    if FLAGS.n_models > 1:
+      prefix = f"m_{target_model}"
+      for var in list(var_list.keys()):
+        if var.endswith('ExponentialMovingAverage') and not var.startswith(prefix):
+          del var_list[var]
+  else:
+    var_list = None
+
   # load checkpoint model from training
   #ckpt_path = FLAGS.ckpt_dir
   print('loading checkpoint model...')
@@ -97,8 +107,11 @@ def main(_):
   #graph = tf.Graph()
   graph = model.predictions.graph
 
-  saver = tf.train.Saver(name='deploy_saver', var_list=None)
+  init = tf.global_variables_initializer()
+
+  saver = tf.train.Saver(name='deploy_saver', var_list=var_list)
   with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))) as sess:
+    sess.run(init)
     pipe.load_vars(sess)
     pipe.init_iterator(sess)
     saver.restore(sess, ckpt_file)
@@ -110,17 +123,17 @@ def main(_):
       shutil.rmtree(export_path)
     builder = tf.saved_model.builder.SavedModelBuilder(export_path)
 
-    true_x = tf.saved_model.utils.build_tensor_info(pipe.true_x) # model.inp.true_x
-    time_x = tf.saved_model.utils.build_tensor_info(pipe.time_x) # model.inp.time_x
-    norm_x = tf.saved_model.utils.build_tensor_info(pipe.norm_x) # model.inp.norm_x
-    lagged_x = tf.saved_model.utils.build_tensor_info(pipe.lagged_x) # model.inp.lagged_x
-    true_y = tf.saved_model.utils.build_tensor_info(pipe.true_y) # model.inp.true_y
-    time_y = tf.saved_model.utils.build_tensor_info(pipe.time_y) # model.inp.time_y
-    norm_y = tf.saved_model.utils.build_tensor_info(pipe.norm_y) # model.inp.norm_y
-    norm_mean = tf.saved_model.utils.build_tensor_info(pipe.norm_mean) # model.inp.norm_mean
-    norm_std = tf.saved_model.utils.build_tensor_info(pipe.norm_std) # model.inp.norm_std
-    pg_features = tf.saved_model.utils.build_tensor_info(pipe.ucdoc_features) # model.inp.ucdoc_features
-    page_ix = tf.saved_model.utils.build_tensor_info(pipe.page_ix) # model.inp.page_ix
+    true_x = tf.saved_model.utils.build_tensor_info(model.inp.true_x) # pipe.true_x
+    time_x = tf.saved_model.utils.build_tensor_info(model.inp.time_x) # pipe.time_x
+    norm_x = tf.saved_model.utils.build_tensor_info(model.inp.norm_x) # pipe.norm_x
+    lagged_x = tf.saved_model.utils.build_tensor_info(model.inp.lagged_x) # pipe.lagged_x
+    true_y = tf.saved_model.utils.build_tensor_info(model.inp.true_y) # pipe.true_y
+    time_y = tf.saved_model.utils.build_tensor_info(model.inp.time_y) # pipe.time_y
+    norm_y = tf.saved_model.utils.build_tensor_info(model.inp.norm_y) # pipe.norm_y
+    norm_mean = tf.saved_model.utils.build_tensor_info(model.inp.norm_mean) # pipe.norm_mean
+    norm_std = tf.saved_model.utils.build_tensor_info(model.inp.norm_std) # pipe.norm_std
+    pg_features = tf.saved_model.utils.build_tensor_info(model.inp.ucdoc_features) # pipe.ucdoc_features
+    page_ix = tf.saved_model.utils.build_tensor_info(model.inp.page_ix) # pipe.page_ix
 
     #pred = tf.saved_model.utils.build_tensor_info(graph.get_operation_by_name('m_0/add').outputs[0])
     pred = tf.saved_model.utils.build_tensor_info(model.predictions)
@@ -141,7 +154,7 @@ def main(_):
           "pageix": page_ix,
         },
         outputs={
-          "pred": pred
+          "predictions": pred
         },
         method_name="tensorflow/serving/predict"))
 
