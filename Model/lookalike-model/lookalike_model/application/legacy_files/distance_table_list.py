@@ -21,6 +21,21 @@ from pyspark.sql.types import FloatType, StringType, StructType, StructField, Ar
 import argparse
 from pyspark.sql.functions import udf
 import time
+import math
+
+'''
+spark-submit --executor-memory 16G --driver-memory 24G  --num-executors 16 --executor-cores 5 --master yarn --conf spark.driver.maxResultSize=8g distance_table_list.py config.yml
+'''
+
+
+def euclidean(l1):
+    def _euclidean(l2):
+        list = []
+        for item in l1:
+            similarity = 1 - (math.sqrt(sum([(item[i]-l2[i]) ** 2 for i in range(len(item))]))/math.sqrt(len(item)))
+            list.append(similarity)
+        return list
+    return _euclidean
 
 
 def dot(l1):
@@ -33,9 +48,11 @@ def dot(l1):
     return _dot
 
 
-
 def ux(l1):
-    _udf_similarity = udf(dot(l1), ArrayType(FloatType()) )
+    if alg == "euclidean":
+        _udf_similarity = udf(euclidean(l1), ArrayType(FloatType()))
+    if alg =="dot":
+        _udf_similarity = udf(dot(l1), ArrayType(FloatType()))
     return _udf_similarity
 
 
@@ -65,8 +82,9 @@ def _mean(l):
 udf_mean = udf(_mean, FloatType())
 
 def run(hive_context, cfg):
-    # load dataframes
-    lookalike_score_table_norm = cfg['output']['did_score_table_norm']
+
+    ## load dataframes
+    lookalike_score_table_norm = cfg['output']['score_norm_table']
     keywords_table = cfg["input"]["keywords_table"]
     seeduser_table = cfg["input"]["seeduser_table"]
     lookalike_similarity_table = cfg["output"]["similarity_table"]
@@ -78,7 +96,10 @@ def run(hive_context, cfg):
 
 
     #### creating a tuple of did and kws for seed users
-    df = df.withColumn('kws_norm_list', udf_tolist(col('kws_norm')))
+    if alg == "dot":
+        df = df.withColumn('kws_norm_list', udf_tolist(col('kws_norm')))
+    if alg == "euclidean":
+        df = df.withColumn('kws_norm_list', udf_tolist(col('kws')))
     df_seed_user = df_seed_user.join(df.select('did','kws_norm_list'), on=['did'], how='left')
     seed_user_list = df_seed_user.select('did', 'kws_norm_list').collect()
 
@@ -115,6 +136,8 @@ if __name__ == "__main__":
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
 
+    ## select similarity algorithm
+    alg = cfg["input"]["alg"]
     run(hive_context=hive_context, cfg=cfg)
     sc.stop()
     end = time.time()
