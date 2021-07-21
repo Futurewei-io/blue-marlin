@@ -26,6 +26,15 @@ import json
 import argparse
 from math import sqrt
 
+'''
+This process generates the score-norm-table with the following format.
+
+DataFrame[age: int, gender: int, did: string, did_index: bigint, 
+interval_starting_time: array<string>, interval_keywords: array<string>, 
+kwi: array<string>, kwi_show_counts: array<string>, kwi_click_counts: array<string>, 
+did_bucket: string, kws: map<string,float>, kws_norm: map<string,float>]
+
+'''
 
 
 def flatten(lst):
@@ -69,12 +78,11 @@ def predict(serving_url, record, length, new_keyword):
     return predictions
 
 
-
 def gen_mappings_media(hive_context, cfg):
     # this function generates mappings between the media category and the slots.
-    media_category_list = cfg["mapping"]["new_slot_id_media_category_list"]
+    media_category_list = cfg['score_generator']["mapping"]["new_slot_id_media_category_list"]
     media_category_set = set(media_category_list)
-    slot_id_list = cfg["mapping"]["new_slot_id_list"]
+    slot_id_list = cfg['score_generator']["mapping"]["new_slot_id_list"]
     # 1 vs 1: slot_id : media_category
     media_slot_mapping = dict()
     for media_category in media_category_set:
@@ -90,6 +98,7 @@ def gen_mappings_media(hive_context, cfg):
     df = hive_context.createDataFrame(media_slot_mapping_rows, schema)
     return df
 
+
 def normalize(x):
     c = 0
     for key, value in x.items():
@@ -99,6 +108,7 @@ def normalize(x):
     for keyword, value in x.items():
         result[keyword] = value / C
     return result
+
 
 udf_normalize = udf(normalize, MapType(StringType(), FloatType()))
 
@@ -111,8 +121,6 @@ class CTRScoreGenerator:
         self.din_model_length = din_model_length
         self.df_did_loaded = None
         self.keyword_index_list, self.keyword_list = self.get_keywords()
-
-
 
     def get_keywords(self):
         keyword_index_list, keyword_list = list(), list()
@@ -143,22 +151,16 @@ class CTRScoreGenerator:
 
                 return did_kw_scores
 
-
             return __helper
 
         self.df_did_loaded = self.df_did.withColumn('kws',
-                                                            udf(predict_udf(din_model_length=self.din_model_length,
-                                                                            din_model_tf_serving_url=self.din_model_tf_serving_url,
-                                                                            keyword_index_list=self.keyword_index_list,
-                                                                            keyword_list=self.keyword_list),
-                                                                MapType(StringType(), FloatType()))
-                                                            (col('did_index'), col('kwi_show_counts'),
-                                                             col('age'), col('gender')))
-
-
-
-
-
+                                                    udf(predict_udf(din_model_length=self.din_model_length,
+                                                                    din_model_tf_serving_url=self.din_model_tf_serving_url,
+                                                                    keyword_index_list=self.keyword_index_list,
+                                                                    keyword_list=self.keyword_list),
+                                                        MapType(StringType(), FloatType()))
+                                                    (col('did_index'), col('kwi_show_counts'),
+                                                     col('age'), col('gender')))
 
 
 if __name__ == "__main__":
@@ -168,23 +170,25 @@ if __name__ == "__main__":
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
 
-
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
 
     # load dataframes
-    did_table, keywords_table, din_tf_serving_url, length = cfg["input"]["did_table"], cfg["input"]["keywords_table"],cfg["input"]["din_model_tf_serving_url"],cfg["input"]["din_model_length"]
+    did_table, keywords_table, din_tf_serving_url, length = cfg['score_generator']["input"]["did_table"],
+    cfg['score_generator']["input"]["keywords_table"],
+    cfg['score_generator']["input"]["din_model_tf_serving_url"],
+    cfg['score_generator']["input"]["din_model_length"]
 
     command = "SELECT * FROM {}"
     df_did = hive_context.sql(command.format(did_table))
     df_keywords = hive_context.sql(command.format(keywords_table))
-    ###### temporary adding to filter based on active keywords
-    df_keywords = df_keywords.filter( (df_keywords.keyword =="video") | (df_keywords.keyword =="shopping") | (df_keywords.keyword == "info") |
-                                      (df_keywords.keyword =="social") | (df_keywords.keyword =="reading") | (df_keywords.keyword =="travel") |
-                                      (df_keywords.keyword =="entertainment") )
-    did_loaded_table = cfg['output']['did_score_table']
-    did_score_table_norm = cfg['output']['did_score_table_norm']
+    # temporary adding to filter based on active keywords
+    df_keywords = df_keywords.filter((df_keywords.keyword == "video") | (df_keywords.keyword == "shopping") | (df_keywords.keyword == "info") |
+                                     (df_keywords.keyword == "social") | (df_keywords.keyword == "reading") | (df_keywords.keyword == "travel") |
+                                     (df_keywords.keyword == "entertainment"))
+    did_loaded_table = cfg['score_generator']['output']['did_score_table']
+    score_norm_table = cfg['score_generator']['output']['score_norm_table']
 
     # create a CTR score generator instance and run to get the loaded did
     ctr_score_generator = CTRScoreGenerator(df_did, df_keywords, din_tf_serving_url, length)
@@ -192,6 +196,6 @@ if __name__ == "__main__":
     df_did_loaded = ctr_score_generator.df_did_loaded
     df_did_loaded_norm = df_did_loaded.withColumn('kws_norm', udf_normalize(col('kws')))
 
-     # save the loaded did to hive table
+    # save the loaded did to hive table
     df_did_loaded_norm.write.option("header", "true").option(
-        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(did_score_table_norm)
+        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(score_norm_table)

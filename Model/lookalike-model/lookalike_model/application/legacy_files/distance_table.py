@@ -42,10 +42,13 @@ def x(l1):
     return _udf_distance
 
 def run(hive_context, cfg):
-    # load dataframes
-    lookalike_loaded_table_norm = cfg['output']['gucdocs_loaded_table_norm']
+    
+    # input tables
     keywords_table = cfg["input"]["keywords_table"]
     seeduser_table = cfg["input"]["seeduser_table"]
+    lookalike_loaded_table_norm = cfg['output']['gucdocs_loaded_table_norm']
+
+    # output dataframes
     lookalike_score_table = cfg["output"]["score_table"]
 
     command = "SELECT * FROM {}"
