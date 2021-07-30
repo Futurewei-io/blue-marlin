@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
 import tensorflow as tf
 
 from feeder import VarFeeder
@@ -32,7 +33,8 @@ import pandas as pd
 class ModelMode(Enum):
     TRAIN = 0
     EVAL = 1,
-    PREDICT = 2
+    PREDICT = 2,
+    TRAIN_SKIP_PREDICT = 3
 
 
 class Split:
@@ -168,7 +170,33 @@ class InputPipe:
             print(f" Lower train {lower_train_start}, prediction {lower_test_start}..{lower_test_end}")
             print(f" Upper train {upper_train_start}, prediction {upper_test_start}..{upper_test_end}")
         # Random starting point
-        offset = tf.random_uniform((), self.start_offset, free_space, dtype=tf.int32, seed=self.rand_seed)
+        offset = tf.random_uniform((), self.start_offset,self.start_offset + free_space+1, dtype=tf.int32, seed=self.rand_seed)
+        end = offset + n_days
+        # Cut all the things
+        return self.cut(hits, offset, end) + args
+
+    def cut_train_skip_predict(self, hits, *args):
+        """
+        Cuts a segment of time series for training. Randomly chooses starting point.
+        :param hits: hits timeseries
+        :param args: pass-through data, will be appended to result
+        :return: result of cut() + args
+        """
+        n_days = self.predict_window + self.train_window
+        # How much free space we have to choose starting day
+        free_space = self.inp.data_days - n_days - self.back_offset - self.start_offset
+        if self.verbose:
+            lower_train_start = pd.to_datetime(self.inp.data_start) + pd.Timedelta(self.start_offset, 'D')
+            lower_test_end = lower_train_start + pd.Timedelta(n_days, 'D')
+            lower_test_start = lower_test_end - pd.Timedelta(self.predict_window, 'D')
+            upper_train_start = pd.to_datetime(self.inp.data_start) + pd.Timedelta(free_space - 1, 'D')
+            upper_test_end = upper_train_start + pd.Timedelta(n_days, 'D')
+            upper_test_start = upper_test_end - pd.Timedelta(self.predict_window, 'D')
+            print(f"Free space for training: {free_space} days.")
+            print(f" Lower train {lower_train_start.date().strftime('%Y-%m-%d')}, prediction {lower_test_start.date().strftime('%Y-%m-%d')}..{lower_test_end.date().strftime('%Y-%m-%d')}")
+            print(f" Upper train {upper_train_start.date().strftime('%Y-%m-%d')}, prediction {upper_test_start.date().strftime('%Y-%m-%d')}..{upper_test_end.date().strftime('%Y-%m-%d')}")
+        # Random starting point
+        offset = tf.random_uniform((), self.start_offset,self.start_offset + free_space+1, dtype=tf.int32, seed=self.rand_seed)
         end = offset + n_days
         # Cut all the things
         return self.cut(hits, offset, end) + args
@@ -194,7 +222,7 @@ class InputPipe:
         keep = zeros_x <= self.max_train_empty
         return keep
 
-    def make_features(self, x_hits, y_hits, dow, lagged_hits, pf_age, pf_si, pf_network, pf_gender, page_ix, pf_price_cat,
+    def make_features(self, x_hits, y_hits, dow, lagged_hits, pf_age, pf_si, pf_network, pf_gender, page_ix, pf_price_model,
     page_popularity, quarter_autocorr):
         """
         Main method. Assembles input data into final tensors
@@ -214,7 +242,7 @@ class InputPipe:
 
         # Combine all page features into single tensor
         stacked_features = tf.stack([page_popularity, quarter_autocorr])
-        flat_ucdoc_features = tf.concat([pf_age, pf_si, pf_network, pf_gender, pf_price_cat, stacked_features], axis=0) #pf_region
+        flat_ucdoc_features = tf.concat([pf_age, pf_si, pf_network, pf_gender, pf_price_model, stacked_features], axis=0) #pf_region
         ucdoc_features = tf.expand_dims(flat_ucdoc_features, 0)
 
         # Train features
@@ -241,7 +269,7 @@ class InputPipe:
         return x_hits, x_features, norm_x_hits, x_lagged, y_hits, y_features, norm_y_hits, mean, std, flat_ucdoc_features, page_ix
 
     def __init__(self, inp: VarFeeder, features: Iterable[tf.Tensor], n_pages: int, mode: ModelMode, n_epoch=None,
-                 batch_size=127, runs_in_burst=1, verbose=True, predict_window=60, train_window=500,
+                 batch_size=2000, runs_in_burst=1, verbose=True, predict_window=60, train_window=10, #127,
                  train_completeness_threshold=1, predict_completeness_threshold=1, back_offset=0,
                  train_skip_first=0, rand_seed=None):
         """
@@ -277,8 +305,11 @@ class InputPipe:
             assert inp.data_days - predict_window > predict_window + train_window, \
                 "Predict+train window length (+predict window for validation) is larger than total number of days in dataset"
             self.start_offset = train_skip_first
+        elif mode == ModelMode.TRAIN_SKIP_PREDICT:
+            assert inp.data_days >= predict_window + train_window, "Predict+train window length is larger than total number of days in dataset"
+            self.start_offset = train_skip_first
         elif mode == ModelMode.EVAL or mode == ModelMode.PREDICT:
-            self.start_offset = inp.data_days - train_window - back_offset
+            self.start_offset = inp.data_days - train_window - back_offset - predict_window
             if verbose:
                 train_start = inp.data_start + pd.Timedelta(self.start_offset, 'D')
                 eval_start = train_start + pd.Timedelta(train_window, 'D')
@@ -298,7 +329,10 @@ class InputPipe:
         num_threads = 3 if mode == ModelMode.TRAIN else 6
 
         # Choose right cutter function for current ModelMode
-        cutter = {ModelMode.TRAIN: self.cut_train, ModelMode.EVAL: self.cut_eval, ModelMode.PREDICT: self.cut_eval}
+        cutter = {ModelMode.TRAIN: self.cut_train,
+                  ModelMode.TRAIN_SKIP_PREDICT: self.cut_train_skip_predict,
+                  ModelMode.EVAL: self.cut_eval,
+                  ModelMode.PREDICT: self.cut_eval}
         # Create dataset, transform features and assemble batches
         root_ds = tf.data.Dataset.from_tensor_slices(tuple(features)).repeat(n_epoch)
         batch = (root_ds
@@ -326,7 +360,7 @@ class InputPipe:
 
 
 def ucdoc_features(inp: VarFeeder):
-    return (inp.hits, inp.pf_age, inp.pf_si, inp.pf_network,inp.pf_gender ,inp.page_ix, inp.pf_price_cat,
+    return (inp.hits, inp.pf_age, inp.pf_si, inp.pf_network,inp.pf_gender ,inp.page_ix, inp.pf_price_model,
              inp.page_popularity, inp.quarter_autocorr)
 
 

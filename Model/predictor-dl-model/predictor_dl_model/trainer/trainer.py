@@ -31,6 +31,7 @@ import heapq
 import logging
 import pandas as pd
 from enum import Enum
+from datetime import date, datetime, timedelta
 
 from hparams import build_from_set, build_hparams
 from feeder import VarFeeder
@@ -38,6 +39,7 @@ from input_pipe import InputPipe, ModelMode, Splitter,FakeSplitter, ucdoc_featur
 from model import Model
 import argparse
 import yaml
+import math
 
 
 
@@ -465,7 +467,8 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
             with tf.device("/cpu:0"):
                 split = splitter.splits[index]
                 pipe = InputPipe(inp, features=split.train_set, n_pages=split.train_size,
-                                 mode=ModelMode.TRAIN, batch_size=batch_size, n_epoch=None, verbose=verbose,
+                                 # mode=ModelMode.TRAIN, batch_size=batch_size, n_epoch=None, verbose=verbose,
+                                 mode=ModelMode.TRAIN_SKIP_PREDICT, batch_size=batch_size, n_epoch=None, verbose=verbose,
                                  train_completeness_threshold=train_completeness_threshold,
                                  predict_completeness_threshold=train_completeness_threshold, train_window=train_window,
                                  predict_window=predict_window,
