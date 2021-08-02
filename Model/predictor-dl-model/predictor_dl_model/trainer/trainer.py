@@ -424,7 +424,7 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
           seed=None, logdir='data/logs', max_epoch=100, patience=2, train_sampling=1.0,
           eval_sampling=1.0, eval_memsize=5, gpu=0, gpu_allow_growth=False, save_best_model=False,
           forward_split=False, write_summaries=False, verbose=False, asgd_decay=None, tqdm=True,
-          side_split=True, max_steps=None, save_from_step=None, do_eval=True, predict_window=63):
+          side_split=True, max_steps=None, save_from_step=None, do_eval=True, predict_window=63, back_offset=0):
 
     eval_k = int(round(2621 * eval_memsize / n_models))
     eval_batch_size = int(
@@ -465,12 +465,14 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
             with tf.device("/cpu:0"):
                 split = splitter.splits[index]
                 pipe = InputPipe(inp, features=split.train_set, n_pages=split.train_size,
-                                 mode=ModelMode.TRAIN, batch_size=batch_size, n_epoch=None, verbose=verbose,
+                                 # mode=ModelMode.TRAIN, batch_size=batch_size, n_epoch=None, verbose=verbose,
+                                 mode=ModelMode.TRAIN_SKIP_PREDICT, batch_size=batch_size, n_epoch=None, verbose=verbose,
                                  train_completeness_threshold=train_completeness_threshold,
                                  predict_completeness_threshold=train_completeness_threshold, train_window=train_window,
                                  predict_window=predict_window,
                                  rand_seed=seed, train_skip_first=hparams.train_skip_first,
-                                 back_offset=predict_window if forward_split else 0)
+                                 # back_offset=predict_window if forward_split else 0)
+                                 back_offset=back_offset)
                 inp_scope.reuse_variables()
                 if side_split:
                     side_eval_pipe = InputPipe(inp, features=split.test_set, n_pages=split.test_size,

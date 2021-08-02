@@ -148,6 +148,7 @@ trainer:
   max_steps: 20000 # type=int, help="Stop training after max steps"
   save_from_step: 100 # type=int, help="Save model on each evaluation (10 evals per epoch), starting from this step"
   predict_window: 10 # default=3, type=int, help="Number of days to predict"
+  back_offset: 20
 
 save_model:
   table: '{product_tag}_{pipeline_tag}_model_stat'
