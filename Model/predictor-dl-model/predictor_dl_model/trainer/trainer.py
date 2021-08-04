@@ -31,7 +31,6 @@ import heapq
 import logging
 import pandas as pd
 from enum import Enum
-from datetime import date, datetime, timedelta
 
 from hparams import build_from_set, build_hparams
 from feeder import VarFeeder
@@ -39,7 +38,6 @@ from input_pipe import InputPipe, ModelMode, Splitter,FakeSplitter, ucdoc_featur
 from model import Model
 import argparse
 import yaml
-import math
 
 
 
