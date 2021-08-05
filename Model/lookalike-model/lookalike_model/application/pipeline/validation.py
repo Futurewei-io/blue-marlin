@@ -18,6 +18,8 @@ from pyspark.sql.functions import lit, col, udf, rand
 from pyspark.sql import HiveContext
 from pyspark import SparkContext
 import argparse, yaml
+from util import resolve_placeholder
+
 
 def counting(click,kwi):
     count_click = 0
@@ -68,6 +70,7 @@ if __name__ == "__main__":
     kwi = args.kwi
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
+        resolve_placeholder(cfg)
 
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')

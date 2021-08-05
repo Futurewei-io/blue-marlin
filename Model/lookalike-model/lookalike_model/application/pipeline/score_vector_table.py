@@ -27,6 +27,11 @@ import argparse
 from pyspark.sql.functions import udf
 from math import sqrt
 import time
+import numpy as np
+
+from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
+from util import resolve_placeholder
+
 
 '''
 
@@ -45,25 +50,6 @@ The top-n-similarity table is
 
 '''
 
-
-def __save_as_table(df, table_name, hive_context, create_table):
-
-    if create_table:
-        command = """
-            DROP TABLE IF EXISTS {}
-            """.format(table_name)
-
-        hive_context.sql(command)
-
-        df.createOrReplaceTempView("r907_temp_table")
-
-        command = """
-            CREATE TABLE IF NOT EXISTS {} as select * from r907_temp_table
-            """.format(table_name)
-
-        hive_context.sql(command)
-
-
 def run(hive_context, cfg):
 
     keywords_table = cfg["score_vector"]["keywords_table"]
@@ -79,8 +65,8 @@ def run(hive_context, cfg):
 
     # add score-vector iterativly
     first_round = True
-    for start_bucket in range(0, bucket_size, bucket_step):
-        command = "SELECT did, did_bucket, kws FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_norm_table, start_bucket, start_bucket+bucket_size-1)
+    for did_bucket in range(0, bucket_size, bucket_step):
+        command = "SELECT did, did_bucket, kws FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_norm_table, did_bucket, did_bucket+bucket_step-1)
 
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [social -> 0.24231663, entertainment -> 0.20828941, reading -> 0.44120282, video -> 0.34497723, travel -> 0.3453492, shopping -> 0.5347804, info -> 0.1978679]|
@@ -88,8 +74,10 @@ def run(hive_context, cfg):
         df = df.withColumn("score_vector",
                            udf(lambda kws: [kws[keyword] if keyword in kws else 0.0 for keyword in keywords], ArrayType(FloatType()))(df.kws))
 
-        df = df.select('did', 'did_bucket', 'score_vector')
-        __save_as_table(df, table_name=score_vector_table, hive_context=hive_context, create_table=first_round)
+        df = df.withColumn('c1', udf(lambda x: float(np.array(x).dot(np.array(x))), FloatType())(df.score_vector))
+       
+        mode = 'overwrite' if first_round else 'append'
+        write_to_table_with_partition(df.select('did', 'score_vector', 'c1', 'did_bucket'), score_vector_table, partition=('did_bucket'), mode=mode)
         first_round = False
 
 
@@ -100,7 +88,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
-
+        resolve_placeholder(cfg)
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
