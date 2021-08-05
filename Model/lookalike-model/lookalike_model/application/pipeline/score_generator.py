@@ -3,13 +3,13 @@
 #  distributed with this work for additional information
 #  regarding copyright ownership.  The ASF licenses this file
 #  to you under the Apache License, Version 2.0 (the
-#  "License"); you may not use this file except in compliance
+#  'License'); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
 
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
+#  distributed under the License is distributed on an 'AS IS' BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
@@ -25,6 +25,8 @@ import requests
 import json
 import argparse
 from math import sqrt
+from util import resolve_placeholder
+from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
 
 '''
 This process generates the score-norm-table with the following format.
@@ -44,10 +46,10 @@ def flatten(lst):
 
 def str_to_intlist(table):
     ji = []
-    for k in [table[j].split(",") for j in range(len(table))]:
+    for k in [table[j].split(',') for j in range(len(table))]:
         s = []
         for a in k:
-            b = int(a.split(":")[0])
+            b = int(a.split(':')[0])
             s.append(b)
         ji.append(s)
     return ji
@@ -65,7 +67,7 @@ def inputData(record, keyword, length):
 
 
 def predict(serving_url, record, length, new_keyword):
-    body = {"instances": []}
+    body = {'instances': []}
     for keyword in new_keyword:
         instance = inputData(record, keyword, length)
         body['instances'].append(instance)
@@ -80,9 +82,9 @@ def predict(serving_url, record, length, new_keyword):
 
 def gen_mappings_media(hive_context, cfg):
     # this function generates mappings between the media category and the slots.
-    media_category_list = cfg['score_generator']["mapping"]["new_slot_id_media_category_list"]
+    media_category_list = cfg['score_generator']['mapping']['new_slot_id_media_category_list']
     media_category_set = set(media_category_list)
-    slot_id_list = cfg['score_generator']["mapping"]["new_slot_id_list"]
+    slot_id_list = cfg['score_generator']['mapping']['new_slot_id_list']
     # 1 vs 1: slot_id : media_category
     media_slot_mapping = dict()
     for media_category in media_category_set:
@@ -110,9 +112,6 @@ def normalize(x):
     return result
 
 
-udf_normalize = udf(normalize, MapType(StringType(), FloatType()))
-
-
 class CTRScoreGenerator:
     def __init__(self, df_did, df_keywords, din_model_tf_serving_url, din_model_length):
         self.df_did = df_did
@@ -125,9 +124,9 @@ class CTRScoreGenerator:
     def get_keywords(self):
         keyword_index_list, keyword_list = list(), list()
         for dfk in self.df_keywords.collect():
-            if not dfk["keyword_index"] in keyword_index_list:
-                keyword_index_list.append(dfk["keyword_index"])
-                keyword_list.append(dfk["keyword"])
+            if not dfk['keyword_index'] in keyword_index_list:
+                keyword_index_list.append(dfk['keyword_index'])
+                keyword_list.append(dfk['keyword'])
         return keyword_index_list, keyword_list
 
     def run(self):
@@ -159,43 +158,44 @@ class CTRScoreGenerator:
                                                                     keyword_index_list=self.keyword_index_list,
                                                                     keyword_list=self.keyword_list),
                                                         MapType(StringType(), FloatType()))
-                                                    (col('did_index'), col('kwi_show_counts'),
-                                                     col('age'), col('gender')))
+                                                    (col('did_index'), col('kwi_show_counts'), col('age'), col('gender')))
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Performance Forecasting: CTR Score Generator")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Performance Forecasting: CTR Score Generator')
     parser.add_argument('config_file')
     args = parser.parse_args()
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
+        resolve_placeholder(cfg)
 
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
 
     # load dataframes
-    did_table, keywords_table, din_tf_serving_url, length = cfg['score_generator']["input"]["did_table"],
-    cfg['score_generator']["input"]["keywords_table"],
-    cfg['score_generator']["input"]["din_model_tf_serving_url"],
-    cfg['score_generator']["input"]["din_model_length"]
+    did_table, keywords_table, din_tf_serving_url, length = cfg['score_generator']['input']['did_table'], cfg['score_generator']['input'][
+        'keywords_table'], cfg['score_generator']['input']['din_model_tf_serving_url'], cfg['score_generator']['input']['din_model_length']
 
-    command = "SELECT * FROM {}"
+    command = 'SELECT * FROM {}'
     df_did = hive_context.sql(command.format(did_table))
     df_keywords = hive_context.sql(command.format(keywords_table))
     # temporary adding to filter based on active keywords
-    df_keywords = df_keywords.filter((df_keywords.keyword == "video") | (df_keywords.keyword == "shopping") | (df_keywords.keyword == "info") |
-                                     (df_keywords.keyword == "social") | (df_keywords.keyword == "reading") | (df_keywords.keyword == "travel") |
-                                     (df_keywords.keyword == "entertainment"))
+    df_keywords = df_keywords.filter((df_keywords.keyword == 'video') | (df_keywords.keyword == 'shopping') | (df_keywords.keyword == 'info') |
+                                     (df_keywords.keyword == 'social') | (df_keywords.keyword == 'reading') | (df_keywords.keyword == 'travel') |
+                                     (df_keywords.keyword == 'entertainment'))
     did_loaded_table = cfg['score_generator']['output']['did_score_table']
     score_norm_table = cfg['score_generator']['output']['score_norm_table']
 
     # create a CTR score generator instance and run to get the loaded did
     ctr_score_generator = CTRScoreGenerator(df_did, df_keywords, din_tf_serving_url, length)
     ctr_score_generator.run()
-    df_did_loaded = ctr_score_generator.df_did_loaded
-    df_did_loaded_norm = df_did_loaded.withColumn('kws_norm', udf_normalize(col('kws')))
+    df = ctr_score_generator.df_did_loaded
+
+    # normalization is required
+    udf_normalize = udf(normalize, MapType(StringType(), FloatType()))
+    if cfg['score_generator']['normalize']:
+        df = df.withColumn('kws_norm', udf_normalize(col('kws')))
 
     # save the loaded did to hive table
-    df_did_loaded_norm.write.option("header", "true").option(
-        "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(score_norm_table)
+    write_to_table_with_partition(df, score_norm_table, partition=('did_bucket'), mode='overwrite')

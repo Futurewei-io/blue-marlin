@@ -61,6 +61,52 @@ class TestMainTrainReady (unittest.TestCase):
         df = util.load_df(self.hive_context, trainready_table)
         self.validate_trainready_output(df, create_unified_log(self.spark))
 
+    def test_filter_users (self):
+        print('*** Running test_filter_users test ***')
+
+        df = create_trainready_filter_user_data(self.spark)
+
+        total_num_intervals = 10
+
+        # Test all filters turned off.
+        df1 = main_trainready.filter_users(df, show_threshold_low=-1, 
+            show_threshold_high=-1, active_interval_threshold=-1, 
+            total_num_intervals=total_num_intervals)
+        df1.show()
+        filtered_did_indices = []
+        self.assertEqual(df.count(), df1.count()+len(filtered_did_indices))
+        self.assertEqual(df.count(), df1.count())
+
+        # Test low impression threshold.
+        df2 = main_trainready.filter_users(df, show_threshold_low=1.0, 
+            show_threshold_high=-1, active_interval_threshold=-1, 
+            total_num_intervals=total_num_intervals)
+        df2.show()
+        filtered_did_indices = [2]
+        self.assertEqual(df.count(), df2.count()+len(filtered_did_indices))
+        for row in df2.collect():
+            self.assertTrue(not row.did_index in filtered_did_indices, 'User {} should have been filtered.'.format(row.did_index))
+
+        # Test high impression threshold.
+        df3 = main_trainready.filter_users(df, show_threshold_low=-1, 
+            show_threshold_high=500, active_interval_threshold=-1, 
+            total_num_intervals=total_num_intervals)
+        df3.show()
+        filtered_did_indices = [3]
+        self.assertEqual(df.count(), df3.count()+len(filtered_did_indices))
+        for row in df3.collect():
+            self.assertTrue(not row.did_index in filtered_did_indices, 'User {} should have been filtered.'.format(row.did_index))
+
+        # Test low active intervals.
+        df4 = main_trainready.filter_users(df, show_threshold_low=-1, 
+            show_threshold_high=-1, active_interval_threshold=0.2, 
+            total_num_intervals=total_num_intervals)
+        df4.show()
+        filtered_did_indices = [2, 4]
+        self.assertEqual(df.count(), df4.count()+len(filtered_did_indices))
+        for row in df4.collect():
+            self.assertTrue(not row.did_index in filtered_did_indices, 'User {} should have been filtered.'.format(row.did_index))
+
 
     def test_run (self):
         # Load the configuration data.

@@ -28,6 +28,10 @@ from pyspark.sql.functions import udf
 from math import sqrt
 import time
 import hashlib
+from util import resolve_placeholder
+
+
+from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
 
 '''
 
@@ -37,24 +41,6 @@ spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memo
 This process generates added secondary buckects ids (alpha-did-bucket).
 
 '''
-
-
-def __save_as_table(df, table_name, hive_context, create_table):
-
-    if create_table:
-        command = """
-            DROP TABLE IF EXISTS {}
-            """.format(table_name)
-
-        hive_context.sql(command)
-
-        df.createOrReplaceTempView("r907_temp_table")
-
-        command = """
-            CREATE TABLE IF NOT EXISTS {} as select * from r907_temp_table
-            """.format(table_name)
-
-        hive_context.sql(command)
 
 
 def assign_new_bucket_id(df, n, new_column_name):
@@ -75,13 +61,15 @@ def run(hive_context, cfg):
     score_vector_alpha_table = cfg['score_vector_rebucketing']['score_vector_alpha_table']
 
     first_round = True
-    for start_bucket in range(0, bucket_size, bucket_step):
-        command = "SELECT did, did_bucket, score_vector FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, start_bucket, start_bucket+bucket_size-1)
+    for did_bucket in range(0, bucket_size, bucket_step):
+        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, did_bucket, did_bucket+bucket_step-1)
 
         df = hive_context.sql(command)
         df = assign_new_bucket_id(df, alpha_bucket_size, 'alpha_did_bucket')
-        df = df.select('did', 'did_bucket', 'score_vector', 'alpha_did_bucket')
-        __save_as_table(df, table_name=score_vector_alpha_table, hive_context=hive_context, create_table=first_round)
+
+        mode = 'overwrite' if first_round else 'append'
+        write_to_table_with_partition(df.select('did', 'score_vector', 'c1', 'did_bucket', 'alpha_did_bucket'),
+                                      score_vector_alpha_table, partition=('did_bucket', 'alpha_did_bucket'), mode=mode)
         first_round = False
 
 
@@ -92,7 +80,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
-
+        resolve_placeholder(cfg)
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)

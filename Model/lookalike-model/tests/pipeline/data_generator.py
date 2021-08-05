@@ -15,7 +15,7 @@
 #  limitations under the License.
 
 import sys
-from pyspark.sql.types import StringType, StructField, StructType, IntegerType
+from pyspark.sql.types import StringType, StructField, StructType, IntegerType, ArrayType, LongType
 from lookalike_model.pipeline.main_clean import add_did_bucket
 from lookalike_model.pipeline.util import write_to_table
 
@@ -306,15 +306,60 @@ def create_trainready_data (spark):
         StructField('gender', IntegerType(), True),
         StructField('did', StringType(), True),
         StructField('did_index', LongType(), True),
-        StructField('interval_starting_time', ArrayType(), True),
-        StructField('interval_keywords', ArrayType(), True),
-        StructField('kwi', ArrayType(), True),
-        StructField('kwi_show_counts', ArrayType(), True),
-        StructField('kwi_click_counts', ArrayType(), True),
+        StructField('interval_starting_time', ArrayType(StringType(), True), True),
+        StructField('interval_keywords', ArrayType(StringType(), True), True),
+        StructField('kwi', ArrayType(StringType(), True), True),
+        StructField('kwi_show_counts', ArrayType(StringType(), True), True),
+        StructField('kwi_click_counts', ArrayType(StringType(), True), True),
         StructField('did_bucket', StringType(), True),
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
+# Returns a dataframe with trainready data for testing user filtering.
+def create_trainready_filter_user_data (spark):
+    data = [
+        (0, 0, 'normal', 1, 
+            [u'1578009600', u'1577923200', u'1577836800', u'1577750400', u'157766400', u'1577577600', u'1577491200', u'1577404800', u'1577318400', u'1577232000'], 
+            [u'travel', u'travel',u'travel', u'travel',u'travel', u'travel', u'game-avg',u'travel', u'travel', u'travel,game-avg'], 
+            [u'1', u'1', u'1', u'1', u'1', u'1', u'1',u'1', u'1', u'1,2'], 
+            [u'1:1', u'1:1', u'1:1', u'1:1', u'1:2', u'1:2', u'2:1', u'1:2', u'1:2', u'1:2,2:1'], # 16
+            [u'1:0', u'1:0', u'1:0', u'1:0', u'1:1', u'1:1', u'2:0', u'1:1', u'1:1', u'1:1,2:0'], '1', ),
+        (0, 0, 'low average show count/few active intervals', 2, 
+            [u'1578009600', u'1577923200', u'1577836800', u'1577750400', u'157766400', u'1577577600', u'1577491200', u'1577404800', u'1577318400', u'1577232000'], 
+            [u'travel', u'travel',u'travel', u'travel',u'travel', u'travel', u'game-avg',u'travel', u'travel', u'travel,game-avg'], 
+            [u'1', u'1', u'1', u'1', u'1', u'1', u'1',u'1', u'1', u'1,2'], 
+            [u'1:0', u'1:0', u'1:0', u'1:0', u'1:0', u'1:0', u'2:0', u'1:0', u'1:0', u'1:0,2:1'], # 1
+            [u'1:0', u'1:0', u'1:0', u'1:0', u'1:1', u'1:1', u'2:0', u'1:1', u'1:1', u'1:1,2:0'], '1', ),
+        (0, 0, 'high average show count', 3, 
+            [u'1578009600', u'1577923200', u'1577836800', u'1577750400', u'157766400', u'1577577600', u'1577491200', u'1577404800', u'1577318400', u'1577232000'], 
+            [u'travel', u'travel',u'travel', u'travel',u'travel', u'travel', u'game-avg',u'travel', u'travel', u'travel,game-avg'], 
+            [u'1', u'1', u'1', u'1', u'1', u'1', u'1',u'1', u'1', u'1,2'], 
+            [u'1:5000', u'1:0', u'1:0', u'1:0', u'1:0', u'1:0', u'2:0', u'1:0', u'1:0', u'1:1,2:1'], # 5002
+            [u'1:0', u'1:0', u'1:0', u'1:0', u'1:1', u'1:1', u'2:0', u'1:1', u'1:1', u'1:1,2:0'], '1', ),
+        (0, 0, 'sparse impressions', 4, 
+            [u'1577232000'], 
+            [u'travel,game-avg'], 
+            [u'1,2'], 
+            [u'1:10,2:10'], # 20
+            [u'1:1,2:0'], '1', ),
+    ]
+
+    schema = StructType([
+        StructField('age', IntegerType(), True),
+        StructField('gender', IntegerType(), True),
+        StructField('did', StringType(), True),
+        StructField('did_index', LongType(), True),
+        StructField('interval_starting_time', ArrayType(StringType(), True), True),
+        StructField('interval_keywords', ArrayType(StringType(), True), True),
+        StructField('kwi', ArrayType(StringType(), True), True),
+        StructField('kwi_show_counts', ArrayType(StringType(), True), True),
+        StructField('kwi_click_counts', ArrayType(StringType(), True), True),
+        StructField('did_bucket', StringType(), True),
+    ])
+
+    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
 
 
 # Prints to screen the code to generate the given data frame.

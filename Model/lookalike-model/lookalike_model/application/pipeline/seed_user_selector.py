@@ -18,6 +18,8 @@ from pyspark import SparkContext
 from pyspark.sql import HiveContext
 import yaml
 import argparse
+from util import resolve_placeholder
+
 
 '''
 input: logfile
@@ -53,7 +55,7 @@ if __name__ == "__main__":
     kwi = args.kwi
     with open(args.config_file, 'r') as yml_file:
         cfg = yaml.safe_load(yml_file)
-
+        resolve_placeholder(cfg)
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)

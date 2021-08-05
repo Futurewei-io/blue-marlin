@@ -1,31 +1,35 @@
+product_tag: 'lookalike'
+pipeline_tag: '08042021'
 score_generator:
     input:
         log_table : "lookalike_03042021_logs"
         did_table: "lookalike_03042021_trainready"
         keywords_table: "din_ad_keywords_09172020"
         test_table: "lookalike_trainready_jimmy_test"
-        din_model_tf_serving_url: "http://10.193.217.105:8506/v1/models/lookalike3:predict"
+        din_model_tf_serving_url: "http://10.193.217.105:8506/v1/models/lookalike:predict"
         din_model_length: 20
         seeduser_table : "lookalike_seeduser"
         number_of_seeduser: 1000
         extend: 2000
         alg: "euclidean" ##### currently just support "euclideand" and "dot"
     output:
-        did_score_table: "lookalike_score_01112021"
-        score_norm_table:  "lookalike_score_norm_01112021"
+        did_score_table: "{product_tag}_score_{pipeline_tag}"
+        score_norm_table:  "{product_tag}_score_norm_{pipeline_tag}"
+    normalize: False
         
 score_vector:
     keywords_table: "din_ad_keywords_09172020"
-    score_norm_table:  "lookalike_score_norm_01112021"   
-    score_vector_table: "lookalike_score_vector_01112021" 
+    score_norm_table:  "{product_tag}_score_norm_{pipeline_tag}"
+    score_vector_table: "{product_tag}_score_vector_{pipeline_tag}"
     did_bucket_size: 2
     did_bucket_step: 2
 score_vector_rebucketing:
     did_bucket_size: 2
     did_bucket_step: 2
-    alpha_did_bucket_size: 1000
-    score_vector_alpha_table: 'lookalike_score_vector_alpha_01112021'
+    alpha_did_bucket_size: 20 #default=1000
+    score_vector_alpha_table: '{product_tag}_score_vector_alpha_{pipeline_tag}'
 top_n_similarity:
-    alpha_did_bucket_step: 100
-    top_n: 100
-    similarity_table: "lookalike_similarity_01112021"
+    did_bucket_step: 1
+    alpha_did_bucket_step: 10
+    top_n: 10
+    similarity_table: "{product_tag}_similarity_{pipeline_tag}"
