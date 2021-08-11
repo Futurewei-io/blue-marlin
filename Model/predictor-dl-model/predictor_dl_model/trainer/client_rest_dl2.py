@@ -93,6 +93,7 @@ def make_pred_input(duration, train_window, predict_window, full_record_exp, x_h
     lag_mask = cropped_lags < 0
     # Convert -1 to 0 for gather(), it don't accept anything exotic
     cropped_lags = np.maximum(cropped_lags, 0)
+    cropped_lags = np.where(cropped_lags > len(full_record_exp) - 1, len(full_record_exp) - 1, cropped_lags)
     # Translate lag indexes to hit values
     lagged_hit = np.take(full_record_exp, cropped_lags)
     # Convert masked (see above) or NaN lagged hits to zeros

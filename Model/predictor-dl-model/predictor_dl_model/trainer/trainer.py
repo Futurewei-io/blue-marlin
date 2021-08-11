@@ -471,7 +471,6 @@ def train(name, hparams, multi_gpu=False, n_models=1, train_completeness_thresho
                                  predict_completeness_threshold=train_completeness_threshold, train_window=train_window,
                                  predict_window=predict_window,
                                  rand_seed=seed, train_skip_first=hparams.train_skip_first,
-                                 # back_offset=predict_window if forward_split else 0)
                                  back_offset=back_offset)
                 inp_scope.reuse_variables()
                 if side_split:
