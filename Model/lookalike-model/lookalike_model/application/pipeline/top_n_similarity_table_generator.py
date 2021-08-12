@@ -33,6 +33,7 @@ import numpy as np
 import itertools
 import heapq
 from util import resolve_placeholder
+from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
 
 
 '''
@@ -51,24 +52,6 @@ The top-n-similarity table is
 '''
 
 
-def __save_as_table(df, table_name, hive_context, create_table):
-
-    if create_table:
-        command = """
-            DROP TABLE IF EXISTS {}
-            """.format(table_name)
-
-        hive_context.sql(command)
-
-        df.createOrReplaceTempView("r907_temp_table")
-
-        command = """
-            CREATE TABLE IF NOT EXISTS {} as select * from r907_temp_table
-            """.format(table_name)
-
-        hive_context.sql(command)
-
-
 def run(sc, hive_context, cfg):
 
     score_vector_alpha_table = cfg['score_vector_rebucketing']['score_vector_alpha_table']
@@ -81,6 +64,9 @@ def run(sc, hive_context, cfg):
     # [0.24231663, 0.20828941, 0.0]|
     df = hive_context.sql(command)
     df = df.withColumn('top_n_user_score', fn.array())
+
+    did_bucket_size = cfg['score_vector']['did_bucket_size']
+    did_bucket_step = cfg['top_n_similarity']['did_bucket_step']
 
     alpha_bucket_size = cfg['score_vector_rebucketing']['alpha_did_bucket_size']
     alpha_bucket_step = cfg['top_n_similarity']['alpha_did_bucket_step']
