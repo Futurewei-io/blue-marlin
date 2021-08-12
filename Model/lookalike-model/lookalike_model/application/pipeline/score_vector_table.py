@@ -53,7 +53,7 @@ The top-n-similarity table is
 def run(hive_context, cfg):
 
     keywords_table = cfg["score_vector"]["keywords_table"]
-    score_norm_table = cfg['score_vector']['score_norm_table']
+    score_table = cfg['score_vector']['score_table']
     score_vector_table = cfg['score_vector']['score_vector_table']
     bucket_size = cfg['score_vector']['did_bucket_size']
     bucket_step = cfg['score_vector']['did_bucket_step']
@@ -66,7 +66,7 @@ def run(hive_context, cfg):
     # add score-vector iterativly
     first_round = True
     for did_bucket in range(0, bucket_size, bucket_step):
-        command = "SELECT did, did_bucket, kws FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_norm_table, did_bucket, did_bucket+bucket_step-1)
+        command = "SELECT did, did_bucket, kws FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_table, did_bucket, did_bucket+bucket_step-1)
 
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [social -> 0.24231663, entertainment -> 0.20828941, reading -> 0.44120282, video -> 0.34497723, travel -> 0.3453492, shopping -> 0.5347804, info -> 0.1978679]|

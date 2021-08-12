@@ -184,8 +184,8 @@ if __name__ == '__main__':
     df_keywords = df_keywords.filter((df_keywords.keyword == 'video') | (df_keywords.keyword == 'shopping') | (df_keywords.keyword == 'info') |
                                      (df_keywords.keyword == 'social') | (df_keywords.keyword == 'reading') | (df_keywords.keyword == 'travel') |
                                      (df_keywords.keyword == 'entertainment'))
-    did_loaded_table = cfg['score_generator']['output']['did_score_table']
-    score_norm_table = cfg['score_generator']['output']['score_norm_table']
+    
+    score_table = cfg['score_generator']['output']['score_table']
 
     # create a CTR score generator instance and run to get the loaded did
     ctr_score_generator = CTRScoreGenerator(df_did, df_keywords, din_tf_serving_url, length)
@@ -198,4 +198,4 @@ if __name__ == '__main__':
         df = df.withColumn('kws_norm', udf_normalize(col('kws')))
 
     # save the loaded did to hive table
-    write_to_table_with_partition(df, score_norm_table, partition=('did_bucket'), mode='overwrite')
+    write_to_table_with_partition(df, score_table, partition=('did_bucket'), mode='overwrite')

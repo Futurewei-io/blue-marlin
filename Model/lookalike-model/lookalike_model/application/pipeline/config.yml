@@ -1,4 +1,4 @@
-product_tag: 'lookalike'
+product_tag: 'lookalike_application'
 pipeline_tag: '08042021'
 score_generator:
     input:
@@ -13,13 +13,12 @@ score_generator:
         extend: 2000
         alg: "euclidean" ##### currently just support "euclideand" and "dot"
     output:
-        did_score_table: "{product_tag}_score_{pipeline_tag}"
-        score_norm_table:  "{product_tag}_score_norm_{pipeline_tag}"
+        score_table:  "{product_tag}_score_{pipeline_tag}"
     normalize: False
         
 score_vector:
     keywords_table: "din_ad_keywords_09172020"
-    score_norm_table:  "{product_tag}_score_norm_{pipeline_tag}"
+    score_table:  "{product_tag}_score_{pipeline_tag}"
     score_vector_table: "{product_tag}_score_vector_{pipeline_tag}"
     did_bucket_size: 2
     did_bucket_step: 2
