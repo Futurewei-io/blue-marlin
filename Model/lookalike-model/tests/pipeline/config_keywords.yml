@@ -1,0 +1,22 @@
+product_tag: 'lookalike'
+pipeline_tag: 'unittest'
+persona_table_name: 'lookalike_unittest_keywords_input_persona'
+showlog_table_name: 'lookalike_unittest_keywords_input_showlog'
+clicklog_table_name: 'lookalike_unittest_keywords_input_clicklog'
+keywords_table: 'lookalike_unittest_keywords_input_keywords'
+log:
+  level: 'ERROR' # log level for spark and app
+pipeline:
+  main_keywords:
+    keyword_output_table: 'lookalike_unittest_keywords_output_keywords'
+    keyword_threshold: 0.1  # Portion of showlog traffic that a keyword must reach to be included.
+  main_clean:  
+    did_bucket_num: 2 # Number of partitions for did
+    load_logs_in_minutes: 1440 #1440/day, original=14400
+    create_keywords: False # set True for first run, then keep False to use the created table.
+    conditions: {
+      'starting_date': '2020-01-01',
+      'ending_date': '2020-01-11'
+    }
+  cutting_date: 1584748800
+  length: 10
