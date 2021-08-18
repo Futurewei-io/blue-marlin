@@ -68,6 +68,20 @@ def create_unified_log_table (spark, table_name):
     df = create_unified_log(spark)
     write_to_table(df, table_name)
 
+# Creates raw clicklog data and writes it to Hive.
+def create_keywords_showlog_table (spark, table_name):
+    df = create_keywords_raw_log(spark)
+    df = df.withColumnRenamed('media', 'adv_type')
+    df = df.withColumnRenamed('price_model', 'adv_bill_mode_cd')
+    df = df.withColumnRenamed('action_time', 'show_time')
+    df.printSchema()
+    write_to_table(df, table_name)
+
+# Creates the effective keywords data and writes is to Hive.
+def create_effective_keywords_table(spark, table_name):
+    df = create_effective_keywords(spark)
+    write_to_table(df, table_name)
+
 #==========================================
 # Create dataframes for the unit tests
 #==========================================
@@ -164,20 +178,6 @@ def create_raw_log (spark):
 def create_cleaned_log (spark):
     data = [
         ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 12:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 13:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 14:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:59:59.00', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 15:59:59.99', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 16:00:00.00', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 16:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 17:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 18:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 19:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 20:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 21:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 22:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
-        # ('C000', '0000001', '1000', 'splash', 'abcdef0', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 23:34:56.78', 'Huawei Magazine', 0, 0, 'travel', '1', '2020-01-01', '1', ),
         ('C001', '0000002', '1000', 'splash', 'abcdef1', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-02 12:34:56.78', 'Huawei Browser', 1, 0, 'travel', '1', '2020-01-02', '1', ),
         ('C002', '0000003', '1001', 'native', 'abcdef2', 'ABC-AL00', '4G', 'CPD', '2020-01-03 12:34:56.78', 'Huawei Video', 0, 1, 'travel', '1', '2020-01-03', '1', ),
         ('C010', '0000004', '1001', 'native', 'abcdef3', 'ABC-AL00', '4G', 'CPD', '2020-01-04 12:34:56.78', 'Huawei Music', 1, 1, 'game-avg', '2', '2020-01-04', '1', ),
@@ -227,7 +227,17 @@ def create_keywords(spark):
         ('reading', 'C021', 3),
         ('reading', 'C022', 3),
         ('reading', 'C023', 3),
-        ('reading', 'C024', 3)
+        ('reading', 'C024', 3),
+        ('shopping', 'C030', 4),
+        ('shopping', 'C031', 4),
+        ('shopping', 'C032', 4),
+        ('shopping', 'C033', 4),
+        ('shopping', 'C034', 4),
+        ('education', 'C040', 5),
+        ('education', 'C041', 5),
+        ('education', 'C042', 5),
+        ('education', 'C043', 5),
+        ('education', 'C044', 5),
     ]
 
     schema = StructType([
@@ -360,6 +370,53 @@ def create_trainready_filter_user_data (spark):
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
 
+# Returns a dataframe with unclean log data.
+def create_keywords_raw_log (spark):
+    data = [
+        ('0000001', '1000', 'splash', 'abcdef0', 'C000', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-01 12:34:56.78'), # travel
+        ('0000002', '1000', 'splash', 'abcdef1', 'C001', 'DUB-AL00', 'WIFI', 'CPC', '2020-01-02 12:34:56.78'), # travel
+        ('0000003', '1001', 'native', 'abcdef2', 'C002', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000005', '1001', 'native', 'abcdef2', 'C002', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000006', '1001', 'native', 'abcdef2', 'C002', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000007', '1001', 'native', 'abcdef2', 'C002', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000008', '1001', 'native', 'abcdef2', 'C003', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000009', '1001', 'native', 'abcdef2', 'C003', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000010', '1001', 'native', 'abcdef2', 'C003', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000011', '1001', 'native', 'abcdef2', 'C004', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000012', '1001', 'native', 'abcdef2', 'C004', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000013', '1001', 'native', 'abcdef2', 'C004', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # travel
+        ('0000014', '1001', 'native', 'abcdef2', 'C010', 'ABC-AL00',   '4G', 'CPD', '2020-01-03 12:34:56.78'), # game-avg
+        ('0000004', '1001', 'native', 'abcdef3', 'C010', 'ABC-AL00',   '4G', 'CPD', '2020-01-04 12:34:56.78'), # game-avg
+        ('0000005', '1001', 'native', 'abcdef3', 'C010', 'ABC-AL00',   '4G', 'CPD', '2020-01-05 12:34:56.78'), # game-avg
+        ('0000007', '1003', 'splash', 'abcdef6', 'C020', 'XYZ-AL00',   '4G', 'CPT', '2020-01-07 12:34:56.78'), # reading; only one entry for this keyword so will be excluded.
+        ('0000008', '1003', 'splash', 'abcdef6', 'C030', 'XYZ-AL00',   '4G', 'CPT', '2020-01-08 12:34:56.78'), # shopping; only one entry for this keyword so will be excluded.
+        ('0000009', '1003', 'splash', 'abcdef6', 'C040', 'XYZ-AL00',   '4G', 'CPT', '2020-01-09 12:34:56.78'), # education; just enough entries to be included.
+        ('0000009', '1003', 'splash', 'abcdef6', 'C040', 'XYZ-AL00',   '4G', 'CPT', '2020-01-09 12:34:56.78'), # education; just enough entries to be included.
+        ('0000010', '1003', 'splash', 'abcdef6', 'C050', 'XYZ-AL00',   '4G', 'CPT', '2020-01-10 12:34:56.78'), # no mapping; only one entry for this keyword so will be excluded.
+        ('0000001', '1000', 'native', 'abcde10', 'C020', 'JKL-AL00',   '4G', 'CPD', '2020-01-11 12:34:56.78'), # reading; outside the date range.
+    ]
+
+    schema = StructType([
+        StructField("did", StringType(), True),
+        StructField("adv_id", StringType(), True),
+        StructField("media", StringType(), True),
+        StructField("slot_id", StringType(), True),
+        StructField("spread_app_id", StringType(), True),
+        StructField("device_name", StringType(), True),
+        StructField("net_type", StringType(), True),
+        StructField("price_model", StringType(), True),
+        StructField("action_time", StringType(), True)
+    ])
+
+    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+
+# Returns a dataframe with the effective keyword data.
+def create_effective_keywords(spark):
+    data = [('travel',), ('game-avg',), ('education',)]
+    schema = StructType([
+        StructField("keyword", StringType(), True)
+    ])
+    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
 
 
 # Prints to screen the code to generate the given data frame.

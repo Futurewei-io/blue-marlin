@@ -75,7 +75,7 @@ def run(sc, hive_context, cfg):
     for did_bucket in range(0, did_bucket_size, did_bucket_step):
 
         command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(
-            score_vector_alpha_table, did_bucket, did_bucket + did_bucket_step - 1)
+            score_vector_alpha_table, did_bucket, min(did_bucket_size, did_bucket + did_bucket_step - 1))
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [0.24231663, 0.20828941, 0.0]|
         df = hive_context.sql(command)
@@ -85,10 +85,14 @@ def run(sc, hive_context, cfg):
             command = """SELECT did, score_vector, c1, alpha_did_bucket 
             FROM {} WHERE alpha_did_bucket BETWEEN {} AND {}"""
             command = command.format(score_vector_alpha_table,
-                                     alpha_bucket, alpha_bucket + alpha_bucket_step - 1)
+                                     alpha_bucket, min(alpha_bucket_size, alpha_bucket + alpha_bucket_step - 1))
 
             df_user = hive_context.sql(command)
             block_user = df_user.select('did', 'score_vector', 'c1').collect()
+
+            if len(block_user) == 0:
+                continue
+
             block_user_did_score = ([_['did'] for _ in block_user], [_['score_vector'] for _ in block_user])
             block_user_broadcast = sc.broadcast(block_user_did_score)
 
@@ -96,23 +100,26 @@ def run(sc, hive_context, cfg):
             c2 = np.square(np.linalg.norm(c2)).tolist()
             c2_broadcast = sc.broadcast(c2)
 
-            def calculate_similarity(user_score_vector, top_n_user_score, c1):
-                m = len(user_score_vector)
-                user_score_vector = np.array(user_score_vector)
-                dids, other_score_vectors = block_user_broadcast.value
-                other_score_vectors = np.array(other_score_vectors)
-                cross_mat = np.matmul(user_score_vector, other_score_vectors.transpose())
-                c2 = np.array(c2_broadcast.value)
-                similarity = np.sqrt(m) - np.sqrt(c1 + c2 - 2 * cross_mat)
-                user_score_s = list(itertools.izip(dids, similarity.tolist()))
-                user_score_s.extend(top_n_user_score)
-                user_score_s = heapq.nlargest(N, user_score_s, key=lambda x: x[1])
-                return user_score_s
+            def calculate_similarity(block_user_broadcast, c2_broadcast):
+                def __helper(user_score_vector, top_n_user_score, c1):
+                    m = len(user_score_vector)
+                    user_score_vector = np.array(user_score_vector)
+                    dids, other_score_vectors = block_user_broadcast.value
+                    other_score_vectors = np.array(other_score_vectors)
+                    cross_mat = np.matmul(user_score_vector, other_score_vectors.transpose())
+                    c2 = np.array(c2_broadcast.value)
+                    similarity = np.sqrt(m) - np.sqrt(c1 + c2 - 2 * cross_mat)
+                    user_score_s = list(itertools.izip(dids, similarity.tolist()))
+                    user_score_s.extend(top_n_user_score)
+                    user_score_s = heapq.nlargest(N, user_score_s, key=lambda x: x[1])
+                    return user_score_s
+                return __helper
 
             elements_type = StructType([StructField('did', StringType(), False), StructField('score', FloatType(), False)])
 
             # update top_n_similar_user field
-            df = df.withColumn('top_n_similar_user', udf(calculate_similarity, ArrayType(elements_type))(df.score_vector, df.top_n_similar_user, df.c1))
+            df = df.withColumn('top_n_similar_user', udf(calculate_similarity(block_user_broadcast, c2_broadcast),
+                                                         ArrayType(elements_type))(df.score_vector, df.top_n_similar_user, df.c1))
 
         mode = 'overwrite' if first_round else 'append'
         # use the partitioned field at the end of the select. Order matters.
