@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import timeit
 
 from pyspark import SparkContext
-from pyspark.sql.functions import col, udf
+from pyspark.sql.functions import col, udf, collect_set
 from pyspark.sql.types import BooleanType, IntegerType, StringType
 from pyspark.sql import HiveContext
 from util import load_config, load_batch_config, load_df
@@ -90,6 +90,12 @@ def clean_batched_log(df, df_persona, conditions, df_keywords, did_bucket_num):
     df = add_did_bucket(df, did_bucket_num)
     return df
 
+def filter_keywords(df, keywords):
+    # User defined function to return if the keyword is in the inclusion set.
+    _udf = udf(lambda x: x in keywords, BooleanType())
+
+    # Return the filtered dataframe.
+    return df.filter(_udf(col('keyword')))
 
 def clean_logs(cfg, df_persona, df_keywords, log_table_names):
     sc = SparkContext.getOrCreate()
@@ -185,6 +191,8 @@ def run(hive_context, cfg):
 
     did_bucket_num = cfg_clean['did_bucket_num']
 
+    keywords_effective_table = cfg['pipeline']['main_keywords']['keyword_output_table']
+
     command = """SELECT did, 
                         gender_new_dev AS gender, 
                         forecast_age_dev AS age 
@@ -200,6 +208,12 @@ def run(hive_context, cfg):
     else:
         df_keywords = load_df(hive_context, keywords_table)
     #[Row(keyword=u'education', keyword_index=1, spread_app_id=u'C100203741')]
+
+    # Use the effective keyword table to filter the keyword table which
+    # will serve to filter the show and click log tables.
+    df_effective_keywords = load_df(hive_context, keywords_effective_table)
+    effective_keywords = df_effective_keywords.select(collect_set('keyword')).first()[0]
+    df_keywords = filter_keywords(df_keywords, effective_keywords)
 
     log_table_names = (showlog_table, showlog_new_table, clicklog_table, clicklog_new_table)
 

@@ -61,8 +61,12 @@ def run(hive_context, cfg):
     score_vector_alpha_table = cfg['score_vector_rebucketing']['score_vector_alpha_table']
 
     first_round = True
+    num_batches = (bucket_size + bucket_step - 1) / bucket_step
+    batch_num = 1
     for did_bucket in range(0, bucket_size, bucket_step):
-        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, did_bucket, did_bucket+bucket_step-1)
+        print('Processing batch {} of {}   bucket number: {}'.format(batch_num, num_batches, did_bucket))
+
+        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, did_bucket, min(did_bucket+bucket_step-1, bucket_size))
 
         df = hive_context.sql(command)
         df = assign_new_bucket_id(df, alpha_bucket_size, 'alpha_did_bucket')
@@ -71,6 +75,7 @@ def run(hive_context, cfg):
         write_to_table_with_partition(df.select('did', 'score_vector', 'c1', 'did_bucket', 'alpha_did_bucket'),
                                       score_vector_alpha_table, partition=('did_bucket', 'alpha_did_bucket'), mode=mode)
         first_round = False
+        batch_num += 1
 
 
 if __name__ == "__main__":

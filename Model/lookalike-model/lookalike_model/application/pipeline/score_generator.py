@@ -29,7 +29,7 @@ from util import resolve_placeholder
 from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
 
 '''
-This process generates the score-norm-table with the following format.
+This process generates the score-table with the following format.
 
 DataFrame[age: int, gender: int, did: string, did_index: bigint, 
 interval_starting_time: array<string>, interval_keywords: array<string>, 
@@ -55,7 +55,7 @@ def str_to_intlist(table):
     return ji
 
 
-def inputData(record, keyword, length):
+def input_data(record, keyword, length):
     if len(record['show_counts']) >= length:
         hist = flatten(record['show_counts'][:length])
         instance = {'hist_i': hist, 'u': record['did'], 'i': keyword, 'j': keyword, 'sl': len(hist)}
@@ -69,7 +69,7 @@ def inputData(record, keyword, length):
 def predict(serving_url, record, length, new_keyword):
     body = {'instances': []}
     for keyword in new_keyword:
-        instance = inputData(record, keyword, length)
+        instance = input_data(record, keyword, length)
         body['instances'].append(instance)
     body_json = json.dumps(body)
     result = requests.post(serving_url, data=body_json).json()
@@ -174,17 +174,20 @@ if __name__ == '__main__':
     hive_context = HiveContext(sc)
 
     # load dataframes
-    did_table, keywords_table, din_tf_serving_url, length = cfg['score_generator']['input']['did_table'], cfg['score_generator']['input'][
-        'keywords_table'], cfg['score_generator']['input']['din_model_tf_serving_url'], cfg['score_generator']['input']['din_model_length']
+    did_table, keywords_table, significant_keywords_table, din_tf_serving_url, length = cfg['score_generator']['input']['did_table'], cfg['score_generator']['input'][
+        'keywords_table'], cfg['score_generator']['input'][
+        'significant_keywords_table'], cfg['score_generator']['input']['din_model_tf_serving_url'], cfg['score_generator']['input']['din_model_length']
 
     command = 'SELECT * FROM {}'
     df_did = hive_context.sql(command.format(did_table))
-    df_keywords = hive_context.sql(command.format(keywords_table))
+
+    command = 'SELECT T1.keyword,T1.spread_app_id,T1.keyword_index FROM {} AS T1 JOIN {} AS T2 ON T1.keyword=T2.keyword'
+    df_keywords = hive_context.sql(command.format(keywords_table, significant_keywords_table))
     # temporary adding to filter based on active keywords
     df_keywords = df_keywords.filter((df_keywords.keyword == 'video') | (df_keywords.keyword == 'shopping') | (df_keywords.keyword == 'info') |
                                      (df_keywords.keyword == 'social') | (df_keywords.keyword == 'reading') | (df_keywords.keyword == 'travel') |
                                      (df_keywords.keyword == 'entertainment'))
-    
+
     score_table = cfg['score_generator']['output']['score_table']
 
     # create a CTR score generator instance and run to get the loaded did
