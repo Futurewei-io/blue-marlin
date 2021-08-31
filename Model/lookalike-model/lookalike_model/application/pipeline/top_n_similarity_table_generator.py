@@ -20,7 +20,7 @@ import pyspark.sql.functions as fn
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType, StructType
+from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType, IntegerType
 
 # from rest_client import predict, str_to_intlist
 import requests
@@ -72,16 +72,21 @@ def run(sc, hive_context, cfg):
     alpha_bucket_step = cfg['top_n_similarity']['alpha_did_bucket_step']
 
     first_round = True
+    num_batches = (did_bucket_size + did_bucket_step - 1) / did_bucket_step
+    batch_num = 1
     for did_bucket in range(0, did_bucket_size, did_bucket_step):
+        print('Processing batch {} of {}   bucket number: {}'.format(batch_num, num_batches, did_bucket))
 
         command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(
-            score_vector_alpha_table, did_bucket, min(did_bucket_size, did_bucket + did_bucket_step - 1))
+            score_vector_alpha_table, did_bucket, min(did_bucket + did_bucket_step - 1, did_bucket_size))
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [0.24231663, 0.20828941, 0.0]|
         df = hive_context.sql(command)
         df = df.withColumn('top_n_similar_user', fn.array())
 
         for alpha_bucket in range(0, alpha_bucket_size, alpha_bucket_step):
+            print('Processing batch {}, alpha bucket {}'.format(batch_num, alpha_bucket))
+ 
             command = """SELECT did, score_vector, c1, alpha_did_bucket 
             FROM {} WHERE alpha_did_bucket BETWEEN {} AND {}"""
             command = command.format(score_vector_alpha_table,
@@ -97,7 +102,6 @@ def run(sc, hive_context, cfg):
             block_user_broadcast = sc.broadcast(block_user_did_score)
 
             c2 = np.array([_['c1'] for _ in block_user])
-            c2 = np.square(np.linalg.norm(c2)).tolist()
             c2_broadcast = sc.broadcast(c2)
 
             def calculate_similarity(block_user_broadcast, c2_broadcast):
@@ -108,7 +112,7 @@ def run(sc, hive_context, cfg):
                     other_score_vectors = np.array(other_score_vectors)
                     cross_mat = np.matmul(user_score_vector, other_score_vectors.transpose())
                     c2 = np.array(c2_broadcast.value)
-                    similarity = np.sqrt(m) - np.sqrt(c1 + c2 - 2 * cross_mat)
+                    similarity = np.sqrt(m) - np.sqrt(np.maximum(np.expand_dims(c1, 1) + c2 - (2 * cross_mat), 0.0))
                     user_score_s = list(itertools.izip(dids, similarity.tolist()))
                     user_score_s.extend(top_n_user_score)
                     user_score_s = heapq.nlargest(N, user_score_s, key=lambda x: x[1])
@@ -125,6 +129,7 @@ def run(sc, hive_context, cfg):
         # use the partitioned field at the end of the select. Order matters.
         write_to_table_with_partition(df.select('did', 'top_n_similar_user', 'did_bucket'), similarity_table, partition=('did_bucket'), mode=mode)
         first_round = False
+        batch_num += 1
 
 
 if __name__ == "__main__":
