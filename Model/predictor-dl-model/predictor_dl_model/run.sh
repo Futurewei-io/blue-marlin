@@ -27,6 +27,15 @@ then
     spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_ts.py config.yml
 fi
 
+#Run outlier filter and save the results as <config.pipeline.time_series.{product_tag}_{pipeline_tag}_tmp_outlier> 
+if false
+then
+    # simple call
+    # spark-submit pipeline/main_outlier.py config.yml   
+    
+    spark-submit --master yarn --py-files pipeline/transform.py --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_outlier.py config.yml
+fi
+
 #Preparing clustering
 if false
 then

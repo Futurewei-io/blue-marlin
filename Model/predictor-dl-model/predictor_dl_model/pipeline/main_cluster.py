@@ -54,6 +54,7 @@ def __save_as_table(df, table_name, hive_context, create_table):
         hive_context.sql(command)
 
 
+
 def estimate_number_of_non_dense_clusters(df, median_popularity_of_dense, cluster_dense_num_ratio_cap):
     # find avg of non-dense popularity
     median_non_dense_p = df.filter('sparse=True').agg(
@@ -151,6 +152,8 @@ def denoise(df, percentile):
     return df
 
 
+
+
 def run(hive_context, cluster_size_cfg, input_table_name,
         pre_cluster_table_name, output_table_name, percentile, create_pre_cluster_table):
 
@@ -162,6 +165,7 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     cluster_dense_num_ratio_cap = cluster_size_cfg['cluster_dense_num_ratio_cap']
     popularity_th = cluster_size_cfg['popularity_th']
     datapoints_min_th = cluster_size_cfg['datapoints_min_th']
+
 
     # Read factdata table
     command = """
@@ -253,6 +257,8 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     # denoising uckeys: remove some datapoints of the uckey
     df = denoise(df, percentile)
 
+
+
     __save_as_table(df, output_table_name, hive_context, True)
 
 
@@ -278,8 +284,9 @@ if __name__ == "__main__":
     output_table_name = cfg['uckey_clustering']['output_table_name']
     pre_cluster_table_name = cfg['uckey_clustering']['pre_cluster_table_name']
     create_pre_cluster_table = cfg['uckey_clustering']['create_pre_cluster_table']
-    input_table_name = cfg['time_series']['output_table_name']
+    input_table_name = cfg['time_series']['outlier_table']
     cluster_size_cfg = cfg['uckey_clustering']['cluster_size']
+
 
     run(hive_context=hive_context,
         cluster_size_cfg=cluster_size_cfg,
