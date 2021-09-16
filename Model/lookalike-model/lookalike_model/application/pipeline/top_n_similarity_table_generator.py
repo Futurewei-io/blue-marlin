@@ -19,14 +19,10 @@ import argparse
 import pyspark.sql.functions as fn
 
 from pyspark import SparkContext
-from pyspark.sql import HiveContext
+from pyspark.sql import HiveContext, SparkSession
 from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType, IntegerType
+from pyspark.sql.functions import udf, col, explode
 
-# from rest_client import predict, str_to_intlist
-import requests
-import json
-import argparse
-from pyspark.sql.functions import udf
 from math import sqrt
 import time
 import numpy as np
@@ -34,7 +30,6 @@ import itertools
 import heapq
 from util import resolve_placeholder
 from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
-
 
 '''
 This process generates the top-n-similarity table.
@@ -52,24 +47,14 @@ The top-n-similarity table is
 '''
 
 
-def run(sc, hive_context, cfg):
+def run(spark_session, hive_context, cfg):
 
-    score_vector_alpha_table = cfg['score_vector_rebucketing']['score_vector_alpha_table']
+    score_matrix_table = cfg['score_matrix_table']['score_matrix_table']
     similarity_table = cfg['top_n_similarity']['similarity_table']
-    N = cfg['top_n_similarity']['top_n']
-
-    command = "SELECT did, score_vector FROM {}".format(score_vector_alpha_table)
-
-    # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
-    # [0.24231663, 0.20828941, 0.0]|
-    df = hive_context.sql(command)
-    df = df.withColumn('top_n_user_score', fn.array())
-
-    did_bucket_size = cfg['score_vector']['did_bucket_size']
+    did_bucket_size = cfg['top_n_similarity']['did_bucket_size']
     did_bucket_step = cfg['top_n_similarity']['did_bucket_step']
-
-    alpha_bucket_size = cfg['score_vector_rebucketing']['alpha_did_bucket_size']
-    alpha_bucket_step = cfg['top_n_similarity']['alpha_did_bucket_step']
+    cross_bucket_size = cfg['top_n_similarity']['cross_bucket_size']
+    top_n_value = cfg['top_n_similarity']['top_n']
 
     first_round = True
     num_batches = (did_bucket_size + did_bucket_step - 1) / did_bucket_step
@@ -77,57 +62,70 @@ def run(sc, hive_context, cfg):
     for did_bucket in range(0, did_bucket_size, did_bucket_step):
         print('Processing batch {} of {}   bucket number: {}'.format(batch_num, num_batches, did_bucket))
 
-        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(
-            score_vector_alpha_table, did_bucket, min(did_bucket + did_bucket_step - 1, did_bucket_size))
+        command = "SELECT did_list, did_bucket, score_matrix, c1_list FROM {} WHERE did_bucket BETWEEN {} AND {}".format(
+            score_matrix_table, did_bucket, min(did_bucket + did_bucket_step - 1, did_bucket_size))
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [0.24231663, 0.20828941, 0.0]|
         df = hive_context.sql(command)
         df = df.withColumn('top_n_similar_user', fn.array())
 
-        for alpha_bucket in range(0, alpha_bucket_size, alpha_bucket_step):
-            print('Processing batch {}, alpha bucket {}'.format(batch_num, alpha_bucket))
- 
-            command = """SELECT did, score_vector, c1, alpha_did_bucket 
-            FROM {} WHERE alpha_did_bucket BETWEEN {} AND {}"""
-            command = command.format(score_vector_alpha_table,
-                                     alpha_bucket, min(alpha_bucket_size, alpha_bucket + alpha_bucket_step - 1))
+        for cross_bucket in range(0, cross_bucket_size):
+            print('Processing batch {}, alpha bucket {}'.format(batch_num, cross_bucket))
+
+            command = """SELECT did_list, score_matrix, c1_list, did_bucket
+            FROM {} WHERE did_bucket = {} """
+            command = command.format(score_matrix_table, cross_bucket)
 
             df_user = hive_context.sql(command)
-            block_user = df_user.select('did', 'score_vector', 'c1').collect()
+            cross_users = df_user.select('did_list', 'score_matrix', 'c1_list').collect()
 
-            if len(block_user) == 0:
+            if len(cross_users) == 0:
                 continue
 
-            block_user_did_score = ([_['did'] for _ in block_user], [_['score_vector'] for _ in block_user])
-            block_user_broadcast = sc.broadcast(block_user_did_score)
+            cross_users_did_score = (cross_users[0]['did_list'], cross_users[0]['score_matrix'])
+            c2 = np.array(cross_users[0]['c1_list'])
 
-            c2 = np.array([_['c1'] for _ in block_user])
-            c2_broadcast = sc.broadcast(c2)
+            def calculate_similarity(cross_users_did_score, c2):
+                def __helper(user_score_matrix, top_n_user_score, c1_list):
+                    user_score_matrix = np.array(user_score_matrix)
+                    m = user_score_matrix.shape[1]
+                    cross_dids, cross_score_matrix = cross_users_did_score
+                    cross_score_matrix = np.array(cross_score_matrix)
+                    cross_mat = np.matmul(user_score_matrix, cross_score_matrix.transpose())
 
-            def calculate_similarity(block_user_broadcast, c2_broadcast):
-                def __helper(user_score_vector, top_n_user_score, c1):
-                    m = len(user_score_vector)
-                    user_score_vector = np.array(user_score_vector)
-                    dids, other_score_vectors = block_user_broadcast.value
-                    other_score_vectors = np.array(other_score_vectors)
-                    cross_mat = np.matmul(user_score_vector, other_score_vectors.transpose())
-                    c2 = np.array(c2_broadcast.value)
-                    similarity = np.sqrt(m) - np.sqrt(np.maximum(np.expand_dims(c1, 1) + c2 - (2 * cross_mat), 0.0))
-                    user_score_s = list(itertools.izip(dids, similarity.tolist()))
-                    user_score_s.extend(top_n_user_score)
-                    user_score_s = heapq.nlargest(N, user_score_s, key=lambda x: x[1])
-                    return user_score_s
+                    similarity = np.sqrt(m) - np.sqrt(np.maximum(np.expand_dims(c1_list, 1) + c2 - (2 * cross_mat), 0.0))
+                    result = []
+                    for cosimilarity, top_n in itertools.izip_longest(similarity, top_n_user_score, fillvalue=[]):
+                        user_score_s = list(itertools.izip(cross_dids, cosimilarity.tolist()))
+                        user_score_s.extend(top_n)
+                        user_score_s = heapq.nlargest(top_n_value, user_score_s, key=lambda x: x[1])
+                        result.append(user_score_s)
+                    return result
                 return __helper
 
             elements_type = StructType([StructField('did', StringType(), False), StructField('score', FloatType(), False)])
 
             # update top_n_similar_user field
-            df = df.withColumn('top_n_similar_user', udf(calculate_similarity(block_user_broadcast, c2_broadcast),
-                                                         ArrayType(elements_type))(df.score_vector, df.top_n_similar_user, df.c1))
+            df = df.withColumn('top_n_similar_user', udf(calculate_similarity(cross_users_did_score, c2),
+                                                         ArrayType(ArrayType(elements_type)))(df.score_matrix, df.top_n_similar_user, df.c1_list))
+
+        # Unpack the matrices into individual users.
+        # Note: in Spark 2.4, the udf can be replaced with arrays_zip().
+        def combine(x, y):
+            return list(zip(x, y))
+        df = df.withColumn("new", udf(combine, ArrayType(StructType([StructField("did", StringType()),
+                                                                     StructField("top_n_similar_user", ArrayType(StructType([
+                                                                         StructField("did", StringType(), True),
+                                                                         StructField("score", FloatType(), True), ]), True)),
+                                                                     ])))(df.did_list, df.top_n_similar_user))
+        df = df.withColumn("new", explode("new"))
+        df = df.select(col("new.did").alias("did"),
+                       col("new.top_n_similar_user").alias("top_n_similar_user"),
+                       "did_bucket")
 
         mode = 'overwrite' if first_round else 'append'
         # use the partitioned field at the end of the select. Order matters.
-        write_to_table_with_partition(df.select('did', 'top_n_similar_user', 'did_bucket'), similarity_table, partition=('did_bucket'), mode=mode)
+        write_to_table_with_partition(df, similarity_table, partition=('did_bucket'), mode=mode)
         first_round = False
         batch_num += 1
 
@@ -144,8 +142,9 @@ if __name__ == "__main__":
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('INFO')
     hive_context = HiveContext(sc)
+    spark_session = SparkSession(sc)
 
-    run(sc=sc, hive_context=hive_context, cfg=cfg)
+    run(spark_session, hive_context, cfg)
     sc.stop()
     end = time.time()
     print('Runtime of the program is:', (end - start))

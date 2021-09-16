@@ -20,6 +20,10 @@ from pyspark import SparkContext
 import argparse, yaml
 from util import resolve_placeholder
 
+'''
+spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict validation.py config.yml "29"
+'''
+
 
 def counting(click,kwi):
     count_click = 0
@@ -31,10 +35,10 @@ def counting(click,kwi):
 
 def run(hive_context,cfg, kwi):
     lookalike_score_table = cfg["output"]["similarity_table"]
-    seed_user_table = cfg['input']['seeduser_table']
+    seed_user_table = 'lookalike_seeduser'
     extend = cfg['input']['extend']
-    test_table = cfg['input']['test_table']
-    number_of_seeduser = cfg['input']['number_of_seeduser']
+    test_table = 'lookalike_trainready_jimmy_test'
+    number_of_seeduser = 1000
 
     ######### filtering the df and removing seed users
     command = "select * from {}"
