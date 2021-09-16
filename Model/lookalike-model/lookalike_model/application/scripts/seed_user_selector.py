@@ -30,9 +30,9 @@ output: lookalike_seeduser table
 
 
 def run(hive_context, cfg, kwi):
-    seed_user_table = cfg['input']['seeduser_table']
+    seed_user_table = 'lookalike_seeduser'
     log_table = cfg['input']['log_table']
-    number_of_seeduser = cfg['input']['number_of_seeduser']
+    number_of_seeduser = 1000
 
     # command = "select * from (select * from {} where is_click=1 and keyword_index=29) as s join (select * from {} where is_click=1 and keyword_index=26) as b on b.did = s.did where s.gender = 1"
     command = "SELECT * FROM {} WHERE is_click=1 AND keyword_index={}"

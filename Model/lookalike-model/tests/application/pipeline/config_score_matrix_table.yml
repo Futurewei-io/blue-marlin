@@ -1,5 +1,5 @@
 product_tag: 'lookalike_application'
-pipeline_tag: 'unittest_top_n_similarity'
+pipeline_tag: 'unittest_score_matrix_table'
 score_generator:
     input:
         log_table : "lookalike_03042021_logs"
@@ -16,7 +16,7 @@ score_generator:
 score_vector:
     keywords_table: "din_ad_keywords_09172020"
     score_table:  "{product_tag}_{pipeline_tag}_score"
-    score_vector_table: "{product_tag}_{pipeline_tag}_score_vector"
+    score_vector_table: '{product_tag}_{pipeline_tag}_input_score_vector'
     did_bucket_size: 2
     did_bucket_step: 2
 score_vector_rebucketing:
@@ -25,9 +25,9 @@ score_vector_rebucketing:
     alpha_did_bucket_size: 4
     score_vector_alpha_table: '{product_tag}_{pipeline_tag}_input_score_vector_alpha'
 score_matrix_table:
-    did_bucket_size: 2
+    did_bucket_size: 1
     did_bucket_step: 1
-    score_matrix_table: '{product_tag}_{pipeline_tag}_input_score_matrix'
+    score_matrix_table: '{product_tag}_{pipeline_tag}_output_score_matrix'
 top_n_similarity:
     did_bucket_size: 1
     did_bucket_step: 1

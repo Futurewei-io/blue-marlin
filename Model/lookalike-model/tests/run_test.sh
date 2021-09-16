@@ -27,9 +27,15 @@ then
     spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/test_main_trainready.py
 fi
 
-# test_top_n_similarity_table_generator: Finds the top n users similar to the given user.
+# test_score_matrix_table: Converts the score vector table into matrices.
 if true
 then
-    spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict application/pipeline/test_top_n_similarity_table_generator.py
-    spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict application/pipeline/test_top_n_similarity_table_generator2.py
+    spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict application/pipeline/test_score_matrix_table.py
+fi
+
+# test_top_n_similarity_table_generator: Finds the top n users similar to the given user.
+if false
+then
+    spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict application/pipeline/test_top_n_similarity_table_generator_1.py
+    spark-submit --master yarn --num-executors 5 --executor-cores 2 --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict application/pipeline/test_top_n_similarity_table_generator_2.py
 fi

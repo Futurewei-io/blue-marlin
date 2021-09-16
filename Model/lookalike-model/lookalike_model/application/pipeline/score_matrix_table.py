@@ -17,8 +17,8 @@
 import yaml
 import argparse
 from pyspark import SparkContext
-from pyspark.sql import HiveContext
-from pyspark.sql.functions import lit, col, udf
+from pyspark.sql import HiveContext, SparkSession, Window
+from pyspark.sql.functions import lit, col, udf, collect_list
 from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType, IntegerType
 # from rest_client import predict, str_to_intlist
 import requests
@@ -36,29 +36,19 @@ from lookalike_model.pipeline.util import write_to_table, write_to_table_with_pa
 '''
 
 To run, execute the following in application folder.
-spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict score_vector_rebucketing.py config.yml
+spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict score_matirx_table.py config.yml
 
-This process generates added secondary buckects ids (alpha-did-bucket).
+This process consolidates bucket score vectors into matrices.
 
 '''
 
 
-def assign_new_bucket_id(df, n, new_column_name):
-    def __hash_sha256(s):
-        hex_value = hashlib.sha256(s.encode('utf-8')).hexdigest()
-        return int(hex_value, 16)
-    _udf = udf(lambda x: __hash_sha256(x) % n, IntegerType())
-    df = df.withColumn(new_column_name, _udf(df.did))
-    return df
-
-
-def run(hive_context, cfg):
+def run(spark_session, hive_context, cfg):
 
     score_vector_table = cfg['score_vector']['score_vector_table']
-    bucket_size = cfg['score_vector_rebucketing']['did_bucket_size']
-    bucket_step = cfg['score_vector_rebucketing']['did_bucket_step']
-    alpha_bucket_size = cfg['score_vector_rebucketing']['alpha_did_bucket_size']
-    score_vector_alpha_table = cfg['score_vector_rebucketing']['score_vector_alpha_table']
+    bucket_size = cfg['score_matrix_table']['did_bucket_size']
+    bucket_step = cfg['score_matrix_table']['did_bucket_step']
+    score_matrix_table = cfg['score_matrix_table']['score_matrix_table']
 
     first_round = True
     num_batches = (bucket_size + bucket_step - 1) / bucket_step
@@ -66,14 +56,19 @@ def run(hive_context, cfg):
     for did_bucket in range(0, bucket_size, bucket_step):
         print('Processing batch {} of {}   bucket number: {}'.format(batch_num, num_batches, did_bucket))
 
-        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, did_bucket, min(did_bucket+bucket_step-1, bucket_size))
+        max_bucket = min(did_bucket+bucket_step-1, bucket_size)
+        command = "SELECT did, did_bucket, score_vector, c1 FROM {} WHERE did_bucket BETWEEN {} AND {}".format(score_vector_table, did_bucket, max_bucket)
+        # command = "SELECT did_bucket, collect_list(struct(did, score_vector, c1)) AS item FROM {} WHERE did_bucket BETWEEN {} AND {} GROUP BY did_bucket".format(score_vector_table, did_bucket, min(did_bucket+bucket_step-1, bucket_size))
 
         df = hive_context.sql(command)
-        df = assign_new_bucket_id(df, alpha_bucket_size, 'alpha_did_bucket')
+        df = df.groupBy('did_bucket').agg(
+            collect_list('did').alias('did_list'),
+            collect_list('score_vector').alias('score_matrix'),
+            collect_list('c1').alias('c1_list'))
 
         mode = 'overwrite' if first_round else 'append'
-        write_to_table_with_partition(df.select('did', 'score_vector', 'c1', 'did_bucket', 'alpha_did_bucket'),
-                                      score_vector_alpha_table, partition=('did_bucket', 'alpha_did_bucket'), mode=mode)
+        write_to_table_with_partition(df.select('did_list', 'score_matrix', 'c1_list', 'did_bucket'),
+                                      score_matrix_table, partition=('did_bucket'), mode=mode)
         first_round = False
         batch_num += 1
 
@@ -89,8 +84,9 @@ if __name__ == "__main__":
     sc = SparkContext.getOrCreate()
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
+    spark_session = SparkSession(sc)
 
-    run(hive_context=hive_context, cfg=cfg)
+    run(spark_session, hive_context=hive_context, cfg=cfg)
     sc.stop()
     end = time.time()
     print('Runtime of the program is:', (end - start))
