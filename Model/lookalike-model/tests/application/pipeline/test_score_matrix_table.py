@@ -22,7 +22,7 @@ from pyspark.sql.types import DataType, StringType, StructField, StructType, Flo
 from lookalike_model.application.pipeline import util, score_matrix_table
 
 
-class TestTopNSimilarityTableGenerator(unittest.TestCase):
+class TestScoreMatrixTable(unittest.TestCase):
 
     def setUp (self):
         # Set the log level.
@@ -34,7 +34,7 @@ class TestTopNSimilarityTableGenerator(unittest.TestCase):
         self.hive_context = HiveContext(self.sc)
 
     def test_run(self):
-        print('*** Running TestTopNSimilarityTableGenerator.test_run ***')
+        print('*** Running TestScoreMatrixTable.test_run ***')
 
         # Load the test configuration.
         with open('application/pipeline/config_score_matrix_table.yml', 'r') as ymlfile:
@@ -63,7 +63,7 @@ class TestTopNSimilarityTableGenerator(unittest.TestCase):
         self.validate_similarity_table(df, df_vector, True)
 
     def test_run2(self):
-        print('*** Running TestTopNSimilarityTableGenerator.test_run2 ***')
+        print('*** Running TestScoreMatrixTable.test_run2 ***')
 
         # Load the test configuration.
         with open('application/pipeline/config_score_matrix_table.yml', 'r') as ymlfile:
@@ -94,7 +94,7 @@ class TestTopNSimilarityTableGenerator(unittest.TestCase):
         self.validate_similarity_table(df, df_vector, False)
 
     def test_run3(self):
-        print('*** Running TestTopNSimilarityTableGenerator.test_run3 ***')
+        print('*** Running TestScoreMatrixTable.test_run3 ***')
 
         # Load the test configuration.
         with open('application/pipeline/config_score_matrix_table.yml', 'r') as ymlfile:

@@ -23,7 +23,7 @@ from pyspark.sql import HiveContext, SparkSession
 from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType, IntegerType
 from pyspark.sql.functions import udf, col, explode
 
-from math import sqrt
+import os
 import time
 import numpy as np
 import itertools
@@ -47,7 +47,7 @@ The top-n-similarity table is
 '''
 
 
-def run(spark_session, hive_context, cfg):
+def run(spark_session, cfg):
 
     score_matrix_table = cfg['score_matrix_table']['score_matrix_table']
     similarity_table = cfg['top_n_similarity']['similarity_table']
@@ -66,7 +66,7 @@ def run(spark_session, hive_context, cfg):
             score_matrix_table, did_bucket, min(did_bucket + did_bucket_step - 1, did_bucket_size))
         # |0004f3b4731abafa9ac54d04cb88782ed61d30531262decd799d91beb6d6246a|0         |
         # [0.24231663, 0.20828941, 0.0]|
-        df = hive_context.sql(command)
+        df = spark_session.sql(command)
         df = df.withColumn('top_n_similar_user', fn.array())
 
         for cross_bucket in range(0, cross_bucket_size):
@@ -76,7 +76,7 @@ def run(spark_session, hive_context, cfg):
             FROM {} WHERE did_bucket = {} """
             command = command.format(score_matrix_table, cross_bucket)
 
-            df_user = hive_context.sql(command)
+            df_user = spark_session.sql(command)
             cross_users = df_user.select('did_list', 'score_matrix', 'c1_list').collect()
 
             if len(cross_users) == 0:
@@ -88,12 +88,20 @@ def run(spark_session, hive_context, cfg):
             def calculate_similarity(cross_users_did_score, c2):
                 def __helper(user_score_matrix, top_n_user_score, c1_list):
                     user_score_matrix = np.array(user_score_matrix)
-                    m = user_score_matrix.shape[1]
                     cross_dids, cross_score_matrix = cross_users_did_score
                     cross_score_matrix = np.array(cross_score_matrix)
-                    cross_mat = np.matmul(user_score_matrix, cross_score_matrix.transpose())
 
-                    similarity = np.sqrt(m) - np.sqrt(np.maximum(np.expand_dims(c1_list, 1) + c2 - (2 * cross_mat), 0.0))
+                    # Calculate the similarity between the users.
+                    method = 'numpy'
+                    if method == 'numpy':
+                        m = user_score_matrix.shape[1]
+                        cross_mat = np.matmul(user_score_matrix, cross_score_matrix.transpose())
+                        similarity = np.sqrt(m) - np.sqrt(np.maximum(np.expand_dims(c1_list, 1) + c2 - (2 * cross_mat), 0.0))
+                    elif method == 'scipy':
+                        from scipy.spatial.distance import cdist
+                        similarity = 1 - cdist(user_score_matrix, cross_score_matrix)
+
+                    # Find the top N users.
                     result = []
                     for cosimilarity, top_n in itertools.izip_longest(similarity, top_n_user_score, fillvalue=[]):
                         user_score_s = list(itertools.izip(cross_dids, cosimilarity.tolist()))
@@ -139,12 +147,14 @@ if __name__ == "__main__":
         cfg = yaml.safe_load(yml_file)
         resolve_placeholder(cfg)
 
-    sc = SparkContext.getOrCreate()
-    sc.setLogLevel('INFO')
-    hive_context = HiveContext(sc)
-    spark_session = SparkSession(sc)
+    # os.environ['PYSPARK_PYTHON'] = "./environment/bin/python"
+    # spark_session = SparkSession.builder.config(
+    #     # "spark.archives",  # 'spark.yarn.dist.archives' in YARN.
+    #     "spark.yarn.dist.archives",  # 'spark.yarn.dist.archives' in YARN.
+    #     "lookalike-application-python-venv.tar.gz#environment").enableHiveSupport().getOrCreate()
+    spark_session = SparkSession.builder.enableHiveSupport().getOrCreate()
 
-    run(spark_session, hive_context, cfg)
-    sc.stop()
+    run(spark_session, cfg)
+    spark_session.stop()
     end = time.time()
     print('Runtime of the program is:', (end - start))

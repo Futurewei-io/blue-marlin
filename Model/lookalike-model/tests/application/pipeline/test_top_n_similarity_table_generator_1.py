@@ -40,15 +40,16 @@ class TestMainClean(unittest.TestCase):
 
     def setUp(self):
         # Set the log level.
-        self.sc = SparkContext.getOrCreate()
-        self.sc.setLogLevel('ERROR')
 
         # Initialize the Spark session
-        self.spark = SparkSession.builder.appName('unit test').enableHiveSupport().getOrCreate()
-        self.hive_context = HiveContext(self.sc)
+        self.spark = SparkSession.builder.appName('unit test').config(
+            "spark.archives",  # 'spark.yarn.dist.archives' in YARN.
+            # "spark.yarn.dist.archives",  # 'spark.yarn.dist.archives' in YARN.
+            "lookalike-application-python-venv.tar.gz#environment").enableHiveSupport().getOrCreate()
+        self.spark.sparkContext.setLogLevel('ERROR')
 
     def drop_table(self, table_name):
-        self.hive_context.sql('DROP TABLE {}'.format(table_name))
+        self.spark.sql('DROP TABLE {}'.format(table_name))
 
     def create_matrix_table(self, data, table_name):
         schema = StructType([
@@ -63,15 +64,15 @@ class TestMainClean(unittest.TestCase):
 
     def run_top_n_similarity_table_generator(self, cfg, _input):
         self.create_matrix_table(_input, cfg['score_matrix_table']['score_matrix_table'])
-        top_n_similarity_table_generator.run(self.sc, self.hive_context, cfg)
-        result = self.hive_context.sql('SELECT did,top_n_similar_user,did_bucket FROM {}'.format(cfg['top_n_similarity']['similarity_table']))
+        top_n_similarity_table_generator.run(self.spark, cfg)
+        result = self.spark.sql('SELECT did,top_n_similar_user,did_bucket FROM {}'.format(cfg['top_n_similarity']['similarity_table']))
         return result
 
     def compare_output_and_expected_and_cleanup(self, cfg, test_name, df_output, _expected_output):
         elements_type = StructType([StructField('did', StringType(), False), StructField('score', FloatType(), False)])
         _schema = StructType([StructField('did', StringType(), False), StructField('top_n_similar_user',
                                                                                    ArrayType(elements_type), False), StructField('did_bucket', IntegerType(), False)])
-        df_expected_output = self.hive_context.createDataFrame(_expected_output, _schema)
+        df_expected_output = self.spark.createDataFrame(_expected_output, _schema)
 
         df_output = df_output.sort('did')
         df_expected_output = df_expected_output.sort('did')
