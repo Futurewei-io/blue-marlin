@@ -31,6 +31,7 @@ from pyspark.sql.window import Window
 from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
 from util import resolve_placeholder
+from statistics import stdev
 
 
 import transform as transform
@@ -52,7 +53,6 @@ def __save_as_table(df, table_name, hive_context, create_table):
             """.format(table_name)
 
         hive_context.sql(command)
-
 
 
 def estimate_number_of_non_dense_clusters(df, median_popularity_of_dense, cluster_dense_num_ratio_cap):
@@ -146,12 +146,13 @@ def denoise(df, percentile):
     df = df.withColumn('nonzero_p', udf(
         lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
             [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
+    df = df.withColumn('nonzero_sd', udf(lambda ts: stdev([_ for _ in ts if _ !=0]))(df.ts))
     
     df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / percentile) else 0 for i in ts],
                                  ArrayType(IntegerType()))(df.ts, df.nonzero_p))
+    df = df.withColumn('ts', udf(lambda ts, nonzero_sd: [i if i and i < (nonzero_sd * 2) else 0 for i in ts],
+                                 ArrayType(IntegerType()))(df.ts, df.nonzero_sd))
     return df
-
-
 
 
 def run(hive_context, cluster_size_cfg, input_table_name,
@@ -165,7 +166,6 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     cluster_dense_num_ratio_cap = cluster_size_cfg['cluster_dense_num_ratio_cap']
     popularity_th = cluster_size_cfg['popularity_th']
     datapoints_min_th = cluster_size_cfg['datapoints_min_th']
-
 
     # Read factdata table
     command = """
@@ -254,10 +254,8 @@ def run(hive_context, cluster_size_cfg, input_table_name,
 
     df = df.filter(udf(lambda p_n, ts: not is_spare(datapoints_th_clusters, -sys.maxsize - 1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
-    # denoising uckeys: remove some datapoints of the uckey
+    # denoising uckeys: remove some datapoints of the uckey. keep the data between upper and lower bound
     df = denoise(df, percentile)
-
-
 
     __save_as_table(df, output_table_name, hive_context, True)
 
@@ -286,7 +284,6 @@ if __name__ == "__main__":
     create_pre_cluster_table = cfg['uckey_clustering']['create_pre_cluster_table']
     input_table_name = cfg['time_series']['outlier_table']
     cluster_size_cfg = cfg['uckey_clustering']['cluster_size']
-
 
     run(hive_context=hive_context,
         cluster_size_cfg=cluster_size_cfg,
