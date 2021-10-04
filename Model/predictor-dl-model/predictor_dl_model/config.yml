@@ -1,6 +1,6 @@
 product_tag: 'dlpm'
 pipeline_tag: '08092021_1200' # IMPORTANT: The pipeline tag has to be changed before each run to prevent record duplication.
-factdata_table_name: 'factdata_hq_09222020'
+factdata_table_name: 'factdata_09202021' #factdata_hq_09222020
 
 log:
   level: 'WARN' # log level for spark and app
@@ -9,7 +9,7 @@ pipeline:
   config_table: '{product_tag}_{pipeline_tag}_config'
   filter: # This is for data filtering- si and region
     percentile: 10     # This is for filtering traffic less than 1/10 of average traffic
-    region_mapping_table: 'region_mapping'
+    region_mapping_table: 'ipl_region_mapping_09282021' #region_mapping_01012020
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_area_map'
     init_start_bucket: 0
     bucket_size: 1000
