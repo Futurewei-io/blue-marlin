@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -23,14 +23,19 @@ import yaml
 
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-from pyspark.sql.functions import udf, expr, collect_list, struct
-from pyspark.sql.types import StringType, ArrayType, MapType, FloatType, StructField, StructType
+from pyspark.sql.functions import udf, expr, collect_list, struct, split, explode
+from pyspark.sql.types import StringType, ArrayType, MapType, FloatType, StructField, StructType, IntegerType, BooleanType
 
 from dlpredictor import transform
 from dlpredictor.configutil import *
 from dlpredictor.log import *
 from dlpredictor.prediction.forecaster import Forecaster
 from dlpredictor.util.sparkesutil import *
+
+
+'''
+spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --py-files dist/dlpredictor-1.6.0-py2.7.egg,lib/imscommon-2.0.0-py2.7.egg,lib/predictor_dl_model-1.6.0-py2.7.egg --conf spark.driver.maxResultSize=5G dlpredictor/main_spark_es.py conf/config.yml
+'''
 
 
 def sum_count_array(hour_counts):
@@ -103,6 +108,51 @@ def __save_as_table(df, table_name, hive_context, create_table):
         hive_context.sql(command)
 
 
+def ipl_revrse_mapping(df, ipl_dist_map_brodcast, df_uckey_distinct):
+
+    df = df.withColumn('ipl', split(df['uckey'], ',').getItem(7).cast(StringType()))
+    df = df.filter(udf(lambda ipl: ipl in ipl_dist_map_brodcast.value, BooleanType())(df.ipl))
+    df = df.withColumn('real_ipl_ratio_map', udf(lambda ipl: ipl_dist_map_brodcast.value[ipl], MapType(StringType(), FloatType(), False))(df.ipl))
+
+    # +-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+---+------------------+
+    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                               |ratio       |uckey                                                       |ipl|real_ipl_ratio_map|
+    # +-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+---+------------------+
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]        |0.00800733  |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40                      |40 |[40 -> 1.0]       |
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]        |0.010742836 |native,z041bf6g4s,WIFI,g_m,3,CPM,30,30                      |30 |[30 -> 1.0]       |
+
+    df = df.select('cluster_uckey', 'price_cat', 'day_prediction_map', 'ratio', 'uckey', 'ipl', explode('real_ipl_ratio_map')).withColumnRenamed(
+        "key", "real_ipl").withColumnRenamed("value", "ipl_ratio")
+
+    #         +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
+    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                       |ratio      |uckey                                 |ipl|real_ipl|ipl_ratio  |
+    # +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.033795446|native,z041bf6g4s,WIFI,g_f,4,CPM,57,57|57 |57      |1.0        |
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.00800733 |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|40 |40      |1.0        |
+
+    # change uckey with new ipl, this for ipl fix not region
+    def __fix_uckey_ipl(uckey, ipl):
+        l = uckey.split(',')
+        l[7] = str(ipl)
+        return ','.join(l)
+    df = df.withColumn('uckey', udf(__fix_uckey_ipl, StringType())(df.uckey, df.real_ipl))
+
+    # filter uckeys to make sure we predict for valid uckeys
+    df = df.join(df_uckey_distinct, on='uckey', how='inner')
+
+    #     +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
+    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                       |ratio      |uckey                                 |ipl|real_ipl|ipl_ratio  |
+    # +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.010742836|native,z041bf6g4s,WIFI,g_m,3,CPM,30,30|30 |30      |1.0        |
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.00800733 |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|40 |40      |1.0        |
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.042944785|native,z041bf6g4s,4G,g_m,4,CPM,3,3    |3  |3       |1.0        |
+    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.011951239|native,z041bf6g4s,4G,g_f,5,CPM,71,101 |71 |101     |0.08843476 |
+
+    # update ratio
+    df = df.withColumn('ratio', udf(lambda r1, r2: float(r1*r2) if r1 and r2 else float(0), FloatType())(df.ratio, df.ipl_ratio))
+
+    return df
+
+
 def run(cfg):
 
     # os.environ[
@@ -126,11 +176,15 @@ def run(cfg):
     # Reading the max bucket_id
     bucket_size = cfg['bucket_size']
     bucket_step = cfg['bucket_step']
-    factdata = cfg['factdata_table']
+    factdata_area_map = cfg['area_map_table']
     distribution_table = cfg['distribution_table']
     norm_table = cfg['norm_table']
     traffic_dist = cfg['traffic_dist']
     model_stat_table = cfg['model_stat_table']
+    ipl_dist_table = cfg['ipl_dist_table']
+    unique_original_uckey_table = cfg['unique_original_uckey_table']
+    skip_ipl_reverse_mapping = bool(cfg['skip_ipl_reverse_mapping'])
+    prediction_table_name = cfg['es_predictions_index']
 
     yesterday = cfg['yesterday']
     serving_url = cfg['serving_url']
@@ -150,6 +204,35 @@ def run(cfg):
     df_dist = df_dist.repartition('uckey')
     df_dist.cache()
     df_dist.count()
+
+    if not skip_ipl_reverse_mapping:
+        command = """
+            SELECT
+            DIST.old as mapped_ipl, 
+            DIST.ipl as real_ipl, 
+            DIST.ratio  
+            FROM {} AS DIST
+            """.format(ipl_dist_table)
+        df = hive_context.sql(command)
+        ipl_dist_list = df.collect()
+        ipl_dist_map = {}
+        for _ in ipl_dist_list:
+            mapped_ipl = _['mapped_ipl']
+            if not mapped_ipl:
+                continue
+            mapped_ipl = str(mapped_ipl)
+            real_ipl = _['real_ipl']
+            ratio = float(0)
+            if _['ratio']:
+                ratio = float(_['ratio'])
+            if mapped_ipl not in ipl_dist_map:
+                ipl_dist_map[mapped_ipl] = {}
+            ipl_dist_map[mapped_ipl][real_ipl] = ratio
+
+        ipl_dist_map_brodcast = sc.broadcast(ipl_dist_map)
+
+        # Get original uckeys
+        df_uckey_distinct = hive_context.sql('SELECT uckey FROM {}'.format(unique_original_uckey_table))
 
     # Read norm table
     # DataFrame[uckey: string, ts: array<int>, p: float, a__n: float, a_1_n: float, a_2_n: float, a_3_n: float, a_4_n: float, a_5_n: float, a_6_n: float, t_UNKNOWN_n: float, t_3G_n: float, t_4G_n: float, t_WIFI_n: float, t_2G_n: float, g__n: float, g_g_f_n: float, g_g_m_n: float, g_g_x_n: float, price_cat_1_n: float, price_cat_2_n: float, price_cat_3_n: float, si_vec_n: array<float>, r_vec_n: array<float>, p_n: float, ts_n: array<float>]
@@ -197,14 +280,14 @@ def run(cfg):
         FACTDATA.uckey
         FROM {} AS FACTDATA
         WHERE FACTDATA.bucket_id BETWEEN {} AND {}
-        """.format(factdata, str(start_bucket), str(end_bucket))
+        """.format(factdata_area_map, str(start_bucket), str(end_bucket))
 
         start_bucket = end_bucket + 1
 
         df = hive_context.sql(command)
 
-        # add partition_group
-        df = df.repartition("uckey")
+        # decrease partitions
+        df = df.coalesce(200)
 
         # [Row(count_array=[u'1:504'], day=u'2019-11-02', hour=2, uckey=u'magazinelock,04,WIFI,g_m,1,CPM,78', hour_price_imp_map={2: [u'1:504']})]
         df = df.withColumn('hour_price_imp_map', expr("map(hour, count_array)"))
@@ -213,8 +296,7 @@ def run(cfg):
         df = df.groupBy('uckey', 'day').agg(collect_list('hour_price_imp_map').alias('hour_price_imp_map_list'))
 
         # [Row(uckey=u'native,68bcd2720e5011e79bc8fa163e05184e,4G,g_m,2,CPM,19', day=u'2019-11-02', day_price_imp=[u'3:58'])]
-        df = df.withColumn('day_price_imp', udf(
-            sum_count_array, ArrayType(StringType()))(df.hour_price_imp_map_list)).drop('hour_price_imp_map_list')
+        df = df.withColumn('day_price_imp', udf(sum_count_array, ArrayType(StringType()))(df.hour_price_imp_map_list)).drop('hour_price_imp_map_list')
 
         # [Row(uckey=u'native,68bcd2720e5011e79bc8fa163e05184e,4G,g_m,2,CPM,19', day=u'2019-11-02', day_price_imp=[u'3:58'], day_price_imp_map={u'2019-11-02': [u'3:58']})]
         df = df.withColumn('day_price_imp_map', expr("map(day, day_price_imp)"))
@@ -269,24 +351,32 @@ def run(cfg):
     # [Row(cluster_uckey=u'1119', price_cat=u'2', day_prediction_map={u'2019-11-02': 220.0, u'2019-11-03': 305.0}, ratio=0.11989551782608032, uckey=u'native,66bcd2720e5011e79bc8fa163e05184e,WIFI,g_m,5,CPC,5')]
     df = df.select('cluster_uckey', 'price_cat', 'day_prediction_map', 'ratio', 'uckey')
 
+    # ------------------------------+----------+--------------------------------------+
+    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                                |ratio     |uckey                                 |
+    # +-------------+---------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+--------------------------------------+
+    # |1009         |2        |[2020-06-26 -> 169.0, 2020-06-27 -> 170.0, 2020-06-24 -> 158.0, 2020-06-25 -> 155.0, 2020-06-28 -> 146.0, 2020-06-29 -> 127.0, 2020-06-30 -> 127.0, 2020-06-22 -> 171.0, 2020-06-23 -> 159.0, 2020-06-21 -> 227.0]|0.00800733|native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|
+    # +-------------+---------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+--------------------------------------+
+
+    if not skip_ipl_reverse_mapping:
+        df = ipl_revrse_mapping(df, ipl_dist_map_brodcast=ipl_dist_map_brodcast, df_uckey_distinct=df_uckey_distinct)
+
     # [Row(ucdoc_elements=Row(price_cat=u'2', ratio=0.11989551782608032, day_prediction_map={u'2019-11-02': 220.0, u'2019-11-03': 305.0}), uckey=u'native,66bcd2720e5011e79bc8fa163e05184e,WIFI,g_m,5,CPC,5')]
     ucdoc_elements_type = StructType([StructField('price_cat', StringType(), False), StructField(
         'ratio', FloatType(), False), StructField('day_prediction_map', MapType(StringType(), FloatType()), False)])
     df = df.withColumn('ucdoc_elements_pre_price_cat', udf(lambda price_cat, ratio, day_prediction_map:
                                                            (price_cat, ratio, day_prediction_map), ucdoc_elements_type)(df.price_cat, df.ratio, df.day_prediction_map)).select('ucdoc_elements_pre_price_cat', 'uckey')
 
-    # [Row(uckey=u'splash,d971z9825e,WIFI,g_m,1,CPT,74', ucdoc_elements=[Row(price_cat=u'1', ratio=0.5007790923118591, day_prediction_map={u'2019-11-02': 220.0, u'2019-11-03': 305.0})])]
-    df = df.groupBy('uckey').agg(collect_list(
-        'ucdoc_elements_pre_price_cat').alias('ucdoc_elements'))
+    df.write.option("header", "true").option("encoding", "UTF-8").mode('overwrite').format('hive').saveAsTable(prediction_table_name + '_details')
 
-    df = df.withColumn('prediction_output', udf(transform.generate_ucdoc(traffic_dist), StringType())(
-        df.uckey, df.ucdoc_elements))
+    # [Row(uckey=u'splash,d971z9825e,WIFI,g_m,1,CPT,74', ucdoc_elements=[Row(price_cat=u'1', ratio=0.5007790923118591, day_prediction_map={u'2019-11-02': 220.0, u'2019-11-03': 305.0})])]
+    df = df.groupBy('uckey').agg(collect_list('ucdoc_elements_pre_price_cat').alias('ucdoc_elements'))
+
+    df = df.withColumn('prediction_output', udf(transform.generate_ucdoc(traffic_dist), StringType())(df.uckey, df.ucdoc_elements))
 
     df_predictions_doc = df.select('uckey', 'prediction_output')
 
     # Save the predictions to Hive.
-    table_name = cfg['es_predictions_index']
-    df_predictions_doc.write.option("header", "true").option("encoding", "UTF-8").mode('overwrite').format('hive').saveAsTable(table_name)
+    df_predictions_doc.write.option("header", "true").option("encoding", "UTF-8").mode('overwrite').format('hive').saveAsTable(prediction_table_name)
 
     # rdd = df_predictions_doc.rdd.map(lambda x: transform.format_data(x, 'ucdoc'))
     # rdd.saveAsNewAPIHadoopFile(
