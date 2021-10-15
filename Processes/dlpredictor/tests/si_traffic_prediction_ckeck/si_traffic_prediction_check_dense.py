@@ -28,13 +28,13 @@ import json
 """
 This file calculated the actual and predicted dense/non-dense traffic a si.
 
+ANALYZE ONLY DENSE TRAFFICE.
 
 1. Input is a SI
 2. Output is
     actual-dense traffic
     predicted-dense traffic
-    actual-non-dense traffic
-    predicted-non-dense traffic
+    
 
 From distribution tmp, it gets a list of non-dense and dense uskeys for SI
 For each group of uckeys, it calculates real-value and predicted-value
@@ -266,8 +266,32 @@ if __name__ == "__main__":
     traffic = {'si': 'd9jucwkpr3', 'version': '04072021-03'}
 
     sis = [
+        '66bcd2720e5011e79bc8fa163e05184e',
+        '7b0d7b55ab0c11e68b7900163e3e481d',
+        'a8syykhszz',
+        'w3wx3nv9ow5i97',
+        'x2fpfbm8rt',
+        '17dd6d8098bf11e5bdec00163e291137',
+        '5cd1c663263511e6af7500163e291137',
+        '68bcd2720e5011e79bc8fa163e05184e',
+        '71bcd2720e5011e79bc8fa163e05184e',
+        'a290af82884e11e5bdec00163e291137',
+        'a47eavw7ex',
+        'b6le0s4qo8',
+        'd4d7362e879511e5bdec00163e291137',
+        'd971z9825e',
         'd9jucwkpr3',
-    ]
+        'e351de37263311e6af7500163e291137',
+        'f1iprgyl13',
+        'j1430itab9wj3b',
+        'k4werqx13k',
+        'l03493p0r3',
+        'l2d4ec6csv',
+        'p7gsrebd4m',
+        's4z85pd1h8',
+        'w9fmyd5r0i',
+        'x0ej5xhk60kjwq',
+        'z041bf6g4s']
 
     sc = SparkContext.getOrCreate()
     hive_context = HiveContext(sc)

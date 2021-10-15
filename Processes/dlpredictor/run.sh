@@ -8,6 +8,12 @@ then
     spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --py-files $SCRIPTPATH/dist/dlpredictor-1.6.0-py2.7.egg $SCRIPTPATH/dlpredictor/show_config.py $SCRIPTPATH/conf/config.yml
 fi
 
+# Build ipl_dist_map table AND unique_origianl_uckey
+if true
+then
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --py-files dist/dlpredictor-1.6.0-py2.7.egg,lib/imscommon-2.0.0-py2.7.egg,lib/predictor_dl_model-1.6.0-py2.7.egg --conf spark.driver.maxResultSize=5G dlpredictor/main_build_ipl_dist.py conf/config.yml
+fi
+
 # Start the predictor
 if true
 then

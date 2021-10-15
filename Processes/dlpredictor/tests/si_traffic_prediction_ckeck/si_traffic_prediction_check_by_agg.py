@@ -17,7 +17,7 @@
 
 from imscommon.es.ims_esclient import ESClient
 from pyspark import SparkContext, SparkConf, Row
-from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list
+from pyspark.sql.functions import concat_ws, count, lit, col, udf, expr, collect_list, sum as fsum
 from pyspark.sql import HiveContext
 from pyspark.sql.types import IntegerType, StringType
 import math
@@ -57,6 +57,46 @@ Author: Reza
         'ipl': attr[7]
     }
 """
+
+
+def get_total_traffic(hive_context):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si 
+        FROM {} AS T1
+        """.format(cfg['pre_cluster_table'])
+
+    df = hive_context.sql(command)
+    result = df.agg(fsum('imp')).take(1)[0]['sum(imp)']
+    return result
+
+
+def get_total_dense_traffic(hive_context):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si,
+        T1.sparse 
+        FROM {} AS T1 WHERE T1.sparse=false
+        """.format(cfg['pre_cluster_table'])
+
+    df = hive_context.sql(command)
+    result = df.agg(fsum('imp')).take(1)[0]['sum(imp)']
+    return result
+
+
+def get_uckey_price_count(hive_context):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si 
+        FROM {} AS T1
+        """.format(cfg['pre_cluster_table'])
+
+    df = hive_context.sql(command)
+    result = df.count()
+    return result
 
 
 def query_predictions_traffic(cfg, starting_day, ending_day, si):
@@ -157,7 +197,50 @@ def error_m(a, p):
     return (e, result)
 
 
-def run(sc, hive_context, cfg, traffic, target_days):
+def get_si_traffic(cfg, hive_context, si):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si 
+        FROM {} AS T1 
+        WHERE T1.si='{}'
+        """.format(cfg['pre_cluster_table'], si)
+
+    df = hive_context.sql(command)
+    result = df.agg(fsum('imp')).take(1)[0]['sum(imp)']
+    return result
+
+
+def get_si_dense_traffic(cfg, hive_context, si):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si,
+        T1.sparse  
+        FROM {} AS T1 
+        WHERE T1.si='{}' AND T1.sparse=false 
+        """.format(cfg['pre_cluster_table'], si)
+
+    df = hive_context.sql(command)
+    result = df.agg(fsum('imp')).take(1)[0]['sum(imp)']
+    return result
+
+
+def get_si_uckey_price_count(cfg, hive_context, si):
+    command = """
+        SELECT
+        T1.imp,
+        T1.si 
+        FROM {} AS T1 
+        WHERE T1.si='{}'
+        """.format(cfg['pre_cluster_table'], si)
+
+    df = hive_context.sql(command)
+    result = df.count()
+    return result
+
+
+def run(sc, hive_context, cfg, version, traffic, target_days, _agg):
 
     command = """
         SELECT
@@ -199,7 +282,6 @@ def run(sc, hive_context, cfg, traffic, target_days):
     real_traffic = agg_uckeys(real_traffic, target_days)
 
     # Predicted Value
-
     predicted_traffic = []
     for day in target_days:
         v = query_predictions_traffic(cfg=cfg, starting_day=day, ending_day=day, si=si)
@@ -208,14 +290,28 @@ def run(sc, hive_context, cfg, traffic, target_days):
     error = error_m(real_traffic, predicted_traffic)[0]
 
     traffic_json = json.dumps(traffic)
-    cfg_json = json.dumps(cfg)
+    cfg_json = json.dumps({})
 
-    df = hive_context.createDataFrame([(traffic_json,
-                                        cfg_json,
-                                        error,
-                                        real_traffic,
-                                        predicted_traffic
-                                        )], ["Traffic", "Config", "Error", "Actual", "Predicted"])
+    # here are the other statistical information
+    si_traffic = get_si_traffic(cfg, hive_context, si)
+    si_uckey_price_count = get_si_uckey_price_count(cfg, hive_context, si)
+
+    w1_error = si_traffic * 1.0 / _agg['total_traffic'] * error
+    w2_error = si_uckey_price_count * 1.0 / _agg['uckey_price_count'] * error
+    _agg['total_w1_error'] += w1_error
+    _agg['total_w2_error'] += w2_error
+
+    si_dense_traffic = get_si_dense_traffic(cfg, hive_context, si)
+    dense_ratio = si_dense_traffic * 1.0 / si_traffic
+
+    # this is only one records
+    df = hive_context.createDataFrame([(version,
+                                        si,
+                                        si_traffic, si_uckey_price_count, w1_error, w2_error, error, dense_ratio,
+                                        cfg_json, real_traffic, predicted_traffic
+                                        )], ["version", "si",
+                                             "si_traffic", "si_uckey_price_count", "w1_error", "w2_error", "error", "dense_ratio",
+                                             "config", "actual", "predicted"])
 
     __save_as_table(df, cfg['report_table'], hive_context)
 
@@ -238,20 +334,24 @@ if __name__ == "__main__":
 
     cfg = {
         'log_level': 'WARN',
-        'pre_cluster_table': 'dlpm_06242021_1635_tmp_pre_cluster',
-        'dist_table': 'dlpm_06242021_1635_tmp_distribution',
+        'pre_cluster_table': 'dlpm_10052021_1400_tmp_pre_cluster',
+        'dist_table': 'dlpm_10052021_1400_tmp_distribution',
         'uckey_attrs': ['m', 'si', 't', 'g', 'a', 'pm', 'r', 'ipl'],
         'es_host': '10.213.37.41',
         'es_port': '9200',
-        'es_predictions_index': 'dlpredictor_06242021_1635_predictions',
+        'es_predictions_index': 'dlpredictor_10142021_1400_predictions',
         'es_predictions_type': 'doc',
-        'report_table': 'si_only_traffic_prediction_check'
+        'report_table': 'si_only_traffic_prediction_check_v3'
     }
 
-    target_days = sorted(['2020-06-21', '2020-06-22', '2020-06-23', '2020-06-24', '2020-06-25', '2020-06-26', '2020-06-27', '2020-06-28', '2020-06-29', '2020-06-30'])
+    _agg = {}
 
-    traffic = {'si': 'd4d7362e879511e5bdec00163e291137', 'version': '04072021-01'}
+    # list of last days in dataset, use model-stat to get the days
+    target_days = sorted(["2021-07-27", "2021-07-28", "2021-07-29", "2021-07-30", "2021-07-31"])
 
+    VERSION = '10142021-1700'
+    traffic = {'si': '', 'version': VERSION}
+ 
     sis = [
         '66bcd2720e5011e79bc8fa163e05184e',
         '7b0d7b55ab0c11e68b7900163e3e481d',
@@ -284,9 +384,33 @@ if __name__ == "__main__":
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg['log_level'])
 
+    _agg['total_traffic'] = get_total_traffic(hive_context)
+    _agg['total_dense_traffic'] = get_total_dense_traffic(hive_context)
+    _agg['uckey_price_count'] = get_uckey_price_count(hive_context)
+    _agg['total_w1_error'] = 0.0
+    _agg['total_w2_error'] = 0.0
+    dense_ratio = _agg['total_dense_traffic'] * 1.0 / _agg['total_traffic']
+
     for si in sis:
         traffic['si'] = si
-        run(sc=sc, hive_context=hive_context, cfg=cfg, traffic=traffic, target_days=target_days)
+        run(sc=sc, hive_context=hive_context, cfg=cfg, version=VERSION, traffic=traffic, target_days=target_days, _agg=_agg)
         print(si)
+
+    # this is only one records
+    df = hive_context.createDataFrame([(VERSION,
+                                        'all',
+                                        _agg['total_traffic'], _agg['uckey_price_count'], _agg['total_w1_error'], _agg['total_w2_error'], -1.0, dense_ratio,
+                                        json.dumps(cfg), [-1], [-1]
+                                        )], ["version", "si",
+                                             "si_traffic", "si_uckey_price_count", "w1_error", "w2_error", "error", "dense_ratio",
+                                             "config", "actual", "predicted"])
+
+    # print([(VERSION,
+    #         'all',
+    #         _agg['total_traffic'], _agg['uckey_price_count'], _agg['total_w1_error'], _agg['total_w2_error'], -1.0, dense_ratio,
+    #         json.dumps(cfg), [-1], [-1]
+    #         )])
+
+    __save_as_table(df, cfg['report_table'], hive_context)
 
     sc.stop()
