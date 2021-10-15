@@ -251,19 +251,21 @@ if __name__ == "__main__":
 
     cfg = {
         'log_level': 'WARN',
-        'pre_cluster_table': 'dlpm_06092021_1500_tmp_pre_cluster',
-        'dist_table': 'dlpm_06092021_1500_tmp_distribution',
+        'pre_cluster_table': 'dlpm_10052021_1400_tmp_pre_cluster',
+        'dist_table': 'dlpm_10052021_1400_tmp_distribution',
         'uckey_attrs': ['m', 'si', 't', 'g', 'a', 'pm', 'r', 'ipl'],
         'es_host': '10.213.37.41',
         'es_port': '9200',
-        'es_predictions_index': 'dlpredictor_06092021_1500_predictions',
+        'es_predictions_index': 'dlpredictor_10052021_1400_predictions',
         'es_predictions_type': 'doc',
         'report_table': 'si_only_traffic_prediction_check'
     }
 
-    target_days = sorted(['2020-06-21', '2020-06-22', '2020-06-23', '2020-06-24', '2020-06-25', '2020-06-26', '2020-06-27', '2020-06-28', '2020-06-29', '2020-06-30'])
+    target_days = sorted(['2021-07-22', '2021-07-23', '2021-07-24', '2021-07-25', '2021-07-26', '2021-07-27', '2021-07-28', '2021-07-29', '2021-07-30', '2021-07-31',
+    '2021-08-01', '2021-08-02', '2021-08-03', '2021-08-04', '2021-08-05', '2021-08-06', '2021-08-07', '2021-08-08', '2021-08-09', '2021-08-10'])
 
-    traffic = {'si': 'd4d7362e879511e5bdec00163e291137', 'version': 2}
+    VERSION = '10122021-1200'
+    traffic = {'si': '', 'version': VERSION}
 
     sis = [
         '66bcd2720e5011e79bc8fa163e05184e',
