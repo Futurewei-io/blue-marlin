@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# main_keywords: identify the keywords with proportion of traffic above set threshold.
+if false
+then
+    # generate the effective keywords table. 
+    spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_keywords.py config.yml
+fi
+
 # main_clean: preparing cleaned persona, click and show logs data.
 if false
 then

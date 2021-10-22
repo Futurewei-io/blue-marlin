@@ -18,8 +18,8 @@ import unittest
 import yaml
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, HiveContext
-from pyspark.sql.functions import col
-from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import col, udf, collect_set
+from pyspark.sql.types import IntegerType, BooleanType
 from lookalike_model.pipeline import main_clean, util
 from data_generator import *
 
@@ -163,10 +163,12 @@ class TestMainClean(unittest.TestCase):
         keywords_table = cfg['keywords_table']
         showlog_table = cfg['showlog_table_name']
         clicklog_table = cfg['clicklog_table_name']
+        effective_keywords_table = cfg['pipeline']['main_keywords']['keyword_output_table']
         create_persona_table(self.spark, persona_table)
         create_keywords_table(self.spark, keywords_table)
         create_clicklog_table(self.spark, clicklog_table)
         create_showlog_table(self.spark, showlog_table)
+        create_effective_keywords_table(self.spark, effective_keywords_table)
 
         # Drop the output tables
         showlog_output_table = cfg['pipeline']['main_clean']['showlog_output_table']
@@ -184,22 +186,32 @@ class TestMainClean(unittest.TestCase):
         bucket_num = cfg['pipeline']['main_clean']['did_bucket_num']
         df_keywords = util.load_df(self.hive_context, keywords_table)
 
+        # run() does filtering on the effective keywords so we need to filter 
+        # the raw logs with the spread app ids when validating the output.
+        effective_spread_app_ids = ['C000', 'C001', 'C002', 'C003', 'C004', 'C010', 'C011', 'C012', 'C013', 'C014', ]
+        df_log = create_raw_log(self.spark)
+        df_log = self.filter_spread_app_ids(df_log, effective_spread_app_ids)
+
         # Validate the cleaned persona table.
         df_persona = util.load_df(self.hive_context, persona_output_table)
         self.validate_clean_persona(df_persona, bucket_num)
 
         # Validate the cleaned clicklog table.
         df_clicklog = util.load_df(self.hive_context, clicklog_output_table)
-        print_df_generator_code(df_clicklog.sort('did'))
-        df_log = create_raw_log(self.spark)
         self.validate_cleaned_log(df_clicklog, conditions, df_persona, df_keywords, df_log, bucket_num)
+        print_df_generator_code(df_clicklog.sort('did'))
 
         # Validate the cleaned showlog table.
         df_showlog = util.load_df(self.hive_context, clicklog_output_table)
-        print_df_generator_code(df_showlog.sort('did'))
-        df_log = create_raw_log(self.spark)
         self.validate_cleaned_log(df_showlog, conditions, df_persona, df_keywords, df_log, bucket_num)
+        print_df_generator_code(df_showlog.sort('did'))
 
+    def filter_spread_app_ids(self, df, spread_app_ids):
+        # User defined function to return if the keyword is in the inclusion set.
+        _udf = udf(lambda x: x in spread_app_ids, BooleanType())
+
+        # Return the filtered dataframe.
+        return df.filter(_udf(col('spread_app_id')))
 
     #========================================
     # Helper methods
