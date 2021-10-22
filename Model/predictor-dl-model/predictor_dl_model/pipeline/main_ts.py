@@ -98,11 +98,11 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
 
         # Read factdata table
         command = """
-        select count_array, day, hour, uckey from {} where bucket_id between {} and {}
+        SELECT count_array, day, hour, uckey FROM {} WHERE bucket_id BETWEEN {} AND {}
         """.format(factdata_table_name, str(start_bucket), str(end_bucket))
 
         if len(conditions) > 0:
-            command = command + " and {}".format(' and '.join(conditions))
+            command = command + " AND {}".format(' AND '.join(conditions))
 
         start_bucket = end_bucket + 1
 

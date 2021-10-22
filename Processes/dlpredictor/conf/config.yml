@@ -1,12 +1,26 @@
-log_level: 'INFO'
-product_tag: 'dlpm'
-pipeline_tag: '11092020'
-factdata_table: 'factdata_hq_09222020_bucket_0'
-distribution_table: '{product_tag}_{pipeline_tag}_tmp_distribution'
-norm_table: '{product_tag}_{pipeline_tag}_trainready'
-model_stat_table: '{product_tag}_{pipeline_tag}_model_stat'
-bucket_size: 10
+log_level: 'info'
+product_tag: 'dlpredictor'
+pipeline_tag: 'dlpm_10052021_1400_reza'
+
+#input tables from dlpm pipeline
+factdata_table: 'factdata_hq_09222020'
+area_map_table: 'dlpm_10052021_1400_tmp_area_map' # this raw data, with filtered si, remapped r and ipl and partitioned by bucket-id
+distribution_table: 'dlpm_10052021_1400_tmp_distribution'
+norm_table: 'dlpm_10052021_1400_trainready'
+model_stat_table: 'dlpm_10052021_1400_model_stat'
+region_mapping_table: 'region_mapping'
+bucket_size: 1
 bucket_step: 1
+ipl_dist_table: '{product_tag}_{pipeline_tag}_ipl_dist_map'
+unique_original_uckey_table: '{product_tag}_{pipeline_tag}_unique_original_uckey'
+skip_ipl_reverse_mapping: true # this makes main_spark_es to process mapped uckeys and skip reverse mapping.
+condition: ''
+
+yesterday: '2021-07-31'
+serving_url: 'http://10.193.217.105:8508/v1/models/dl_20210706:predict'
+
+config_table: '{product_tag}_{pipeline_tag}_config'
+
 es_host: '10.213.37.41'
 es_port: '9200'
 es_predictions_index: '{product_tag}_{pipeline_tag}_predictions'

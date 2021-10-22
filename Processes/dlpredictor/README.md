@@ -14,7 +14,7 @@ pip install -r requirements.txt
 2.	Transfer the dlpredictor directory to ~/code/dlpredictor on a machine which also has Spark Client.
 3.  cd dlpredictor
 4.  pip install -r requirements.txt (to install required packages)
-5.  python setup install (to install predictor_dl_model package)
+5.  python setup.py install (to install predictor_dl_model package)
 6.	Run run.sh 
 
 ### Documentation

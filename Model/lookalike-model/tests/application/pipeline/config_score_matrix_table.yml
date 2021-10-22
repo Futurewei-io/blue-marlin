@@ -1,0 +1,38 @@
+product_tag: 'lookalike_application'
+pipeline_tag: 'unittest_score_matrix_table'
+score_generator:
+    input:
+        log_table : "lookalike_03042021_logs"
+        did_table: "lookalike_03042021_trainready"
+        keywords_table: "din_ad_keywords_09172020"
+        din_model_tf_serving_url: "http://10.193.217.105:8506/v1/models/lookalike:predict"
+        din_model_length: 20
+        extend: 2000
+        alg: "euclidean" ##### currently just support "euclideand" and "dot"
+    output:
+        score_table:  "{product_tag}_score_{pipeline_tag}"
+    normalize: False
+        
+score_vector:
+    keywords_table: "din_ad_keywords_09172020"
+    score_table:  "{product_tag}_{pipeline_tag}_score"
+    score_vector_table: '{product_tag}_{pipeline_tag}_input_score_vector'
+    did_bucket_size: 2
+    did_bucket_step: 2
+score_vector_rebucketing:
+    did_bucket_size: 2
+    did_bucket_step: 1
+    alpha_did_bucket_size: 4
+    score_vector_alpha_table: '{product_tag}_{pipeline_tag}_input_score_vector_alpha'
+score_matrix_table:
+    did_bucket_size: 1
+    did_bucket_step: 1
+    score_matrix_table: '{product_tag}_{pipeline_tag}_output_score_matrix'
+top_n_similarity:
+    did_bucket_size: 1
+    did_bucket_step: 1
+    cross_bucket_size: 1
+    cross_bucket_step: 1
+    alpha_did_bucket_step: 1
+    top_n: 10
+    similarity_table: "{product_tag}_{pipeline_tag}_output_similarity"

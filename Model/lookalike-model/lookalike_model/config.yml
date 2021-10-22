@@ -99,6 +99,9 @@ features:
               'task_id',
               'pps_inside_exprmt_ab_tag']
 pipeline:
+  main_keywords:
+    keyword_output_table: '{product_tag}_{pipeline_tag}_keywords'
+    keyword_threshold: 0.01  # Portion of showlog traffic that a keyword must reach to be included.
   main_clean:  
     did_bucket_num: 2 # Number of partitions for did
     load_logs_in_minutes: 14400 #1440/day, original=14400

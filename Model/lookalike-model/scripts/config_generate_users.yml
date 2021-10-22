@@ -1,0 +1,8 @@
+log:
+  level: 'ERROR' # log level for spark and app
+generate_users:
+  number_users: 10000000
+  increment_size:  10000
+  number_time_intervals: 99
+  number_did_buckets: 1000
+  output_table: 'lookalike_score_norm_generated_20210714'

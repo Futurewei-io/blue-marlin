@@ -1,21 +1,18 @@
-# Copyright 2019, Futurewei Technologies
-#
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-#                                                 * "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+ 
+#  http://www.apache.org/licenses/LICENSE-2.0.html
+
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 import json
 import math
@@ -64,6 +61,14 @@ def normalize_ts(ts):
 
 def predict_daily_uckey(days, serving_url, forecaster, model_stats, columns):
 
+    def _denoise(ts):
+        non_zero_ts = [_ for _ in ts if _ != 0]
+        nonzero_p = 0.0
+        if len(non_zero_ts) > 0:
+            nonzero_p = 1.0 * sum(ts) / len(non_zero_ts)
+
+        return [i if i > (nonzero_p / 10.0) else 0 for i in ts]
+
     def _helper(cols):
         day_list = days[:]
         ucdoc_attribute_map = {}
@@ -88,7 +93,11 @@ def predict_daily_uckey(days, serving_url, forecaster, model_stats, columns):
                         break
             model_input_ts.append(imp)
 
-        model_input_ts = replace_with_median(model_input_ts)
+        # remove science 06/21/2021
+        # model_input_ts = replace_with_median(model_input_ts)
+
+        model_input_ts = _denoise(model_input_ts)
+
         ts_n = normalize_ts(model_input_ts)
         ucdoc_attribute_map['ts_n'] = ts_n
 

@@ -4,6 +4,13 @@ predictor_dl_model is a suite of offline processes to forecast traffic inventory
 1.	datagen:  This module generates factdata table which contains traffic data. 
 2.	trainer:  This module builds and trains a deep learning model based on the factdata table.
 3.	pipeline: This module processes factdata table into training-ready data which is used to train the neural network.
+    a. Main-ts only modifies the structure the raw data, does not remove any data.
+    b. Pre-cluster denoises(new)/removes individual uckeys and prepare them for clustering
+    c. Cluster creates clusters and denoises/removes clusters
+    d. Distribution records the relationship between virtual-uckey and uckey
+    e. Norm normalizes attributes
+    f. Tfrecords, save data into tfrecords format
+ 
 
 ### Prerequisites
 Cluster: Spark 2.3/HDFS 2.7/YARN 2.3/MapReduce 2.7/Hive 1.2
