@@ -62,7 +62,8 @@ def estimate_number_of_non_dense_clusters(df, median_popularity_of_dense, cluste
 
     no_of_items_in_a_cluster = median_popularity_of_dense / median_non_dense_p
 
-    no_of_cluster = df.filter('sparse=True').count() * 1.0 / no_of_items_in_a_cluster / 3.0
+    no_of_cluster = df.filter('sparse=True').count() * \
+        1.0 / no_of_items_in_a_cluster / 3.0
 
     # Ceiling for num virtual clusters set at a ratio of the number of dense uckeys.
     dense_count = df.filter(df.sparse == False).count()
@@ -96,7 +97,7 @@ def agg_ts(mlist):
 
 def agg_on_uckey_price_cat(df):
 
-    column_names = ['ts', 'a', 'g', 't', 'si', 'r', 'ipl']
+    column_names = ['ts', 'a', 'g', 't', 'si', 'ipl']
     agg_exprs = [collect_list(col).alias(col) for col in column_names]
     df = df.groupBy('uckey', 'price_cat').agg(*agg_exprs)
 
@@ -146,8 +147,9 @@ def denoise(df, percentile):
     df = df.withColumn('nonzero_p', udf(
         lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
             [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
-    df = df.withColumn('nonzero_sd', udf(lambda ts: stdev([_ for _ in ts if _ !=0]))(df.ts))
-    
+    df = df.withColumn('nonzero_sd', udf(
+        lambda ts: stdev([_ for _ in ts if _ != 0]))(df.ts))
+
     df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / percentile) else 0 for i in ts],
                                  ArrayType(IntegerType()))(df.ts, df.nonzero_p))
     df = df.withColumn('ts', udf(lambda ts, nonzero_sd: [i if i and i < (nonzero_sd * 2) else 0 for i in ts],
@@ -169,17 +171,19 @@ def run(hive_context, cluster_size_cfg, input_table_name,
 
     # Read factdata table
     command = """
-    SELECT ts, price_cat, uckey, a, g, t, si, r, ipl FROM {}
+    SELECT ts, price_cat, uckey, a, g, t, si, ipl FROM {}
     """.format(input_table_name)
 
     # DataFrame[uckey: string, price_cat: string, ts: array<int>, a: string, g: string, t: string, si: string, r: string]
     df = hive_context.sql(command)
 
     # add imp
-    df = df.withColumn('imp', udf(lambda ts: sum([_ for _ in ts if _]), IntegerType())(df.ts))
+    df = df.withColumn('imp', udf(lambda ts: sum(
+        [_ for _ in ts if _]), IntegerType())(df.ts))
 
     # add popularity = mean
-    df = df.withColumn('p', udf(lambda ts: sum([_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
+    df = df.withColumn('p', udf(lambda ts: sum(
+        [_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
 
     # add normalized popularity = mean_n
     df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
@@ -206,27 +210,36 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     df_sparse = df.filter(df.sparse == True)
 
     # Calculate the total impressions for each ad unit
-    df_sparse = df_sparse.withColumn('si_imp_total', fn.sum('imp').over(Window.partitionBy('si')))
+    df_sparse = df_sparse.withColumn(
+        'si_imp_total', fn.sum('imp').over(Window.partitionBy('si')))
 
     # Calculate total impressions of the sparse uckeys.
     imp_total = df_sparse.agg(fn.sum('imp')).collect()[0][0]
+
+    # that is when there is no, sparse uckey
+    if imp_total == None:
+        imp_total = 0
 
     # Calculate the number of virtual clusters for each si based on the number of
     # virtual clusters, the total impressions of the sparse uckeys, and the total
     # impressions of each si.
     imp_per_cluster = imp_total/number_of_virtual_clusters
-    df_sparse = df_sparse.withColumn('si_num_cluster', udf(lambda si_imp_total: int((si_imp_total + imp_per_cluster - 1) / imp_per_cluster))(df_sparse.si_imp_total))
+    df_sparse = df_sparse.withColumn('si_num_cluster', udf(lambda si_imp_total: int(
+        (si_imp_total + imp_per_cluster - 1) / imp_per_cluster))(df_sparse.si_imp_total))
 
     # Create a tie breaker column for assigning sparse uckeys from the same si
     # to different virtual clusters.
-    df_sparse = df_sparse.withColumn('tie_breaker', udf(lambda num_clusters: random.randint(0, num_clusters - 1))(df_sparse.si_num_cluster))
+    df_sparse = df_sparse.withColumn('tie_breaker', udf(
+        lambda num_clusters: random.randint(0, num_clusters - 1))(df_sparse.si_num_cluster))
 
     # Assign a cluster number to the sparse uckeys based on si and the tie breaker.
-    df_sparse = df_sparse.withColumn('cn', dense_rank().over(Window.orderBy('si', 'tie_breaker')))
+    df_sparse = df_sparse.withColumn(
+        'cn', dense_rank().over(Window.orderBy('si', 'tie_breaker')))
 
     # Add the same columns for the dense uckeys so they can be recombined.
+    # si_imp_total is calcualted for df_sparse.
     df_dense = df.filter(df.sparse == False)
-    df_dense = df_dense.withColumn('si_imp_total', df_dense['imp'])
+    df_dense = df_dense.withColumn('si_imp_total', lit(0))
     df_dense = df_dense.withColumn('si_num_cluster', lit(1))
     df_dense = df_dense.withColumn('tie_breaker', lit(0))
     df_dense = df_dense.withColumn('cn', lit(0))
@@ -239,23 +252,30 @@ def run(hive_context, cluster_size_cfg, input_table_name,
         __save_as_table(df, pre_cluster_table_name, hive_context, True)
 
     # Change the uckey for sparse uckeys their cluster number.
-    df = df.withColumn('uckey', udf(lambda uckey, cn, sparse: str(cn) if sparse else uckey, StringType())(df.uckey, df.cn, df.sparse))
+    df = df.withColumn('uckey', udf(lambda uckey, cn, sparse: str(
+        cn) if sparse else uckey, StringType())(df.uckey, df.cn, df.sparse))
 
     df = agg_on_uckey_price_cat(df)
 
     # add imp
-    df = df.withColumn('imp', udf(lambda ts: sum([_ for _ in ts if _]), IntegerType())(df.ts))
+    df = df.withColumn('imp', udf(lambda ts: sum(
+        [_ for _ in ts if _]), IntegerType())(df.ts))
 
     # add popularity = mean
-    df = df.withColumn('p', udf(lambda ts: sum([_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
+    df = df.withColumn('p', udf(lambda ts: sum(
+        [_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))
 
     # add normalized popularity = mean_n
     df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
 
-    df = df.filter(udf(lambda p_n, ts: not is_spare(datapoints_th_clusters, -sys.maxsize - 1)(p_n, ts), BooleanType())(df.p_n, df.ts))
+    df = df.filter(udf(lambda p_n, ts: not is_spare(
+        datapoints_th_clusters, -sys.maxsize - 1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
     # denoising uckeys: remove some datapoints of the uckey. keep the data between upper and lower bound
     df = denoise(df, percentile)
+
+    # drop tmp columns
+    df = df.drop('si_imp_total')
 
     __save_as_table(df, output_table_name, hive_context, True)
 

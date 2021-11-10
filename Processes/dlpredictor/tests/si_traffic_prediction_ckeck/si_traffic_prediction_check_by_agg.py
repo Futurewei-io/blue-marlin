@@ -334,12 +334,12 @@ if __name__ == "__main__":
 
     cfg = {
         'log_level': 'WARN',
-        'pre_cluster_table': 'dlpm_10052021_1400_tmp_pre_cluster',
-        'dist_table': 'dlpm_10052021_1400_tmp_distribution',
+        'pre_cluster_table': 'dlpm_110221_no_residency_no_mapping_tmp_pre_cluster',
+        'dist_table': 'dlpm_110221_no_residency_no_mapping_tmp_distribution',
         'uckey_attrs': ['m', 'si', 't', 'g', 'a', 'pm', 'r', 'ipl'],
         'es_host': '10.213.37.41',
         'es_port': '9200',
-        'es_predictions_index': 'dlpredictor_10142021_1400_predictions',
+        'es_predictions_index': 'dlpredictor_110221_no_residency_no_mapping_predictions',
         'es_predictions_type': 'doc',
         'report_table': 'si_only_traffic_prediction_check_v3'
     }
@@ -347,38 +347,37 @@ if __name__ == "__main__":
     _agg = {}
 
     # list of last days in dataset, use model-stat to get the days
-    target_days = sorted(["2021-07-27", "2021-07-28", "2021-07-29", "2021-07-30", "2021-07-31"])
+    target_days = sorted(["2021-07-12", "2021-07-13", "2021-07-14", "2021-07-15", "2021-07-16","2021-07-17", "2021-07-18", "2021-07-19", "2021-07-20", "2021-07-21"])
 
-    VERSION = '10142021-1700'
+    VERSION = '110221_no_residency_no_mapping_2'
     traffic = {'si': '', 'version': VERSION}
  
     sis = [
-        '66bcd2720e5011e79bc8fa163e05184e',
-        '7b0d7b55ab0c11e68b7900163e3e481d',
-        'a8syykhszz',
-        'w3wx3nv9ow5i97',
-        'x2fpfbm8rt',
-        '17dd6d8098bf11e5bdec00163e291137',
-        '5cd1c663263511e6af7500163e291137',
-        '68bcd2720e5011e79bc8fa163e05184e',
-        '71bcd2720e5011e79bc8fa163e05184e',
-        'a290af82884e11e5bdec00163e291137',
         'a47eavw7ex',
-        'b6le0s4qo8',
-        'd4d7362e879511e5bdec00163e291137',
-        'd971z9825e',
-        'd9jucwkpr3',
-        'e351de37263311e6af7500163e291137',
-        'f1iprgyl13',
-        'j1430itab9wj3b',
-        'k4werqx13k',
-        'l03493p0r3',
-        'l2d4ec6csv',
-        'p7gsrebd4m',
-        's4z85pd1h8',
-        'w9fmyd5r0i',
-        'x0ej5xhk60kjwq',
-        'z041bf6g4s']
+'66bcd2720e5011e79bc8fa163e05184e',
+'x0ej5xhk60kjwq',
+'l03493p0r3',
+'7b0d7b55ab0c11e68b7900163e3e481d',
+'b6le0s4qo8',
+'e351de37263311e6af7500163e291137',
+'a290af82884e11e5bdec00163e291137',
+'68bcd2720e5011e79bc8fa163e05184e',
+'f1iprgyl13',
+'w9fmyd5r0i',
+'w3wx3nv9ow5i97',
+'d971z9825e',
+'l2d4ec6csv',
+'z041bf6g4s',
+'71bcd2720e5011e79bc8fa163e05184e',
+'5cd1c663263511e6af7500163e291137',
+'x2fpfbm8rt',
+'d9jucwkpr3',
+'k4werqx13k',
+'j1430itab9wj3b',
+'a8syykhszz',
+'s4z85pd1h8',
+'17dd6d8098bf11e5bdec00163e291137',
+'d4d7362e879511e5bdec00163e291137']
 
     sc = SparkContext.getOrCreate()
     hive_context = HiveContext(sc)

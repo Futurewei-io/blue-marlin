@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -94,16 +94,14 @@ def run(sc, hive_context, columns, input_table_name, output_table_name, yesterda
     model_info['holidays_norm'] = holidays_norm
     model_stats['holiday_stats'] = [hol_avg, hol_std]
 
-    # Read factdata table
     command = """
-    SELECT uckey, ts, price_cat, a, g, t, si, r, p, ipl FROM {}
+    SELECT uckey, ts, price_cat, a, g, t, si, p FROM {}
     """.format(input_table_name)
 
     # DataFrame[uckey: string, price_cat: string, ts: array<int>, a: string, g: string, t: string, si: string, r: string, ipl: string]
     df = hive_context.sql(command)
 
     si_list = []
-    r_list = []
     ipl_list = []
     removed_columns = []
     for feature_name, feature_value_list in columns.items():
@@ -119,8 +117,6 @@ def run(sc, hive_context, columns, input_table_name, output_table_name, yesterda
             ohe_feature_n = ohe_feature + '_n'
             if feature_name == 'si':
                 si_list.append(ohe_feature_n)
-            if feature_name == 'r':
-                r_list.append(ohe_feature_n)
             if feature_name == 'ipl':
                 ipl_list.append(ohe_feature_n)
             df, stats = transform.normalize_ohe_feature(
@@ -135,11 +131,6 @@ def run(sc, hive_context, columns, input_table_name, output_table_name, yesterda
         df = df.withColumn('si_vec_n', udf(
             lambda *x: [_ for _ in x], ArrayType(FloatType()))(*si_list))
         df = df.drop(*si_list)
-
-    if len(r_list):
-        df = df.withColumn('r_vec_n', udf(
-            lambda *x: [_ for _ in x], ArrayType(FloatType()))(*r_list))
-        df = df.drop(*r_list)
 
     if len(ipl_list):
         df = df.withColumn('ipl_vec_n', udf(

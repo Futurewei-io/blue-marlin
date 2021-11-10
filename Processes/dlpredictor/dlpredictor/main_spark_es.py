@@ -108,51 +108,6 @@ def __save_as_table(df, table_name, hive_context, create_table):
         hive_context.sql(command)
 
 
-def ipl_revrse_mapping(df, ipl_dist_map_brodcast, df_uckey_distinct):
-
-    df = df.withColumn('ipl', split(df['uckey'], ',').getItem(7).cast(StringType()))
-    df = df.filter(udf(lambda ipl: ipl in ipl_dist_map_brodcast.value, BooleanType())(df.ipl))
-    df = df.withColumn('real_ipl_ratio_map', udf(lambda ipl: ipl_dist_map_brodcast.value[ipl], MapType(StringType(), FloatType(), False))(df.ipl))
-
-    # +-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+---+------------------+
-    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                               |ratio       |uckey                                                       |ipl|real_ipl_ratio_map|
-    # +-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+---+------------------+
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]        |0.00800733  |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40                      |40 |[40 -> 1.0]       |
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]        |0.010742836 |native,z041bf6g4s,WIFI,g_m,3,CPM,30,30                      |30 |[30 -> 1.0]       |
-
-    df = df.select('cluster_uckey', 'price_cat', 'day_prediction_map', 'ratio', 'uckey', 'ipl', explode('real_ipl_ratio_map')).withColumnRenamed(
-        "key", "real_ipl").withColumnRenamed("value", "ipl_ratio")
-
-    #         +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
-    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                       |ratio      |uckey                                 |ipl|real_ipl|ipl_ratio  |
-    # +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.033795446|native,z041bf6g4s,WIFI,g_f,4,CPM,57,57|57 |57      |1.0        |
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.00800733 |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|40 |40      |1.0        |
-
-    # change uckey with new ipl, this for ipl fix not region
-    def __fix_uckey_ipl(uckey, ipl):
-        l = uckey.split(',')
-        l[7] = str(ipl)
-        return ','.join(l)
-    df = df.withColumn('uckey', udf(__fix_uckey_ipl, StringType())(df.uckey, df.real_ipl))
-
-    # filter uckeys to make sure we predict for valid uckeys
-    df = df.join(df_uckey_distinct, on='uckey', how='inner')
-
-    #     +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
-    # |cluster_uckey|price_cat|day_prediction_map                                                                                                                                                                                       |ratio      |uckey                                 |ipl|real_ipl|ipl_ratio  |
-    # +-------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------+--------------------------------------+---+--------+-----------+
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.010742836|native,z041bf6g4s,WIFI,g_m,3,CPM,30,30|30 |30      |1.0        |
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.00800733 |native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|40 |40      |1.0        |
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.042944785|native,z041bf6g4s,4G,g_m,4,CPM,3,3    |3  |3       |1.0        |
-    # |1009         |2        |[2020-06-26 -> 89.0, 2020-06-27 -> 91.0, 2020-06-24 -> 78.0, 2020-06-25 -> 81.0, 2020-06-28 -> 77.0, 2020-06-29 -> 63.0, 2020-06-30 -> 62.0, 2020-06-22 -> 83.0, 2020-06-23 -> 79.0, 2020-06-21 -> 101.0]|0.011951239|native,z041bf6g4s,4G,g_f,5,CPM,71,101 |71 |101     |0.08843476 |
-
-    # update ratio
-    df = df.withColumn('ratio', udf(lambda r1, r2: float(r1*r2) if r1 and r2 else float(0), FloatType())(df.ratio, df.ipl_ratio))
-
-    return df
-
-
 def run(cfg):
 
     # os.environ[
@@ -181,9 +136,6 @@ def run(cfg):
     norm_table = cfg['norm_table']
     traffic_dist = cfg['traffic_dist']
     model_stat_table = cfg['model_stat_table']
-    ipl_dist_table = cfg['ipl_dist_table']
-    unique_original_uckey_table = cfg['unique_original_uckey_table']
-    skip_ipl_reverse_mapping = bool(cfg['skip_ipl_reverse_mapping'])
     prediction_table_name = cfg['es_predictions_index']
 
     yesterday = cfg['yesterday']
@@ -205,35 +157,6 @@ def run(cfg):
     df_dist.cache()
     df_dist.count()
 
-    if not skip_ipl_reverse_mapping:
-        command = """
-            SELECT
-            DIST.old as mapped_ipl, 
-            DIST.ipl as real_ipl, 
-            DIST.ratio  
-            FROM {} AS DIST
-            """.format(ipl_dist_table)
-        df = hive_context.sql(command)
-        ipl_dist_list = df.collect()
-        ipl_dist_map = {}
-        for _ in ipl_dist_list:
-            mapped_ipl = _['mapped_ipl']
-            if not mapped_ipl:
-                continue
-            mapped_ipl = str(mapped_ipl)
-            real_ipl = _['real_ipl']
-            ratio = float(0)
-            if _['ratio']:
-                ratio = float(_['ratio'])
-            if mapped_ipl not in ipl_dist_map:
-                ipl_dist_map[mapped_ipl] = {}
-            ipl_dist_map[mapped_ipl][real_ipl] = ratio
-
-        ipl_dist_map_brodcast = sc.broadcast(ipl_dist_map)
-
-        # Get original uckeys
-        df_uckey_distinct = hive_context.sql('SELECT uckey FROM {}'.format(unique_original_uckey_table))
-
     # Read norm table
     # DataFrame[uckey: string, ts: array<int>, p: float, a__n: float, a_1_n: float, a_2_n: float, a_3_n: float, a_4_n: float, a_5_n: float, a_6_n: float, t_UNKNOWN_n: float, t_3G_n: float, t_4G_n: float, t_WIFI_n: float, t_2G_n: float, g__n: float, g_g_f_n: float, g_g_m_n: float, g_g_x_n: float, price_cat_1_n: float, price_cat_2_n: float, price_cat_3_n: float, si_vec_n: array<float>, r_vec_n: array<float>, p_n: float, ts_n: array<float>]
     command = """
@@ -244,9 +167,7 @@ def run(cfg):
         t_UNKNOWN_n,t_3G_n,t_4G_n,t_WIFI_n,t_2G_n,
         g__n, g_g_f_n, g_g_m_n, g_g_x_n,
         price_cat_1_n, price_cat_2_n, price_cat_3_n,
-        si_vec_n,
-        r_vec_n,
-        ipl_vec_n
+        si_vec_n 
         FROM {}
         """.format(norm_table)
     df_norm = hive_context.sql(command)
@@ -356,9 +277,6 @@ def run(cfg):
     # +-------------+---------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+--------------------------------------+
     # |1009         |2        |[2020-06-26 -> 169.0, 2020-06-27 -> 170.0, 2020-06-24 -> 158.0, 2020-06-25 -> 155.0, 2020-06-28 -> 146.0, 2020-06-29 -> 127.0, 2020-06-30 -> 127.0, 2020-06-22 -> 171.0, 2020-06-23 -> 159.0, 2020-06-21 -> 227.0]|0.00800733|native,z041bf6g4s,WIFI,g_f,5,CPM,40,40|
     # +-------------+---------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+--------------------------------------+
-
-    if not skip_ipl_reverse_mapping:
-        df = ipl_revrse_mapping(df, ipl_dist_map_brodcast=ipl_dist_map_brodcast, df_uckey_distinct=df_uckey_distinct)
 
     # [Row(ucdoc_elements=Row(price_cat=u'2', ratio=0.11989551782608032, day_prediction_map={u'2019-11-02': 220.0, u'2019-11-03': 305.0}), uckey=u'native,66bcd2720e5011e79bc8fa163e05184e,WIFI,g_m,5,CPC,5')]
     ucdoc_elements_type = StructType([StructField('price_cat', StringType(), False), StructField(
