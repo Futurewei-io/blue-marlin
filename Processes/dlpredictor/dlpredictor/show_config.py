@@ -63,7 +63,7 @@ def run(cfg, hive_context):
     product_tag = cfg['product_tag']
     pipeline_tag = cfg['pipeline_tag']
 
-    factdata = cfg['factdata_table']
+    area_map_table = cfg['area_map_table']
     distribution_table = cfg['distribution_table']
     norm_table = cfg['norm_table']
     model_stat_table = cfg['model_stat_table']
@@ -88,8 +88,8 @@ def run(cfg, hive_context):
     print('')
 
     command = "SELECT * FROM {}"
-    df = hive_context.sql(command.format(factdata))
-    print('Factdata schema')
+    df = hive_context.sql(command.format(area_map_table))
+    print('Filterted Factdata table schema')
     df.printSchema()
 
     command = "SELECT * FROM {}"

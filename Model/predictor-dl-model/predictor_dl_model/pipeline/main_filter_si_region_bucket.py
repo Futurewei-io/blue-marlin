@@ -56,42 +56,10 @@ def __save_as_table(df, table_name, hive_context, create_table):
 
 
 def drop_residency(df):
-    new_uckey = udf(lambda uckey: ','.join([v for i, v in enumerate(uckey.split(',')) if i != 6]))
-    df = df.withColumn('_uckey', new_uckey(df.uckey)).drop('uckey').withColumnRenamed('_uckey', 'uckey')
-    return df
-
-
-def modify_ipl(df, mapping):
-    def __udf_method(_uckey_str):
-        uckey = list(_uckey_str.split(','))
-        uckey_ipl = uckey[-1]
-        if uckey_ipl in mapping:
-            uckey_ipl = mapping[uckey_ipl]
-            uckey[-1] = uckey_ipl
-        uckey_new = ','.join(uckey)
-        return uckey_new
-
-    new_uckey = udf(__udf_method, StringType())
-    df = df.withColumn('uckey', new_uckey(df.uckey))
-    df = df.drop('virtual').drop('original')
-    return df
-
-
-def modify_residency(df, mapping_df):
-    df = df.withColumn('original', split(df['uckey'], ',').getItem(6).cast(IntegerType()))
-    df = df.join(mapping_df, on=['original'], how='left')
-
-    def __udf_method(_uckey_str, _r, _virtual_region):
-        uckey = list(_uckey_str.split(','))
-        uckey_residency = uckey[:-2]
-        uckey_ipl = uckey[-1]
-        new_residency = _virtual_region
-        uckey_new = ','.join(uckey_residency + ['' if new_residency is None else new_residency] + [uckey_ipl])
-        return uckey_new
-
-    new_uckey = udf(__udf_method, StringType())
-    df = df.withColumn('uckey', new_uckey(df.uckey, df.original, df.virtual))
-    df = df.drop('virtual').drop('original')
+    new_uckey = udf(lambda uckey: ','.join(
+        [v if i != 6 else '' for i, v in enumerate(uckey.split(','))]))
+    df = df.withColumn('_uckey', new_uckey(df.uckey)).drop(
+        'uckey').withColumnRenamed('_uckey', 'uckey')
     return df
 
 
@@ -105,16 +73,7 @@ def assign_new_bucket_id(df, n):
     return df
 
 
-def run(hive_context, conditions, factdata_table_name, output_table_name, region_mapping_table, init_start_bucket, bucket_size, bucket_step, new_bucket_size, new_si_set):
-
-    # ts will be counts from yesterday-(past_days) to yesterday
-    mapping_df = hive_context.sql('SELECT old AS original, new AS virtual FROM {}'.format(region_mapping_table))
-    mapping_list = mapping_df.collect()
-    mapping = {}
-    for row in mapping_list:
-        original = row['original']
-        virtual = row['virtual']
-        mapping[original] = virtual
+def run(hive_context, conditions, factdata_table_name, output_table_name, init_start_bucket, bucket_size, bucket_step, new_bucket_size, new_si_set):
 
     start_bucket = init_start_bucket
     first_round = True
@@ -142,8 +101,7 @@ def run(hive_context, conditions, factdata_table_name, output_table_name, region
         _udf = udf(lambda x: x.split(',')[1] in new_si_set, BooleanType())
         df = df.filter(_udf(df.uckey))
 
-        df = modify_ipl(df, mapping)
-        # df = modify_residency(df, mapping_df)
+        df = drop_residency(df)
 
         df = assign_new_bucket_id(df, new_bucket_size)
 
@@ -179,7 +137,6 @@ if __name__ == "__main__":
 
     factdata_table_name = cfg['factdata_table_name']
     output_table_name = cfg_filter['output_table_name']
-    region_mapping_table = cfg_filter['region_mapping_table']
     init_start_bucket = cfg_filter['init_start_bucket']
     bucket_size = cfg_filter['bucket_size']
     bucket_step = cfg_filter['bucket_step']
@@ -190,7 +147,7 @@ if __name__ == "__main__":
     new_si_set = set(new_si_list)
 
     run(hive_context=hive_context, conditions=conditions, factdata_table_name=factdata_table_name,
-        output_table_name=output_table_name, region_mapping_table=region_mapping_table, init_start_bucket=init_start_bucket,
+        output_table_name=output_table_name, init_start_bucket=init_start_bucket,
         bucket_size=bucket_size, bucket_step=bucket_step, new_bucket_size=new_bucket_size, new_si_set=new_si_set)
 
     sc.stop()

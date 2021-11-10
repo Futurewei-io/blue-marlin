@@ -39,7 +39,7 @@ def add_count_map(df):
 # This method replace zeros with nan and inject nans for non existing days
 
 
-def calculate_time_series(df, day_list):
+def calculate_time_series(df, col_name, day_list):
     def _helper(ts_list_map):
         ts_map = {}
         result = []
@@ -61,7 +61,7 @@ def calculate_time_series(df, day_list):
         return result
 
     _udf = udf(_helper, ArrayType(IntegerType()))
-    df = df.withColumn('ts', _udf(df.ts_list_map))
+    df = df.withColumn(col_name, _udf(df.ts_list_map))
     return df
 
 

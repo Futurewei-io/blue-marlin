@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -17,15 +17,19 @@
 import unittest
 import yaml
 from pyspark import SparkContext
-from pyspark.sql import HiveContext
+from pyspark.sql import SparkSession, HiveContext
 
 
 class TestBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with open('config.yml', 'r') as ymlfile:
-            cfg = yaml.load(ymlfile)
+        try:
+            with open('config.yml', 'r') as ymlfile:
+                cfg = yaml.load(ymlfile)
+        except IOError:
+            cfg = {'test': {'timer': 10}}
+
         cls.cfg = cfg
         sc = SparkContext().getOrCreate()
         sc.setLogLevel('warn')

@@ -47,11 +47,11 @@ def __save_as_table(df, table_name, hive_context, create_table):
             uckey string,
             price_cat string,
             ts array<int>,
+            ts_ver array<int>,
             a string,
             g string,
             t string,
             si string,
-            r string,
             ipl string
             )
             """.format(table_name)
@@ -61,11 +61,11 @@ def __save_as_table(df, table_name, hive_context, create_table):
     df.select('uckey',
               'price_cat',
               'ts',
+              'ts_ver',
               'a',
               'g',
               't',
               'si',
-              'r',
               'ipl'
               ).write.format('hive').option("header", "true").option("encoding", "UTF-8").mode('append').insertInto(table_name)
 
@@ -76,7 +76,7 @@ def normalize(mlist):
     return [0 if std == 0 else (item-avg)/(std) for item in mlist], avg, std
 
 
-def run(hive_context, conditions, factdata_table_name, yesterday, past_days, output_table_name, bucket_size, bucket_step):
+def run(hive_context, conditions, input_table, yesterday, past_days, predict_window, output_table, bucket_size, bucket_step):
 
     # ts will be counts from yesterday-(past_days) to yesterday
 
@@ -86,6 +86,13 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
         day_list.append(datetime.strftime(day, '%Y-%m-%d'))
         day = day + timedelta(days=-1)
     day_list.sort()
+
+    day = datetime.strptime(yesterday, '%Y-%m-%d')
+    ver_day_list = []
+    for _ in range(0, predict_window):
+        day = day + timedelta(days=1)
+        ver_day_list.append(datetime.strftime(day, '%Y-%m-%d'))       
+    ver_day_list.sort()
 
     start_bucket = 0
     first_round = True
@@ -99,7 +106,7 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
         # Read factdata table
         command = """
         SELECT count_array, day, hour, uckey FROM {} WHERE bucket_id BETWEEN {} AND {}
-        """.format(factdata_table_name, str(start_bucket), str(end_bucket))
+        """.format(input_table, str(start_bucket), str(end_bucket))
 
         if len(conditions) > 0:
             command = command + " AND {}".format(' AND '.join(conditions))
@@ -130,20 +137,21 @@ def run(hive_context, conditions, factdata_table_name, yesterday, past_days, out
         # [Row(uckey='native,l03493p0r3,4G,g_m,4,CPM,23,78', price_cat='1', ts_list_map=[{'2019-11-02': '13'}])]
 
         # This method handles missing dates by injecting nan
-        df = transform.calculate_time_series(df, day_list)
+        df = transform.calculate_time_series(df, 'ts', day_list)
         # [Row(uckey='native,l03493p0r3,4G,g_m,4,CPM,23,78', price_cat='1', ts_list_map=[{'2019-11-02': '13'}], ts=[nan, nan, nan, nan, nan, nan, nan, nan, nan, 2.6390573978424072])]
+
+        df = transform.calculate_time_series(df, 'ts_ver', ver_day_list)
 
         # Log processor code to know the index of features
         # v = concat_ws(UCDoc.uckey_delimiter, df.adv_type 0 , df.slot_id 1 , df.net_type 2 , df.gender 3 , df.age 4 ,
         #                   df.price_dev 5 , df.pricing_type 6 , df.residence_city 7 , df.ip_city_code 8 )
         df = df.withColumn('a', transform.add_feature_udf(4)(df.uckey))
         df = df.withColumn('si', transform.add_feature_udf(1)(df.uckey))
-        df = df.withColumn('r', transform.add_feature_udf(7)(df.uckey))
-        df = df.withColumn('ipl', transform.add_feature_udf(8)(df.uckey))
+        df = df.withColumn('ipl', transform.add_feature_udf(7)(df.uckey))
         df = df.withColumn('t', transform.add_feature_udf(2)(df.uckey))
         df = df.withColumn('g', transform.add_feature_udf(3)(df.uckey))
 
-        __save_as_table(df, output_table_name, hive_context, first_round)
+        __save_as_table(df, output_table, hive_context, first_round)
         first_round = False
 
 
@@ -159,21 +167,22 @@ if __name__ == "__main__":
         resolve_placeholder(cfg)
 
     cfg_log = cfg['log']
-    cfg = cfg['pipeline']['time_series']
+    cfg_pipeline = cfg['pipeline']['time_series']
 
     sc = SparkContext()
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg_log['level'])
 
-    yesterday = cfg['yesterday']
-    prepare_past_days = cfg['prepare_past_days']
-    output_table_name = cfg['output_table_name']
-    bucket_size = cfg['bucket_size']
-    bucket_step = cfg['bucket_step']
-    input_table_name = cfg['input_table_name']
-    conditions = cfg['conditions']
+    yesterday = cfg_pipeline['yesterday']
+    prepare_past_days = cfg_pipeline['prepare_past_days']
+    output_table = cfg_pipeline['output_table_name']
+    bucket_size = cfg_pipeline['bucket_size']
+    bucket_step = cfg_pipeline['bucket_step']
+    input_table = cfg_pipeline['input_table_name']
+    conditions = cfg_pipeline['conditions']
+    predict_window = cfg['trainer']['predict_window']
 
-    run(hive_context, conditions, input_table_name,
-        yesterday, prepare_past_days, output_table_name, bucket_size, bucket_step)
+    run(hive_context=hive_context, conditions=conditions, input_table=input_table,
+        yesterday=yesterday, past_days=prepare_past_days, predict_window=predict_window, output_table=output_table, bucket_size=bucket_size, bucket_step=bucket_step)
 
     sc.stop()
