@@ -10,6 +10,7 @@ spark = SparkSession \
     .getOrCreate()
 
 df = spark.read.parquet("user_score")
+
 normalizer = Normalizer(inputCol="user_score", outputCol="normFeatures", p=2.0)
 extended_user_df = normalizer.transform(df)
 extended_user_df.cache()
