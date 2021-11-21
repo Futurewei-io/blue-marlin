@@ -147,13 +147,13 @@ def denoise(df, percentile):
     df = df.withColumn('nonzero_p', udf(
         lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
             [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
-    df = df.withColumn('nonzero_sd', udf(
-        lambda ts: stdev([_ for _ in ts if _ != 0]))(df.ts))
+    # df = df.withColumn('nonzero_sd', udf(
+    #     lambda ts: stdev([_ for _ in ts if _ != 0]), FloatType())(df.ts))
 
     df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / percentile) else 0 for i in ts],
                                  ArrayType(IntegerType()))(df.ts, df.nonzero_p))
-    df = df.withColumn('ts', udf(lambda ts, nonzero_sd: [i if i and i < (nonzero_sd * 2) else 0 for i in ts],
-                                 ArrayType(IntegerType()))(df.ts, df.nonzero_sd))
+    # df = df.withColumn('ts', udf(lambda ts, nonzero_sd: [i if i and i < (nonzero_sd * 2) else 0 for i in ts],
+    #                              ArrayType(IntegerType()))(df.ts, df.nonzero_sd))
     return df
 
 
