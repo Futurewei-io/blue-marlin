@@ -83,7 +83,7 @@ def run(hive_context, cfg):
 
         mode = 'overwrite' if first_round else 'append'
         write_to_table_with_partition(df.select('did', 'score_vector', 'c1', 'did_bucket'), score_vector_table, partition=('did_bucket'), mode=mode)
-        # write_to_table_with_partition(df.select('did', 'did_bucket'), score_vector_table, partition=('did_bucket'), mode=mode)
+
         first_round = False
         batch_num += 1
 

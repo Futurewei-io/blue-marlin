@@ -5,6 +5,10 @@ import itertools
 import heapq
 from pyspark.sql import Row
 
+'''
+Author:Reza
+'''
+
 
 def calculate_similarity(alpha_user_did_score, c2):
     # we don't need did_list in dataframe

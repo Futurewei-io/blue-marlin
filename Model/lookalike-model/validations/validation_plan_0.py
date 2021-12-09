@@ -17,7 +17,8 @@
 from pyspark.sql.functions import lit, col, udf, rand
 from pyspark.sql import HiveContext
 from pyspark import SparkContext
-import argparse, yaml
+import argparse
+import yaml
 from util import resolve_placeholder
 
 '''
@@ -25,7 +26,7 @@ spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memo
 '''
 
 
-def counting(click,kwi):
+def counting(click, kwi):
     count_click = 0
     for row in click:
         if len(row) != 0:
@@ -33,35 +34,37 @@ def counting(click,kwi):
             count_click += sum([int(j.split(':')[1]) for j in l.split(',') if j.split(':')[0] == kwi])
     return count_click
 
-def run(hive_context,cfg, kwi):
+
+def run(hive_context, cfg, kwi):
     lookalike_score_table = cfg["output"]["similarity_table"]
     seed_user_table = 'lookalike_seeduser'
     extend = cfg['input']['extend']
     test_table = 'lookalike_trainready_jimmy_test'
     number_of_seeduser = 1000
 
-    ######### filtering the df and removing seed users
+    # filtering the df and removing seed users
     command = "select * from {}"
-    user = hive_context.sql(command.format(seed_user_table)) #look_alike_seeduser
+    user = hive_context.sql(command.format(seed_user_table))  # look_alike_seeduser
     user_list = [row[0] for row in user.select('did').collect()]
     command = "select * from {}"
-    df = hive_context.sql(command.format(lookalike_score_table)) #lookalike_similarity
+    df = hive_context.sql(command.format(lookalike_score_table))  # lookalike_similarity
     df = df.filter(~col('did').isin(user_list))
-    df_test = hive_context.sql(command.format(test_table)) #"lookalike_trainready_jimmy_test"
+    df_test = hive_context.sql(command.format(test_table))  # "lookalike_trainready_jimmy_test"
 
-    #######user_form score
+    # user_form score
     fdf = df.select('did').orderBy(col('mean_score').desc())
     did_list = [row[0] for row in fdf.select('did').collect()][0:extend]
     count_df = df_test.filter(col('did').isin(did_list))
     click = [row[0] for row in count_df.select('keyword_indexes_click_counts').collect()]
-    print("click count is: ",counting(click,kwi))
+    print("click count is: ", counting(click, kwi))
 
-    ########user form random
+    # user form random
     random_user = df.select('did').orderBy(rand())
     did_list = [row[0] for row in random_user.select('did').collect()][0:extend]
     count_df = df_test.filter(col('did').isin(did_list))
     click = [row[0] for row in count_df.select('keyword_indexes_click_counts').collect()]
-    print("click count is: ",counting(click,kwi))
+    print("click count is: ", counting(click, kwi))
+
 
 if __name__ == "__main__":
     """
@@ -80,5 +83,5 @@ if __name__ == "__main__":
     sc.setLogLevel('WARN')
     hive_context = HiveContext(sc)
 
-    run(hive_context=hive_context,cfg=cfg, kwi=kwi)
+    run(hive_context=hive_context, cfg=cfg, kwi=kwi)
     sc.stop()

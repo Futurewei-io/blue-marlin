@@ -1,0 +1,7 @@
+
+IVF256,Flat
+k = 10
+1m users
+We tuned the configuration. We need to index in 500k increaments and search in 1m increaments. 
+the overall time to process 1m user (including hive and spark operations) is 10 minutes. I beleive we can process 50m in less than one hour.
+Clustering is good enough, we do not need vector optimization such as OP.

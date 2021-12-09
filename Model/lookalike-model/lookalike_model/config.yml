@@ -1,9 +1,9 @@
 product_tag: 'lookalike'
-pipeline_tag: '03042021'
-persona_table_name: 'ads_persona_0520'
-showlog_table_name: 'ads_showlog_0520'
-clicklog_table_name: 'ads_clicklog_0520'
-keywords_table: 'din_ad_keywords_02182021' #if this keywords table name is changed, set the below to True.
+pipeline_tag: '11192021'
+persona_table_name: 'ads_persona_11162021'
+showlog_table_name: 'ads_showlog_11162021'
+clicklog_table_name: 'ads_clicklog_11162021'
+# keywords_table: 'din_ad_keywords_02182021' # This was keyword mapping table.
 log:
   level: 'WARN' # log level for spark and app
 features:
@@ -105,7 +105,7 @@ pipeline:
   main_clean:  
     did_bucket_num: 2 # Number of partitions for did
     load_logs_in_minutes: 14400 #1440/day, original=14400
-    create_keywords: False # set True for first run, then keep False to use the created table.
+    create_keywords: True # set True for first run, then keep False to use the created table.
     persona_output_table: '{product_tag}_{pipeline_tag}_persona'
     showlog_output_table: '{product_tag}_{pipeline_tag}_showlog'
     clicklog_output_table: '{product_tag}_{pipeline_tag}_clicklog'
@@ -156,8 +156,8 @@ pipeline:
             'd4d7362e879511e5bdec00163e291137',
             '15e9ddce941b11e5bdec00163e291137'
       ],
-      'starting_date': '2019-12-18', #2019-12-18
-      'ending_date': '2020-04-16' #2020-04-15 #2019-12-23
+      'starting_date': '2021-06-01', #2019-12-18
+      'ending_date': '2021-08-08' #2020-04-15 #2019-12-23
     }
   main_logs:
     interval_time_in_seconds: 86400 # default=1 day, group logs in interval time.
@@ -167,7 +167,7 @@ pipeline:
   tfrecords:
     tfrecords_statistics_path: '{product_tag}_{pipeline_tag}_tfrecord_statistics.pkl'
     tfrecords_hdfs_path: '{product_tag}_{pipeline_tag}_tfrecord' # it is hdfs location for tfrecords, over-writes the existing files
-  cutting_date: 1584748800
+  cutting_date: 1627171200 # 07/30/2021 It uses data before this for training samples and after that for testing samples. <Improvement is required.>
   length: 10
 
 

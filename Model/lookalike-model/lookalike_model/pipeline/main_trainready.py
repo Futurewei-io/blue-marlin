@@ -23,7 +23,7 @@ from pyspark import SparkContext
 from pyspark.sql import functions as fn
 from pyspark.sql.functions import lit, col, udf, collect_list, concat_ws, first, create_map, monotonically_increasing_id, row_number
 from pyspark.sql.window import Window
-from pyspark.sql.types import IntegerType, ArrayType, StringType, LongType
+from pyspark.sql.types import IntegerType, ArrayType, StringType, LongType, BooleanType
 from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
 from util import write_to_table, write_to_table_with_partition, print_batching_info, resolve_placeholder, load_config, load_batch_config, load_df
@@ -39,16 +39,16 @@ def date_to_timestamp(dt):
 
 def generate_trainready(hive_context, batch_config,
                         interval_time_in_seconds,
-                        logs_table_name, trainready_table, did_bucket_num):
+                        logs_table_name, trainready_table, aid_bucket_num):
 
     def group_batched_logs(df_logs):
         # group logs from did + interval_time + keyword.
         # group 1: group by did + interval_starting_time + keyword
-        df = df_logs.groupBy('did', 'interval_starting_time', 'keyword_index').agg(
+        df = df_logs.groupBy('aid', 'interval_starting_time', 'keyword_index').agg(
             first('keyword').alias('keyword'),
             first('age').alias('age'),
-            first('gender').alias('gender'),
-            first('did_bucket').alias('did_bucket'),
+            first('gender_index').alias('gender_index'),
+            first('aid_bucket').alias('aid_bucket'),
             fn.sum(col('is_click')).alias('kw_clicks_count'),
             fn.sum(fn.when(col('is_click') == 0, 1).otherwise(0)).alias('kw_shows_count'),
         )
@@ -59,7 +59,7 @@ def generate_trainready(hive_context, batch_config,
         df = df.withColumn('kw_shows_count', concat_ws(":", col('keyword'), col('kw_shows_count')))
 
         # group 2: group by did + interval_starting_time
-        df = df.groupBy('did', 'interval_starting_time').agg(
+        df = df.groupBy('aid', 'interval_starting_time').agg(
             concat_ws(",", collect_list('keyword_index')).alias('kwi'),
             concat_ws(",", collect_list('kwi_clicks_count')).alias('kwi_click_counts'),
             concat_ws(",", collect_list('kwi_shows_count')).alias('kwi_show_counts'),
@@ -67,8 +67,8 @@ def generate_trainready(hive_context, batch_config,
             concat_ws(",", collect_list('kw_clicks_count')).alias('kw_click_counts'),
             concat_ws(",", collect_list('kw_shows_count')).alias('kw_show_counts'),
             first('age').alias('age'),
-            first('gender').alias('gender'),
-            first('did_bucket').alias('did_bucket')
+            first('gender_index').alias('gender_index'),
+            first('aid_bucket').alias('aid_bucket')
         )
 
         return df
@@ -82,11 +82,11 @@ def generate_trainready(hive_context, batch_config,
         agg_attr_list = list(chain(*[(lit(attr), col(attr)) for attr in df.columns if attr in features]))
         df = df.withColumn('attr_map', create_map(agg_attr_list))
 
-        df = df.groupBy('did').agg(
+        df = df.groupBy('aid').agg(
             collect_list('attr_map').alias('attr_map_list'),
             first('age').alias('age'),
-            first('gender').alias('gender'),
-            first('did_bucket').alias('did_bucket')
+            first('gender_index').alias('gender_index'),
+            first('aid_bucket').alias('aid_bucket')
         )
 
         return df
@@ -147,7 +147,7 @@ def generate_trainready(hive_context, batch_config,
     all_intervals.sort()
 
     batched_round = 1
-    for did_bucket in range(did_bucket_num):
+    for aid_bucket in range(aid_bucket_num):
         for interval_point in all_intervals:
             '''
             We need the days since we have days partitions.
@@ -160,13 +160,12 @@ def generate_trainready(hive_context, batch_config,
                         WHERE 
                         day >= '{}' AND day <= '{}' AND  
                         interval_starting_time = '{}' AND 
-                        did_bucket= '{}' """
-            df_logs = hive_context.sql(command.format(logs_table_name, day_lower, day_upper, interval_point, did_bucket))
+                        aid_bucket= '{}' """
+            df_logs = hive_context.sql(command.format(logs_table_name, day_lower, day_upper, interval_point, aid_bucket))
 
             df_trainready = group_batched_logs(df_logs)
-
             mode = 'overwrite' if batched_round == 1 else 'append'
-            write_to_table_with_partition(df_trainready, trainready_table_temp, partition=('did_bucket'), mode=mode)
+            write_to_table_with_partition(df_trainready, trainready_table_temp, partition=('aid_bucket'), mode=mode)
             batched_round += 1
 
     '''
@@ -180,33 +179,36 @@ def generate_trainready(hive_context, batch_config,
     If not possible we need to increase user bucket number.
     '''
     trainready_table_temp
+    shift = 0
     batched_round = 1
-    for did_bucket in range(did_bucket_num):
+    for aid_bucket in range(aid_bucket_num):
         command = """SELECT * 
                         FROM {} 
                         WHERE 
-                        did_bucket= '{}' """
-        df = hive_context.sql(command.format(trainready_table_temp, did_bucket))
+                        aid_bucket= '{}' """
+        df = hive_context.sql(command.format(trainready_table_temp, aid_bucket))
         df = collect_trainready(df)
         df = build_feature_array(df)
         '''
         at this point df is like below
-        [Row(age=6, gender=0, did=u'773e03d2bc89d49c0c9c60270ee650e555abdf32cf5305c9fe27f081e1e64d91', metrics_list=[[u'1576800000'], [u'25'], [u'25:1'], [u'25:0']], did_bucket=u'0')]
+        [Row(age=6, gender=0, aid=u'773e03d2bc89d49c0c9c60270ee650e555abdf32cf5305c9fe27f081e1e64d91', metrics_list=[[u'1576800000'], [u'25'], [u'25:1'], [u'25:0']], aid_bucket=u'0')]
         '''
         for i, feature_name in enumerate(['interval_starting_time', 'interval_keywords', 'kwi', 'kwi_show_counts', 'kwi_click_counts']):
             df = df.withColumn(feature_name, col('metrics_list').getItem(i))
 
+        # Filtering the users with less than 10 days activity
+        df = df.filter(udf(lambda x: len(x) > 10, BooleanType())(df.interval_starting_time))
         # Add did_index
-        w = Window.orderBy("did_bucket", "did")
+        w = Window.orderBy("aid_bucket", "aid")
         df = df.withColumn('row_number', row_number().over(w))
-        df = df.withColumn('did_index', udf(lambda x: did_bucket*(MAX_USER_IN_BUCKET) + x, LongType())(col('row_number')))
-        df = df.select('age', 'gender', 'did', 'did_index', 'interval_starting_time', 'interval_keywords',
-                       'kwi', 'kwi_show_counts', 'kwi_click_counts', 'did_bucket')
-
+        df = df.withColumn('aid_index', udf(lambda x: shift+ x, LongType())(col('row_number')))
+        # df = df.withColumn('aid_index', udf(lambda x: aid_bucket * (MAX_USER_IN_BUCKET) + x, LongType())(col('row_number')))
+        df = df.select('age', 'gender_index', 'aid', 'aid_index', 'interval_starting_time', 'interval_keywords',
+                       'kwi', 'kwi_show_counts', 'kwi_click_counts', 'aid_bucket')
         mode = 'overwrite' if batched_round == 1 else 'append'
-        write_to_table_with_partition(df, trainready_table, partition=('did_bucket'), mode=mode)
+        write_to_table_with_partition(df, trainready_table, partition=('aid_bucket'), mode=mode)
         batched_round += 1
-
+        shift += df.count()
     return
 
 
@@ -218,11 +220,11 @@ def run(hive_context, cfg):
 
     cfg_train = cfg['pipeline']['main_trainready']
     trainready_table = cfg_train['trainready_output_table']
-    did_bucket_num = cfg_clean['did_bucket_num']
+    aid_bucket_num = cfg_clean['did_bucket_num']
 
     batch_config = load_batch_config(cfg)
 
-    generate_trainready(hive_context, batch_config, interval_time_in_seconds, logs_table_name, trainready_table, did_bucket_num)
+    generate_trainready(hive_context, batch_config, interval_time_in_seconds, logs_table_name, trainready_table, aid_bucket_num)
 
 
 if __name__ == "__main__":
@@ -232,6 +234,8 @@ if __name__ == "__main__":
     groups data into time_intervals and dids (labeled by did)
     """
     sc, hive_context, cfg = load_config(description="pre-processing train ready data")
+    hive_context.setConf("hive.exec.dynamic.partition", "true")
+    hive_context.setConf("hive.exec.dynamic.partition.mode", "nonstrict")
     resolve_placeholder(cfg)
     run(hive_context=hive_context, cfg=cfg)
     sc.stop()

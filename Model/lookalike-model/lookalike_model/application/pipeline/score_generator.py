@@ -25,8 +25,7 @@ import requests
 import json
 import argparse
 from math import sqrt
-from util import resolve_placeholder
-from lookalike_model.pipeline.util import write_to_table, write_to_table_with_partition
+from util import resolve_placeholder, write_to_table_with_partition
 
 '''
 This process generates the score-table with the following format.

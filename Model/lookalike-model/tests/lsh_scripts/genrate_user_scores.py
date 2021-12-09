@@ -11,7 +11,6 @@ from pyspark.mllib.random import RandomRDDs
 num_users=100000
 
 user_embedding_dim=20
-
 spark = SparkSession \
     .builder \
     .getOrCreate()
@@ -23,7 +22,5 @@ def generate_random_uniform_df(nrows, ncols):
 df=generate_random_uniform_df(num_users,20)
 vectorAssembler = VectorAssembler().setInputCols(df.columns).setOutputCol("user_score")
 ddf = vectorAssembler.transform(df).select("user_score")
-# df.write.partitionBy("dow").parquet(writePath)
-# ddf.coalesce(100).write.mode('overwrite').parquet("user_score")
-ddf.coalesce(100).write.mode('overwrite').partitionBy("dow").parquet("user_score")
+ddf.coalesce(100).write.mode('overwrite').parquet("user_score")
 

@@ -1,5 +1,5 @@
 product_tag: 'lookalike_application'
-pipeline_tag: '08172021_1000'
+pipeline_tag: '08192021_1m'
 score_generator:
     input:
         log_table : "lookalike_08172021_1000_logs"
@@ -17,15 +17,13 @@ score_vector:
     keywords_table: "din_ad_keywords_09172020"
     score_table:  "{product_tag}_{pipeline_tag}_score"
     score_vector_table: "{product_tag}_{pipeline_tag}_score_vector"
-    did_bucket_size: 2
-    did_bucket_step: 2
-score_matrix_table:
-    did_bucket_size: 2
-    did_bucket_step: 2
-    score_matrix_table: '{product_tag}_{pipeline_tag}_score_matrix'
+    did_bucket_size: 100
+    did_bucket_step: 10
 top_n_similarity:
     did_bucket_size: 100
-    did_bucket_step: 100
-    cross_bucket_size: 1 # in production this should be as same as did_bucket_size
+    load_bucket_step: 20
+    search_bucket_step: 50
     top_n: 10
+    index_factory_string: "IVF256,Flat"
     similarity_table: "{product_tag}_{pipeline_tag}_similarity"
+    

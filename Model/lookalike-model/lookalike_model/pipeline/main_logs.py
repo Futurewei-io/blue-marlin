@@ -32,9 +32,8 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
 
     def union_logs(df_clicklog, df_showlog):
         # union click log and show log.
-        columns = ['did', 'is_click', 'action_time', 'keyword',
-                   'keyword_index', 'media', 'net_type', 'gender',
-                   'age', 'adv_id', 'day', 'did_bucket']
+        columns = ['aid', 'is_click', 'action_time', 'keyword','keyword_index', 'gender','gender_index',
+                   'age', 'day', 'aid_bucket']
 
         df_clicklog = df_clicklog.withColumn('is_click', lit(1))
         df_clicklog = df_clicklog.select(columns)
@@ -79,21 +78,19 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
             start_day = starting_time.strftime("%Y-%m-%d")
             end_day = batched_time_end.strftime("%Y-%m-%d")
 
-            command = """SELECT did, 
+            command = """SELECT aid, 
                         action_time, 
-                        keyword, 
-                        keyword_index,                    
-                        media, 
-                        net_type, 
+                        keyword,
+                        keyword_index,
                         gender, 
-                        age, 
-                        adv_id, 
+                        gender_index,
+                        age,
                         day, 
-                        did_bucket  
+                        aid_bucket  
                         FROM {} WHERE 
                         day >= '{}' AND day <= '{}' AND 
                         action_time >= '{}' AND action_time < '{}' 
-                        AND did_bucket= '{}' """
+                        AND aid_bucket= '{}' """
 
             df_clicklog_batched = hive_context.sql(command.format(clicklog_table_name, start_day, end_day, batched_time_start_str, batched_time_end_str, did_bucket))
 
@@ -103,14 +100,14 @@ def join_logs(hive_context, batch_config, interval_time_in_seconds, log_table_na
 
             df_logs_batched = transform_action_time(df_logs_batched, interval_time_in_seconds)
 
-            columns = ['did', 'is_click', 'action_time', 'keyword',
-                       'keyword_index', 'media', 'net_type', 'gender',
-                       'age', 'adv_id', 'interval_starting_time', 'action_time_seconds',
-                       'day', 'did_bucket']
+            columns = ['aid', 'is_click', 'action_time', 'keyword','keyword_index',
+                       'gender', 'gender_index',
+                       'age', 'interval_starting_time', 'action_time_seconds',
+                       'day', 'aid_bucket']
             df_logs_batched = df_logs_batched.select(columns)
 
             mode = 'overwrite' if batched_round == 1 else 'append'
-            write_to_table_with_partition(df_logs_batched, logs_table_name, partition=('day', 'did_bucket'), mode=mode)
+            write_to_table_with_partition(df_logs_batched, logs_table_name, partition=('day', 'aid_bucket'), mode=mode)
             batched_round += 1
             starting_time = batched_time_end
 
@@ -146,6 +143,8 @@ if __name__ == "__main__":
     adds did
     """
     sc, hive_context, cfg = load_config(description="pre-processing logs data")
+    hive_context.setConf("hive.exec.dynamic.partition", "true")
+    hive_context.setConf("hive.exec.dynamic.partition.mode", "nonstrict")
     resolve_placeholder(cfg)
     run(hive_context=hive_context, cfg=cfg)
     sc.stop()
