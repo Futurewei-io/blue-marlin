@@ -25,6 +25,14 @@ from pyspark.sql import HiveContext
 from lookalike_model.pipeline.util import write_to_table_with_partition, load_config, resolve_placeholder
 
 
+
+'''
+
+spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memory 8G --driver-memory 8G --conf spark.driver.maxResultSize=5g --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict generate_users.py config_generate_users.yml
+
+'''
+
+
 def create_user_df (hive_context, num_users, num_time_intervals, num_did_buckets):
     time_intervals = [1586822400 - i*86400 for i in range(num_time_intervals)]
     keyword_list = [

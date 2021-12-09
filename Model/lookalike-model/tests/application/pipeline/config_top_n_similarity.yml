@@ -16,23 +16,13 @@ score_generator:
 score_vector:
     keywords_table: "din_ad_keywords_09172020"
     score_table:  "{product_tag}_{pipeline_tag}_score"
-    score_vector_table: "{product_tag}_{pipeline_tag}_score_vector"
+    score_vector_table: '{product_tag}_{pipeline_tag}_input_score_vector'
     did_bucket_size: 2
     did_bucket_step: 2
-score_vector_rebucketing:
-    did_bucket_size: 2
-    did_bucket_step: 1
-    alpha_did_bucket_size: 4
-    score_vector_alpha_table: '{product_tag}_{pipeline_tag}_input_score_vector_alpha'
-score_matrix_table:
-    did_bucket_size: 2
-    did_bucket_step: 1
-    score_matrix_table: '{product_tag}_{pipeline_tag}_input_score_matrix'
 top_n_similarity:
     did_bucket_size: 1
-    did_bucket_step: 1
-    cross_bucket_size: 1
-    cross_bucket_step: 1
-    alpha_did_bucket_step: 1
-    top_n: 10
-    similarity_table: "{product_tag}_{pipeline_tag}_output_similarity"
+    load_bucket_step: 1
+    search_bucket_step: 1
+    top_n: 4
+    index_factory_string: "Flat"
+    similarity_table: '{product_tag}_{pipeline_tag}_output_similarity'
