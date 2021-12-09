@@ -1,0 +1,42 @@
+DATA_PREP:
+  selected_features: ['did','adv_id']
+  user_id_col: "did"
+  huawei_ads_ctr: 0.03
+  clicklog_table_name: "ads.clicklog"
+  showlog_table_name: "ads.showlog"
+  persona_table_name: "ads.persona"
+  data_prep_write_path: "lookalike_data_prep"
+  pickel_file_write_path: "lookalike.pkl"
+  tfrecords_write_path: "lookalike_tfrecords"
+
+MODEL:
+  FM:
+    k: 10
+    w_reg: 0.0001
+    v_reg: 0.0001
+
+  DEEP_FM_FEATURES:
+    did:
+      unique_count: 10000000
+      emmbedding_dim: 4
+      embed_reg: 0001
+    adv_id:
+      unique_count: 4096
+      emmbedding_dim: 4
+      embed_reg: 0.0001
+
+  DNN_PARAMS:
+    hidden_units : [256,128,64]
+    activation: "relu"
+    dnn_dropout: 0.2
+
+  TF_RECORDS_READER:
+    tfrecord_location:
+    shuffle : 100000
+    batch : 8192
+    prefetch : 16384
+
+DMP:
+  user_similarity_data:
+  score_table:
+  seed_user_vs_exd_user:
