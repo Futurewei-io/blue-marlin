@@ -10,3 +10,8 @@
 ### 1.6
 1. Add region and IPL features
 2. Add TAG to config file. The whole set of tmp tables are named by product_tag and pipeline_tag. The user does not need to review the name of those tables anymore. 
+
+### 1.7
+1. Remove residency from UCKey. The value of residency is repleace by an empty string. The number of commas are still the same.
+2. Remove region mapping for IPL.
+3. Remove normalization of residency and IPL in main_norm.
