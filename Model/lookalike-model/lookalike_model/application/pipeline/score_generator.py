@@ -30,10 +30,10 @@ from util import resolve_placeholder, write_to_table_with_partition
 '''
 This process generates the score-table with the following format.
 
-DataFrame[age: int, gender: int, did: string, did_index: bigint, 
+DataFrame[age: int, gender: int, aid: string, aid_index: bigint, 
 interval_starting_time: array<string>, interval_keywords: array<string>, 
 kwi: array<string>, kwi_show_counts: array<string>, kwi_click_counts: array<string>, 
-did_bucket: string, kws: map<string,float>, kws_norm: map<string,float>]
+aid_bucket: string, kws: map<string,float>, kws_norm: map<string,float>]
 
 '''
 
@@ -57,11 +57,11 @@ def str_to_intlist(table):
 def input_data(record, keyword, length):
     if len(record['show_counts']) >= length:
         hist = flatten(record['show_counts'][:length])
-        instance = {'hist_i': hist, 'u': record['did'], 'i': keyword, 'j': keyword, 'sl': len(hist)}
+        instance = {'hist_i': hist, 'u': record['aid'], 'i': keyword, 'j': keyword, 'sl': len(hist)}
     else:
         hist = flatten(record['show_counts'])
         # [hist.extend([0]) for i in range(length - len(hist))]
-        instance = {'hist_i': hist, 'u': record['did'], 'i': keyword, 'j': keyword, 'sl': len(hist)}
+        instance = {'hist_i': hist, 'u': record['aid'], 'i': keyword, 'j': keyword, 'sl': len(hist)}
     return instance
 
 
@@ -112,12 +112,12 @@ def normalize(x):
 
 
 class CTRScoreGenerator:
-    def __init__(self, df_did, df_keywords, din_model_tf_serving_url, din_model_length):
-        self.df_did = df_did
+    def __init__(self, df_aid, df_keywords, din_model_tf_serving_url, din_model_length):
+        self.df_aid = df_aid
         self.df_keywords = df_keywords
         self.din_model_tf_serving_url = din_model_tf_serving_url
         self.din_model_length = din_model_length
-        self.df_did_loaded = None
+        self.df_aid_loaded = None
         self.keyword_index_list, self.keyword_list = self.get_keywords()
 
     def get_keywords(self):
@@ -131,33 +131,35 @@ class CTRScoreGenerator:
     def run(self):
 
         def predict_udf(din_model_length, din_model_tf_serving_url, keyword_index_list, keyword_list):
-            def __helper(did, kwi_show_counts, age, gender):
+            def __helper(aid, kwi_show_counts, age, gender):
                 kwi_show_counts = str_to_intlist(kwi_show_counts)
-                record = {'did': did,
+                record = {'aid': aid,
                           'show_counts': kwi_show_counts,
                           'a': str(age),
                           'g': str(gender)}
 
                 response = predict(serving_url=din_model_tf_serving_url, record=record,
                                    length=din_model_length, new_keyword=keyword_index_list)
+                # If the response is a string, there was an error.
+                assert not isinstance(response, str), 'Error occurred when retrieving keyword scores from URL.'
 
-                did_kw_scores = dict()
+                aid_kw_scores = dict()
                 for i in range(len(response)):
                     keyword = keyword_list[i]
                     keyword_score = response[i][0]
-                    did_kw_scores[keyword] = keyword_score
+                    aid_kw_scores[keyword] = keyword_score
 
-                return did_kw_scores
+                return aid_kw_scores
 
             return __helper
 
-        self.df_did_loaded = self.df_did.withColumn('kws',
+        self.df_aid_loaded = self.df_aid.withColumn('kws',
                                                     udf(predict_udf(din_model_length=self.din_model_length,
                                                                     din_model_tf_serving_url=self.din_model_tf_serving_url,
                                                                     keyword_index_list=self.keyword_index_list,
                                                                     keyword_list=self.keyword_list),
                                                         MapType(StringType(), FloatType()))
-                                                    (col('did_index'), col('kwi_show_counts'), col('age'), col('gender')))
+                                                    (col('aid_index'), col('kwi_show_counts'), col('age'), col('gender_index')))
 
 
 if __name__ == '__main__':
@@ -173,31 +175,28 @@ if __name__ == '__main__':
     hive_context = HiveContext(sc)
 
     # load dataframes
-    did_table, keywords_table, significant_keywords_table, din_tf_serving_url, length = cfg['score_generator']['input']['did_table'], cfg['score_generator']['input'][
-        'keywords_table'], cfg['score_generator']['input'][
-        'significant_keywords_table'], cfg['score_generator']['input']['din_model_tf_serving_url'], cfg['score_generator']['input']['din_model_length']
+    aid_table = cfg['score_generator']['input']['aid_table']
+    keywords_table = cfg['score_generator']['input']['keywords_table']
+    din_tf_serving_url = cfg['score_generator']['input']['din_model_tf_serving_url']
+    length = cfg['score_generator']['input']['din_model_length']
 
-    command = 'SELECT * FROM {}'
-    df_did = hive_context.sql(command.format(did_table))
+    command = 'SELECT * FROM {}'.format(aid_table)
+    df_aid = hive_context.sql(command)
 
-    command = 'SELECT T1.keyword,T1.spread_app_id,T1.keyword_index FROM {} AS T1 JOIN {} AS T2 ON T1.keyword=T2.keyword'
-    df_keywords = hive_context.sql(command.format(keywords_table, significant_keywords_table))
-    # temporary adding to filter based on active keywords
-    df_keywords = df_keywords.filter((df_keywords.keyword == 'video') | (df_keywords.keyword == 'shopping') | (df_keywords.keyword == 'info') |
-                                     (df_keywords.keyword == 'social') | (df_keywords.keyword == 'reading') | (df_keywords.keyword == 'travel') |
-                                     (df_keywords.keyword == 'entertainment'))
+    command = 'SELECT keyword, keyword_index FROM {}'.format(keywords_table)
+    df_keywords = hive_context.sql(command)
 
     score_table = cfg['score_generator']['output']['score_table']
 
-    # create a CTR score generator instance and run to get the loaded did
-    ctr_score_generator = CTRScoreGenerator(df_did, df_keywords, din_tf_serving_url, length)
+    # create a CTR score generator instance and run to get the loaded aid
+    ctr_score_generator = CTRScoreGenerator(df_aid, df_keywords, din_tf_serving_url, length)
     ctr_score_generator.run()
-    df = ctr_score_generator.df_did_loaded
+    df = ctr_score_generator.df_aid_loaded
 
     # normalization is required
     udf_normalize = udf(normalize, MapType(StringType(), FloatType()))
     if cfg['score_generator']['normalize']:
         df = df.withColumn('kws_norm', udf_normalize(col('kws')))
 
-    # save the loaded did to hive table
-    write_to_table_with_partition(df, score_table, partition=('did_bucket'), mode='overwrite')
+    # save the loaded aid to hive table
+    write_to_table_with_partition(df, score_table, partition=('aid_bucket'), mode='overwrite')

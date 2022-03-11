@@ -31,5 +31,5 @@ if false
 then
     # generate tf records: din tf record in hdfs.
     # after the tf records folder is generated in hdfs, use 'hadoop fs -copyToLocal' to copy it to local.
-    spark-submit --master yarn --num-executors 10 --executor-cores 5 --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main_tfrecords.py config.yml
+    spark-submit --master yarn --executor-memory 16G --driver-memory 24G --num-executors 10 --executor-cores 5 --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main_tfrecord_generator.py config.yml
 fi

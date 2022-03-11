@@ -104,6 +104,7 @@ pipeline:
     keyword_threshold: 0.01  # Portion of showlog traffic that a keyword must reach to be included.
   main_clean:  
     did_bucket_num: 2 # Number of partitions for did
+    search_bucket_step: 1 # Step for bucket search
     load_logs_in_minutes: 14400 #1440/day, original=14400
     create_keywords: True # set True for first run, then keep False to use the created table.
     persona_output_table: '{product_tag}_{pipeline_tag}_persona'
@@ -166,7 +167,8 @@ pipeline:
     trainready_output_table: '{product_tag}_{pipeline_tag}_trainready'
   tfrecords:
     tfrecords_statistics_path: '{product_tag}_{pipeline_tag}_tfrecord_statistics.pkl'
-    tfrecords_hdfs_path: '{product_tag}_{pipeline_tag}_tfrecord' # it is hdfs location for tfrecords, over-writes the existing files
+    tfrecords_hdfs_path_train: '{product_tag}_{pipeline_tag}_train_tfrecord' # it is hdfs location for tfrecords, over-writes the existing files
+    tfrecords_hdfs_path_test: '{product_tag}_{pipeline_tag}_test_tfrecord'
   cutting_date: 1627171200 # 07/30/2021 It uses data before this for training samples and after that for testing samples. <Improvement is required.>
   length: 10
 

@@ -32,8 +32,7 @@ spark-submit --master yarn --num-executors 20 --executor-cores 5 --executor-memo
 
 '''
 
-
-def create_user_df (hive_context, num_users, num_time_intervals, num_did_buckets):
+def create_user_df (sc, hive_context, num_users, num_time_intervals, num_did_buckets):
     time_intervals = [1586822400 - i*86400 for i in range(num_time_intervals)]
     keyword_list = [
         "education", "entertainment", "game-act", "game-avg", "game-cnc", 
@@ -87,7 +86,7 @@ def create_user_df (hive_context, num_users, num_time_intervals, num_did_buckets
         StructField("did_bucket", IntegerType(), True),
     ])
 
-    return hive_context.createDataFrame(user_data, schema)
+    return hive_context.createDataFrame(sc.parallelize(user_data), schema)
 
 
 def run(sc, hive_context, cfg):
@@ -104,7 +103,7 @@ def run(sc, hive_context, cfg):
     mode = 'overwrite'
     while num_users_generated < num_users:
         chunk_size = min(num_users - num_users_generated, increment_size)
-        df = create_user_df(hive_context, chunk_size, num_time_intervals, num_did_buckets)
+        df = create_user_df(sc, hive_context, chunk_size, num_time_intervals, num_did_buckets)
         write_to_table_with_partition(
             df.select('age', 'gender', 'did', 'did_index', 'interval_start_time', 'interval_keywords', 
                 'kwi', 'kwi_show_counts', 'kwi_click_counts', 'kws', 'kws_norm', 'did_bucket'), 

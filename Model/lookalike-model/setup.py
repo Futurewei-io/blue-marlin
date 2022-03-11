@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lookalike_model",  # Replace with your own username
-    version="1.0.0",
+    version="1.0.1",
     author="Reza Adibniar",
     author_email="radibnia@futurewei.com",
     description="All the packages required for running predictor pipeline",

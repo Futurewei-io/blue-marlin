@@ -40,9 +40,11 @@ if __name__ == "__main__":
     sc, hive_context, cfg = load_config(description="generate tf records")
     resolve_placeholder(cfg)
     cfgp = cfg['pipeline']
-    trainready_table = cfgp['main_trainready']['trainready_output_table']
+    # trainready_table = cfgp['main_trainready']['trainready_output_table']
     tfrecords_hdfs_path = cfgp['tfrecords']['tfrecords_hdfs_path']
     tf_statis_path = cfgp['tfrecords']['tfrecords_statistics_path']
+    trainready_table = "lookalike_trainready_lookalike_faezeh"
+
     # save selected columns of train ready table as tfrecords.
     save_tfrecords(hive_context, trainready_table, tfrecords_hdfs_path, tf_statis_path)
     sc.stop()

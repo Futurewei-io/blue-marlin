@@ -1,0 +1,33 @@
+System Test Report
+
+The number of user in persona: 4,000,000
+Number of record in logs table: 301,999,050
+The model accuracy in this test is:  %69.34
+
+Goal of this test: Comparing the result of extending users based on Model and based on random selection
+
+Test case: 
+1.	Select different number of seed users with a common interest in a specific keyword
+2.	Randomly select extended number of users
+3.	Let the model select extended number of users
+4.	Calculate the CTR for above two steps
+5.	Compare the CTR
+
+Result:
+
+The above steps have been followed and summary of result can be found bellow.
+
+
+Keyword	Seed number	Extended number	CTR- random	CTR- model	CTR-model/CTR-random
+10	100		10000		0.01942	        0.117015	602.56%
+9	100		10000		0.002994	0.10343	        3454.35%
+1	1000		100000		0.001446	0.098093	6784.11%
+5	100		100000		0.005803	0.104653	1803.28%
+2	1000		100000		0.002588	0.108057	4175.56%
+3	100		100000		0.007519	0.106548	1417.10%
+6	100		1000		0.006972	0.113644	1630.12%
+15	100		1000		0.003794	0.142577	3758.25%
+
+
+
+As you can find, in each case the model is performing at least 602% better than random selection. 

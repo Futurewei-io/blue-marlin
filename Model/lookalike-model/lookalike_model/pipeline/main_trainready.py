@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -18,7 +18,7 @@ import yaml
 import argparse
 import os
 import timeit
-
+import collections
 from pyspark import SparkContext
 from pyspark.sql import functions as fn
 from pyspark.sql.functions import lit, col, udf, collect_list, concat_ws, first, create_map, monotonically_increasing_id, row_number
@@ -41,6 +41,12 @@ def generate_trainready(hive_context, batch_config,
                         interval_time_in_seconds,
                         logs_table_name, trainready_table, aid_bucket_num):
 
+    def remove_no_show_records(df):
+        w = Window.partitionBy('aid', 'interval_starting_time', 'keyword_index')
+        df = df.withColumn('_show_counts', fn.sum(fn.when(col('is_click') == 0, 1).otherwise(0)).over(w))
+        df = df.filter(fn.udf(lambda x: x > 0, BooleanType())(df._show_counts))
+        return df
+
     def group_batched_logs(df_logs):
         # group logs from did + interval_time + keyword.
         # group 1: group by did + interval_starting_time + keyword
@@ -52,12 +58,11 @@ def generate_trainready(hive_context, batch_config,
             fn.sum(col('is_click')).alias('kw_clicks_count'),
             fn.sum(fn.when(col('is_click') == 0, 1).otherwise(0)).alias('kw_shows_count'),
         )
-
+        # df = df.orderBy('keyword_index')
         df = df.withColumn('kwi_clicks_count', concat_ws(":", col('keyword_index'), col('kw_clicks_count')))
         df = df.withColumn('kwi_shows_count', concat_ws(":", col('keyword_index'), col('kw_shows_count')))
         df = df.withColumn('kw_clicks_count', concat_ws(":", col('keyword'), col('kw_clicks_count')))
         df = df.withColumn('kw_shows_count', concat_ws(":", col('keyword'), col('kw_shows_count')))
-
         # group 2: group by did + interval_starting_time
         df = df.groupBy('aid', 'interval_starting_time').agg(
             concat_ws(",", collect_list('keyword_index')).alias('kwi'),
@@ -73,22 +78,33 @@ def generate_trainready(hive_context, batch_config,
 
         return df
 
+    def sort_kwi_counts(unsorted_x):
+        unsorted_x = "{" + unsorted_x + "}"
+        d = eval(unsorted_x)
+        f = collections.OrderedDict(sorted(d.items()))
+        k = [str(i) + ':' + str(j) for i, j in f.iteritems()]
+        sorted_x = ','.join(k)
+        return sorted_x
+
+    def sort_kwi(unsorted_kwi):
+        l = [int(el) for el in unsorted_kwi.split(",")]
+        l.sort()
+        l = [str(item) for item in l]
+        sorted_kwi=','.join(l)
+        return sorted_kwi
+
     def collect_trainready(df_trainready_batched_temp):
         # group 3: group by did with the temp batched did-interval rows.
-
         df = df_trainready_batched_temp
-
         features = ['interval_starting_time', 'interval_keywords', 'kwi', 'kwi_click_counts', 'kwi_show_counts']
         agg_attr_list = list(chain(*[(lit(attr), col(attr)) for attr in df.columns if attr in features]))
         df = df.withColumn('attr_map', create_map(agg_attr_list))
-
         df = df.groupBy('aid').agg(
             collect_list('attr_map').alias('attr_map_list'),
             first('age').alias('age'),
             first('gender_index').alias('gender_index'),
             first('aid_bucket').alias('aid_bucket')
         )
-
         return df
 
     def build_feature_array(df):
@@ -163,7 +179,12 @@ def generate_trainready(hive_context, batch_config,
                         aid_bucket= '{}' """
             df_logs = hive_context.sql(command.format(logs_table_name, day_lower, day_upper, interval_point, aid_bucket))
 
+            df_logs = remove_no_show_records(df_logs)
+
             df_trainready = group_batched_logs(df_logs)
+            df_trainready = df_trainready.withColumn('kwi_click_counts', udf(sort_kwi_counts, StringType())(df_trainready.kwi_click_counts))
+            df_trainready = df_trainready.withColumn('kwi_show_counts', udf(sort_kwi_counts, StringType())(df_trainready.kwi_show_counts))
+            df_trainready = df_trainready.withColumn('kwi', udf(sort_kwi, StringType())(df_trainready.kwi))
             mode = 'overwrite' if batched_round == 1 else 'append'
             write_to_table_with_partition(df_trainready, trainready_table_temp, partition=('aid_bucket'), mode=mode)
             batched_round += 1
@@ -201,7 +222,7 @@ def generate_trainready(hive_context, batch_config,
         # Add did_index
         w = Window.orderBy("aid_bucket", "aid")
         df = df.withColumn('row_number', row_number().over(w))
-        df = df.withColumn('aid_index', udf(lambda x: shift+ x, LongType())(col('row_number')))
+        df = df.withColumn('aid_index', udf(lambda x: shift + x, LongType())(col('row_number')))
         # df = df.withColumn('aid_index', udf(lambda x: aid_bucket * (MAX_USER_IN_BUCKET) + x, LongType())(col('row_number')))
         df = df.select('age', 'gender_index', 'aid', 'aid_index', 'interval_starting_time', 'interval_keywords',
                        'kwi', 'kwi_show_counts', 'kwi_click_counts', 'aid_bucket')

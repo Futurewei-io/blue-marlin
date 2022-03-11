@@ -5,7 +5,7 @@
 #  to you under the Apache License, Version 2.0 (the
 #  "License"); you may not use this file except in compliance
 #  with the License.  You may obtain a copy of the License at
- 
+
 #  http://www.apache.org/licenses/LICENSE-2.0.html
 
 #  Unless required by applicable law or agreed to in writing, software
@@ -23,64 +23,123 @@ from pyspark.sql.types import IntegerType, BooleanType
 from lookalike_model.pipeline import main_clean, util
 from data_generator import *
 
+
 class TestMainClean(unittest.TestCase):
 
-    def setUp (self):
-        # Set the log level.
-        sc = SparkContext.getOrCreate()
-        sc.setLogLevel('ERROR')
-
+    def setUp(self):
         # Initialize the Spark session
-        self.spark = SparkSession.builder.appName('unit test').enableHiveSupport().getOrCreate()
-        self.hive_context = HiveContext(sc)
-
+        self.spark = SparkSession.builder.appName('unit test').getOrCreate()
+        self.spark.sparkContext.setLogLevel('ERROR')
 
     # Testing the method that tests user uniqueness and removes users with conflicting age/gender.
-    def test_clean_persona (self):
+
+    def compare_list(self, list1, list2):
+        if len(list1) != len(list2):
+            return False
+
+        def _key(x): return '-'.join([str(_) for _ in x])
+        return sorted(list1, key=_key) == sorted(list2, key=_key)
+
+    def _test_clean_persona(self):
         print('*** Running test_clean_persona ***')
 
-        # Get the persona data to be cleaned.
-        df = create_raw_persona(self.spark)
+        data = [
+            ('0000001', 0, 0),
+            ('0000001', 0, 0),  # duplicate entry, duplicates will be removed
+            ('0000002', 1, 1),
+            ('0000003', 2, 2),
+            ('0000003', 2, 3),  # duplicate entry, duplicates will be removed
+        ]
+        schema = StructType([
+            StructField("aid", StringType(), True),
+            StructField("gender", StringType(), True),
+            StructField("age", StringType(), True)
+        ])
 
-        # Run the method to be tested.
-        bucket_num = 4
-        df = main_clean.clean_persona(df, bucket_num)
+        df = self.spark.createDataFrame(self.spark.sparkContext.parallelize(data), schema)
+        df = main_clean.clean_persona(df, 1).select('aid', 'gender', 'age')
+
+        expected_output = [
+            ('0000001', 0, 0),
+            ('0000002', 1, 1)
+        ]
+
+        print("Original DataFrame df:")
         print(df.show(100, False))
 
-        # Validate the output.
-        self.validate_clean_persona(df, bucket_num)
+        print("Expected DataFrame df_expected:")
+        print(expected_output)
+        self.assertTrue(self.compare_list(df.collect(), expected_output))
 
     # Tests the method that adds the 'day' column with just the date from the action_time column.
-    def test_add_day (self):
+    def _test_add_day(self):
         print('*** Running test_add_day ***')
-
-        # Get the log data frame.
-        df = create_raw_log(self.spark)
-
+        data = [
+            ('0000001', '2022-02-19 12:34:56.78'),
+            ('0000002', '2022-02-20 12:34:56.78')
+        ]
+        schema = StructType([
+            StructField("aid", StringType(), True),
+            StructField("action_time", StringType(), True)
+        ])
+        df = self.spark.createDataFrame(self.spark.sparkContext.parallelize(data), schema)
         # Run the method to be tested.
         df = main_clean.add_day(df)
         print(df.show(100, False))
 
-        # Validate the output.
-        self.validate_add_day(df)
+        expected_output = [
+            ('0000001', '2022-02-19 12:34:56.78', '2022-02-19'),
+            ('0000002', '2022-02-20 12:34:56.78', '2022-02-20')
+        ]
 
-    # Testing the addition of the 'did_bucket' column with a hash mod bucket_num value.
-    def test_add_did_bucket (self):
-        print('*** Running test_add_did_bucket ***')
-
-        # Get the data 
-        df = create_raw_persona(self.spark)
-
-        # Run the method to be tested.
-        bucket_num = 4
-        df = main_clean.add_did_bucket(df, bucket_num)
+        schema_expected = StructType([
+            StructField("aid", StringType(), True),
+            StructField("action_time", StringType(), True),
+            StructField("day", StringType(), True),
+        ])
+        df_expected = self.spark.createDataFrame(self.spark.sparkContext.parallelize(expected_output), schema_expected)
+        df_expected = main_clean.add_day(df_expected)
+        print("Original DataFrame df:")
         print(df.show(100, False))
+        print("Expected DataFrame df_expected:")
+        print(df_expected.show(100, False))
+        result = sorted(df.collect()) == sorted(df_expected.collect())
+        print result
 
-        # Validate the output.
-        self.validate_add_did_bucket(df, bucket_num)
+    # Testing the addition of the 'aid_bucket' column with a hash mod bucket_num value.
+    def _test_add_aid_bucket(self):
+        print('*** Running test_add_aid_bucket ***')
+        # Input
+        data = [
+            ('0000001', 0, 0),
+            ('0000002', 1, 1),
+            ('0000003', 2, 2),
+        ]
+        schema = StructType([
+            StructField("aid", StringType(), True),
+            StructField("gender", StringType(), True),
+            StructField("age", StringType(), True)
+        ]
+        )
+        df = self.spark.createDataFrame(self.spark.sparkContext.parallelize(data), schema)
+        # Run the method to be tested.
+        aid_bucket_num = 4
+        df = main_clean.add_aid_bucket(df, aid_bucket_num)
+        expected_output = [
+            ('0000001', 0, 0),
+            ('0000002', 1, 1),
+            ('0000003', 2, 2)
+        ]
+        df_expected = add_aid_bucket(self.spark.createDataFrame(self.spark.sparkContext.parallelize(expected_output), schema), aid_bucket_num)
+        print("Original DataFrame df:")
+        print(df.show(100, False))
+        print("Expected DataFrame df_expected:")
+        print(df_expected.show(100, False))
+        result = sorted(df.collect()) == sorted(df_expected.collect())
+        print result
 
     # Testing the method that joins the log rows with the user persona, keyword, and media category.
-    def test_clean_batched_log (self):
+    def _test_clean_batched_log(self):
         print('*** Running test_clean_batched_log ***')
 
         # Get the data inputs for the test.
@@ -90,27 +149,27 @@ class TestMainClean(unittest.TestCase):
 
         conditions = {
             'new_slot_id_list': [
-                'abcdef0', 'abcdef1', 'abcdef2', 'abcdef3', 'abcdef4', 
+                'abcdef0', 'abcdef1', 'abcdef2', 'abcdef3', 'abcdef4',
                 'abcdef5', 'abcdef6', 'abcdef7', 'abcdef8', 'abcdef9'
             ],
             'new_slot_id_app_name_list': [
-                'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading', 
+                'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading',
                 'Huawei Magazine', 'Huawei Browser', 'Huawei Video', 'Huawei Music', 'Huawei Reading'
             ]
         }
 
         # Run the method to be tested.
-        bucket_num = 4
-        df = main_clean.clean_batched_log(df_log, df_persona, conditions, df_keywords, bucket_num)
-        print(df.sort('did').show(100, False))
+        aid_bucket_num = 4
+        df = main_clean.clean_batched_log(df_log, df_persona, df_keywords, aid_bucket_num)
+        print(df.sort('aid').show(100, False))
 
         # Validate the output.
-        self.validate_cleaned_log(df, conditions, df_persona, df_keywords, df_log, bucket_num)
+        self.validate_cleaned_log(df, df_persona, conditions, df_keywords, df_log, aid_bucket_num)
 
     # Testing data look up and cleaning process for clicklog and showlog data.
-    def test_clean_logs (self):
+    def _test_clean_logs(self):
         print('*** Running test_clean_logs ***')
-        with open('pipeline/config_clean.yml', 'r') as ymlfile:
+        with open('config_clean.yml', 'r') as ymlfile:
             cfg = yaml.safe_load(ymlfile)
 
         showlog_table = cfg['showlog_table_name']
@@ -145,17 +204,17 @@ class TestMainClean(unittest.TestCase):
         # Validate the cleaned clicklog table.
         df_clicklog = util.load_df(self.hive_context, clicklog_output_table)
         print(df_clicklog.sort('action_time').show(100, False))
-        self.validate_cleaned_log(df_clicklog, conditions, df_persona, df_keywords, df_log, cfg['pipeline']['main_clean']['did_bucket_num'])
+        self.validate_cleaned_log(df_clicklog, conditions, df_persona, df_keywords, df_log, cfg['pipeline']['main_clean']['aid_bucket_num'])
 
         # Validate the cleaned showlog table.
         df_showlog = util.load_df(self.hive_context, clicklog_output_table)
-        self.validate_cleaned_log(df_showlog, conditions, df_persona, df_keywords, df_log, cfg['pipeline']['main_clean']['did_bucket_num'])
-
+        self.validate_cleaned_log(df_showlog, conditions, df_persona, df_keywords, df_log, cfg['pipeline']['main_clean']['aid_bucket_num'])
 
     # Testing full data cleaning process for persona, clicklog, and showlog data.
-    def test_run (self):
+
+    def _test_run(self):
         print('*** Running test_run ***')
-        with open('pipeline/config_clean.yml', 'r') as ymlfile:
+        with open('config_clean.yml', 'r') as ymlfile:
             cfg = yaml.safe_load(ymlfile)
 
         # Create the persona, keywords, clicklog and showlog tables.
@@ -183,10 +242,10 @@ class TestMainClean(unittest.TestCase):
 
         # Validate the output tables.
         conditions = cfg['pipeline']['main_clean']['conditions']
-        bucket_num = cfg['pipeline']['main_clean']['did_bucket_num']
+        bucket_num = cfg['pipeline']['main_clean']['aid_bucket_num']
         df_keywords = util.load_df(self.hive_context, keywords_table)
 
-        # run() does filtering on the effective keywords so we need to filter 
+        # run() does filtering on the effective keywords so we need to filter
         # the raw logs with the spread app ids when validating the output.
         effective_spread_app_ids = ['C000', 'C001', 'C002', 'C003', 'C004', 'C010', 'C011', 'C012', 'C013', 'C014', ]
         df_log = create_raw_log(self.spark)
@@ -199,12 +258,12 @@ class TestMainClean(unittest.TestCase):
         # Validate the cleaned clicklog table.
         df_clicklog = util.load_df(self.hive_context, clicklog_output_table)
         self.validate_cleaned_log(df_clicklog, conditions, df_persona, df_keywords, df_log, bucket_num)
-        print_df_generator_code(df_clicklog.sort('did'))
+        print_df_generator_code(df_clicklog.sort('aid'))
 
         # Validate the cleaned showlog table.
         df_showlog = util.load_df(self.hive_context, clicklog_output_table)
         self.validate_cleaned_log(df_showlog, conditions, df_persona, df_keywords, df_log, bucket_num)
-        print_df_generator_code(df_showlog.sort('did'))
+        print_df_generator_code(df_showlog.sort('aid'))
 
     def filter_spread_app_ids(self, df, spread_app_ids):
         # User defined function to return if the keyword is in the inclusion set.
@@ -213,48 +272,14 @@ class TestMainClean(unittest.TestCase):
         # Return the filtered dataframe.
         return df.filter(_udf(col('spread_app_id')))
 
-    #========================================
+    # ========================================
     # Helper methods
-    #========================================
-    def validate_clean_persona (self, df, bucket_num):
-        # The did_bucket column should have been added.
-        self.assertTrue('did_bucket' in df.columns)
-
-        # The type for age and gender should have changed to integer.
-        schema = df.schema
-        self.assertIsInstance(schema['age'].dataType, IntegerType)
-        self.assertIsInstance(schema['gender'].dataType, IntegerType)
-
-        # The output should be the same as the generated clean persona dataframe.
-        df_clean = create_cleaned_persona(self.spark, bucket_num)
-
-        # Make sure the output isn't missing any rows.
-        self.assertEqual(df_clean.subtract(df).count(), 0)
-
-        # Make sure the output doesn't have any extra rows.
-        self.assertEqual(df.subtract(df_clean).count(), 0)
-
-    def validate_add_day (self, df):
-        # The day column should have been added.
-        self.assertTrue('day' in df.columns)
-
-        # Check the entries in the day column using a different method to generate the expected value.
-        for row in df.collect():
-            print(row['day'])
-            self.assertEqual(row['day'], row['action_time'].split()[0])
-
-    def validate_add_did_bucket (self, df, bucket_num):
-        # Check that the did_bucket column was added.
-        self.assertTrue('did_bucket' in df.columns)
-
-        for row in df.collect():
-            self.assertTrue(int(row['did_bucket']) < bucket_num)
-
-    def validate_cleaned_log (self, df, conditions, df_persona, df_keywords, df_log, bucket_num):
+    # ========================================
+    def validate_cleaned_log(self, df, conditions, df_persona, df_keywords, df_log, bucket_num):
         # Verify the column names.
-        columns = ['spread_app_id', 'did', 'adv_id', 'media', 'slot_id', 'device_name', 
-            'net_type', 'price_model', 'action_time', 'gender', 'age', 
-            'keyword', 'keyword_index', 'day', 'did_bucket']
+        columns = ['spread_app_id', 'aid', 'adv_id', 'media', 'slot_id', 'device_name',
+                   'net_type', 'price_model', 'action_time', 'gender', 'age',
+                   'gender_index', 'keyword', 'day', 'aid_bucket']
         for name in columns:
             self.assertTrue(name in df.columns)
 
@@ -263,25 +288,25 @@ class TestMainClean(unittest.TestCase):
         self.assertEqual(df.count(), df_log.count() - 1)
 
         # Helper method for verifying table joins.
-        def assert_row_value (row, df_match, field_name, join_field):
+        def assert_row_value(row, df_match, field_name, join_field):
             self.assertEqual(row[field_name], df_match.filter(col(join_field) == row[join_field]).collect()[0][field_name])
 
         # Check the row values.
         for row in df.collect():
             self.assertTrue(row['slot_id'] in conditions['new_slot_id_list'])
             self.assertEqual(row['day'], row['action_time'].split()[0])
-            self.assertTrue(int(row['did_bucket']) < bucket_num)
-            assert_row_value(row, df_persona, 'gender', 'did')
-            assert_row_value(row, df_persona, 'age', 'did')
+            self.assertTrue(int(row['aid_bucket']) < bucket_num)
+            assert_row_value(row, df_persona, 'gender', 'aid')
+            assert_row_value(row, df_persona, 'age', 'aid')
             assert_row_value(row, df_keywords, 'keyword', 'spread_app_id')
             assert_row_value(row, df_keywords, 'keyword_index', 'spread_app_id')
-            assert_row_value(row, df_log, 'adv_id', 'did')
-            assert_row_value(row, df_log, 'media', 'did')
-            assert_row_value(row, df_log, 'slot_id', 'did')
-            assert_row_value(row, df_log, 'device_name', 'did')
-            assert_row_value(row, df_log, 'net_type', 'did')
-            assert_row_value(row, df_log, 'price_model', 'did')
-            assert_row_value(row, df_log, 'action_time', 'did')
+            assert_row_value(row, df_log, 'adv_id', 'aid')
+            assert_row_value(row, df_log, 'media', 'aid')
+            assert_row_value(row, df_log, 'slot_id', 'aid')
+            assert_row_value(row, df_log, 'device_name', 'aid')
+            assert_row_value(row, df_log, 'net_type', 'aid')
+            assert_row_value(row, df_log, 'price_model', 'aid')
+            assert_row_value(row, df_log, 'action_time', 'aid')
 
 
 # Runs the tests.

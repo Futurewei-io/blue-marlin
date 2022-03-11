@@ -45,8 +45,19 @@ def str_to_map(_str):
 
 
 # TODO: Mocked.
-def extend_users(k, seed_users):
-    return [_['aid'] for _ in seed_users]
+def extend_users(cfg, hive_context, seed_users):
+    k = cfg['extended_users']
+    df = hive_context.sql('select * from {}'.format(cfg['similarity_table']))
+    df = df.join(seed_users, on=['aid'], how='inner').take(100)
+    seed = [df[i][0] for i in range(len(df))]
+    extended_user = [df[i][1] for i in range(len(df))]
+    x = []
+    for i in range(len(extended_user)):
+        for j in range(len(extended_user[i])):
+            x.append(extended_user[i][j][0])
+    x_users = x
+    return x_users
+
 
 
 def get_avg_ctr(user_id_list, target_kw, starting_time, ending_time):
@@ -75,7 +86,6 @@ def get_user_ctr_for_kw(target_kw, starting_time, ending_time):
                     shows += show_map[target_kw]
                 if target_kw in click_map:
                     clicks += click_map[target_kw]
-
         ctr = float(0)
         if shows > 0:
             ctr = float(clicks * 1.0 / shows)
@@ -84,15 +94,12 @@ def get_user_ctr_for_kw(target_kw, starting_time, ending_time):
 
 
 def find_n_users_with_interest_in_kw(hive_context, target_kw, seed_size, min_ctr, starting_time, ending_time):
-
     df = hive_context.sql('SELECT * FROM {}'.format(cfg['lookalike_trainready']))
     df = df.withColumn('ctr', udf(get_user_ctr_for_kw(target_kw=target_kw, starting_time=starting_time, ending_time=ending_time),
                                   FloatType())(df.interval_starting_time, df.kwi_show_counts, df.kwi_click_counts))
     df = df.filter(udf(lambda _ctr: _ctr >= min_ctr, BooleanType())(df.ctr))
+    return(df)
 
-    users = df.take(seed_size)
-    for user in users:
-        print(user)
 
 
 def run(hive_context, cfg, target_kw):
@@ -101,14 +108,14 @@ def run(hive_context, cfg, target_kw):
     seed_users = find_n_users_with_interest_in_kw(hive_context=hive_context, target_kw=target_kw, seed_size=cfg['seed_size'],
                                                   min_ctr=cfg['min_ctr'], starting_time=starting_time, ending_time=ending_time)
 
-    extended_users = extend_users(cfg['extended_users'], seed_users)
+    extended_users = extend_users(cfg, hive_context, seed_users)
 
     user_id_list = extended_users
-    avg_ctr_1 = get_avg_ctr(user_id_list, starting_time, ending_time)
+    avg_ctr_1 = get_avg_ctr(user_id_list,target_kw,  starting_time, ending_time)
 
     random_users = hive_context.sql('SELECT aid FROM {}'.format(cfg['lookalike_trainready'])).take(cfg['extended_users'])
     random_users = [_['aid'] for _ in random_users]
-    avg_ctr_2 = get_avg_ctr(random_users, starting_time, ending_time)
+    avg_ctr_2 = get_avg_ctr(random_users, target_kw, starting_time, ending_time)
 
     print(avg_ctr_1)
     print(avg_ctr_2)
@@ -126,7 +133,8 @@ if __name__ == "__main__":
         'lookalike_trainready': 'lookalike_11192021_trainready',
         'seed_size': 100,
         'min_ctr': 0.7,
-        'extended_users': 10000
+        'extended_users': 10000,
+        'similarity_table': 'lookalike_application_12132021_similarity'
     }
 
     target_kw = '10'

@@ -16,7 +16,7 @@
 
 import sys
 from pyspark.sql.types import StringType, StructField, StructType, IntegerType, ArrayType, LongType
-from lookalike_model.pipeline.main_clean import add_did_bucket
+from lookalike_model.pipeline.main_clean import add_aid_bucket
 from lookalike_model.pipeline.util import write_to_table
 
 #==========================================
@@ -114,15 +114,15 @@ def create_raw_persona (spark):
     ]
 
     schema = StructType([
-        StructField("did", StringType(), True),
+        StructField("aid", StringType(), True),
         StructField("gender", StringType(), True),
         StructField("age", StringType(), True)
     ])
 
-    return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+    return spark.createDataFrame(data, schema)
 
 # Returns a dataframe with cleaned persona data.
-def create_cleaned_persona (spark, bucket_num = 4):
+def create_cleaned_persona (spark, aid_bucket_num = 4):
     data = [
         ('0000001', 0, 0),
         ('0000002', 1, 0),
@@ -137,12 +137,12 @@ def create_cleaned_persona (spark, bucket_num = 4):
     ]
 
     schema = StructType([
-        StructField("did", StringType(), True),
+        StructField("aid", StringType(), True),
         StructField("gender", IntegerType(), True),
         StructField("age", IntegerType(), True)
     ])
 
-    return add_did_bucket(spark.createDataFrame(spark.sparkContext.parallelize(data), schema), bucket_num)
+    return add_aid_bucket(spark.createDataFrame(spark.sparkContext.parallelize(data), schema), aid_bucket_num)
 
 # Returns a dataframe with unclean log data.
 def create_raw_log (spark):
@@ -161,7 +161,7 @@ def create_raw_log (spark):
     ]
 
     schema = StructType([
-        StructField("did", StringType(), True),
+        StructField("aid", StringType(), True),
         StructField("adv_id", StringType(), True),
         StructField("media", StringType(), True),
         StructField("slot_id", StringType(), True),
@@ -191,7 +191,7 @@ def create_cleaned_log (spark):
 
     schema = StructType([
         StructField('spread_app_id', StringType(), True),
-        StructField('did', StringType(), True),
+        StructField('aid', StringType(), True),
         StructField('adv_id', StringType(), True),
         StructField('media', StringType(), True),
         StructField('slot_id', StringType(), True),
@@ -205,7 +205,7 @@ def create_cleaned_log (spark):
         StructField('keyword', StringType(), True),
         StructField('keyword_index', StringType(), True),
         StructField('day', StringType(), True),
-        StructField('did_bucket', StringType(), True),
+        StructField('aid_bucket', StringType(), True),
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
@@ -278,7 +278,7 @@ def create_unified_log (spark):
     ]
 
     schema = StructType([
-        StructField('did', StringType(), True),
+        StructField('aid', StringType(), True),
         StructField('is_click', IntegerType(), True),
         StructField('action_time', StringType(), True),
         StructField('keyword', StringType(), True),
@@ -291,7 +291,7 @@ def create_unified_log (spark):
         StructField('interval_starting_time', IntegerType(), True),
         StructField('action_time_seconds', IntegerType(), True),
         StructField('day', StringType(), True),
-        StructField('did_bucket', StringType(), True),
+        StructField('aid_bucket', StringType(), True),
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
@@ -314,14 +314,14 @@ def create_trainready_data (spark):
     schema = StructType([
         StructField('age', IntegerType(), True),
         StructField('gender', IntegerType(), True),
-        StructField('did', StringType(), True),
-        StructField('did_index', LongType(), True),
+        StructField('aid', StringType(), True),
+        StructField('aid_index', LongType(), True),
         StructField('interval_starting_time', ArrayType(StringType(), True), True),
         StructField('interval_keywords', ArrayType(StringType(), True), True),
         StructField('kwi', ArrayType(StringType(), True), True),
         StructField('kwi_show_counts', ArrayType(StringType(), True), True),
         StructField('kwi_click_counts', ArrayType(StringType(), True), True),
-        StructField('did_bucket', StringType(), True),
+        StructField('aid_bucket', StringType(), True),
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
@@ -358,14 +358,14 @@ def create_trainready_filter_user_data (spark):
     schema = StructType([
         StructField('age', IntegerType(), True),
         StructField('gender', IntegerType(), True),
-        StructField('did', StringType(), True),
-        StructField('did_index', LongType(), True),
+        StructField('aid', StringType(), True),
+        StructField('aid_index', LongType(), True),
         StructField('interval_starting_time', ArrayType(StringType(), True), True),
         StructField('interval_keywords', ArrayType(StringType(), True), True),
         StructField('kwi', ArrayType(StringType(), True), True),
         StructField('kwi_show_counts', ArrayType(StringType(), True), True),
         StructField('kwi_click_counts', ArrayType(StringType(), True), True),
-        StructField('did_bucket', StringType(), True),
+        StructField('aid_bucket', StringType(), True),
     ])
 
     return spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
@@ -397,7 +397,7 @@ def create_keywords_raw_log (spark):
     ]
 
     schema = StructType([
-        StructField("did", StringType(), True),
+        StructField("aid", StringType(), True),
         StructField("adv_id", StringType(), True),
         StructField("media", StringType(), True),
         StructField("slot_id", StringType(), True),
