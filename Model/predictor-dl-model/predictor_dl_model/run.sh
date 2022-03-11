@@ -5,6 +5,12 @@ then
     spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/show_config.py config.yml
 fi
 
+#This module transform T1 : request based factdata to T2 : compatible factdata for rest of pipelie
+if false
+then
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml
+fi
+
 #Preparing the data by filtering reliable si, remapping r, ipl and recalculating bucket-ids
 #This part might be optional if uckeys have stable slot-id with region data
 if false

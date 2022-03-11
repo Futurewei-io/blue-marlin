@@ -181,6 +181,9 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     df = df.withColumn('imp', udf(lambda ts: sum(
         [_ for _ in ts if _]), IntegerType())(df.ts))
 
+    # remove uckeys with 0 imp
+    df = df.filter('imp>0')
+
     # add popularity = mean
     df = df.withColumn('p', udf(lambda ts: sum(
         [_ for _ in ts if _])/(1.0 * len(ts)), FloatType())(df.ts))

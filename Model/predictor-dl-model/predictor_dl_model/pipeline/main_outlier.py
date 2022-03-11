@@ -52,7 +52,7 @@ def run(hive_context, input_table_name, outlier_table):
     def _filter_outlier(x, ind_list):
         for i in range(1, len(x)-1):
             if i in ind_list and x[i] != None and x[i + 1] != None and x[i - 1] != None:
-                x[i] = (x[i - 1] + x[i + 1]) / 2
+                x[i] = int((x[i - 1] + x[i + 1]) / 2)
         return x
 
     command = """

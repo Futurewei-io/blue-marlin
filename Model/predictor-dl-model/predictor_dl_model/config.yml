@@ -1,12 +1,23 @@
 product_tag: 'dlpm'
 pipeline_tag: '111021_no_residency_no_mapping' # IMPORTANT: The pipeline tag has to be changed before each run to prevent record duplication.
-factdata_table_name: 'factdata_10202021' #factdata_hq_09222020
+factdata_table_name: 'factdata_test_02112022'  # factdata_10202021 #factdata_hq_09222020
 
 log:
   level: 'warn' # log level for spark and app
 
 pipeline:
   config_table: '{product_tag}_{pipeline_tag}_config'
+
+  rti_transform: # This is to transform reques-based factdata to impression-based by filling out empty places
+    default_hour: 7
+    default_price_cat: '1'
+    day_step: 2
+    start_day: '2020-01-01'
+    end_day: '2020-01-02'
+    new_bucket_size: 2
+    input_table: 'factdata_request_01012022'
+    # output_table is factdata_table_name
+
   filter: # This is for data filtering- si and region
     percentile: 10     # This is for filtering traffic less than 1/10 of average traffic
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_area_map'
@@ -51,9 +62,9 @@ pipeline:
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_ts' # name of the hive table that keeps cleansed and normalized data before writing it into tfrecords, over-writes the existing table
     outlier_table: '{product_tag}_{pipeline_tag}_tmp_outlier'
   uckey_clustering: # This is done on whole data, not slicing on buckets
-    pre_cluster_table_name: '{product_tag}_{pipeline_tag}_tmp_pre_cluster'
+    pre_cluster_table_name: '{product_tag}_{pipeline_tag}_tmp_pre_cluster_test_12212021'
     create_pre_cluster_table: True
-    output_table_name: '{product_tag}_{pipeline_tag}_tmp_cluster'
+    output_table_name: '{product_tag}_{pipeline_tag}_tmp_cluster_test_12212021'
     cluster_size:
       number_of_virtual_clusters: 1000
       cluster_dense_num_ratio_cap: 0.01
@@ -64,7 +75,7 @@ pipeline:
       popularity_th: 4
       median_popularity_of_dense: 1856.2833251953125 # median imp of sparse=False, calculate once
   normalization: # This is done on whole data, not slicing on buckets
-    output_table_name: '{product_tag}_{pipeline_tag}_trainready'
+    output_table_name: '{product_tag}_{pipeline_tag}_trainready_test_12212021'
     columns: {
     'price_cat':['1','2','3'], 
     'a': ['','1','2','3','4','5','6'],
@@ -102,8 +113,8 @@ pipeline:
     tfrecords_hdfs_path: 'factdata.tfrecord.{pipeline_tag}' # it is hdfs location for tfrecords, over-writes the existing files
     tf_statistics_path: './tf_statistics_{pipeline_tag}.pkl'
   distribution:
-    output_table_name: '{product_tag}_{pipeline_tag}_tmp_distribution'
-    output_detail_table_name: '{product_tag}_{pipeline_tag}_tmp_distribution_detail'
+    output_table_name: '{product_tag}_{pipeline_tag}_tmp_distribution_test_12212021'
+    output_detail_table_name: '{product_tag}_{pipeline_tag}_tmp_distribution_detail_test_12212021'
 
 tfrecorder_reader:
   tfrecords_local_path: './factdata.tfrecord.{pipeline_tag}' # it us local path for tfrecords, over-writes the existing files
@@ -113,7 +124,7 @@ tfrecorder_reader:
   start: '' # help="Effective start date. Data before the start is dropped"
   end: '' # help="Effective end date. Data past the end is dropped"
   corr_backoffset: 0 # default=0, type=int, help="Offset for correlation calculation"
-  batch_size: 11880 # batch size of exmaples in tfrecord
+  batch_size: 155000 # batch size of exmaples in tfrecord,
   duration: 82 # time series length, This has to less or equal prepare_past_days
   tf_statistics_path: './tf_statistics_{pipeline_tag}.pkl'
 
@@ -145,12 +156,12 @@ trainer:
   back_offset: 0 # don't change it.
 
 save_model:
-  table: '{product_tag}_{pipeline_tag}_model_stat'
+  table: '{product_tag}_{pipeline_tag}_model_stat_test_12212021'
   data_dir: data/vars
   ckpt_dir: data/cpt/s32 
   saved_dir: data/vars
   model_version: 'version_{pipeline_tag}'
-  model_name: 'model_{product_tag}_{pipeline_tag}'
+  model_name: 'model_{product_tag}_{pipeline_tag}_test_12212021'
   train_window: 60 # Should be same as the one in hparams
 
 elastic_search:
