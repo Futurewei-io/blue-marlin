@@ -1,0 +1,25 @@
+GET pf_gucdoc_09112020/_search{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "ucdoc.g": "0"
+          }
+        },
+        {
+          "exists": {
+            "field": "kws.shopping"
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "kws.shopping.keyword": {
+        "order": "desc"
+      }
+    }
+  ]
+}

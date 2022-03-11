@@ -10,6 +10,7 @@ zookeeper:
   # 30
   gucdocs_loaded_table: "/performance-forecasting/ctr-score-generator/din-ucdoc-loaded-table"
   # "din_gucdocs_loaded_09172020"
+  threshold: "/performance-forecasting/ctr-score-generator/threshold"
 mapping:
   'new_slot_id_list': [
       '06',

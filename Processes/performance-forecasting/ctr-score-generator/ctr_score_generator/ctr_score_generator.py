@@ -25,6 +25,7 @@ from pyspark.sql.functions import lit, col, udf
 from pyspark.sql.types import FloatType, StringType, StructType, StructField, ArrayType, MapType
 from din_model.trainer.rest_client import predict, str_to_intlist
 from kazoo.client import KazooClient
+import numpy as np
 
 
 def gen_mappings_media(hive_context, cfg):
@@ -112,6 +113,24 @@ def load_df_with_zookeeper(hive_context, cfg_zk, zk):
 
     return df_gucdocs, df_keywords, din_serving_url, din_model_length
 
+def threshold(hive_context, cfg_zk, zk):
+
+    gucdocs_table, stat = zk.get(cfg_zk["gucdocs_loaded_table"])
+    # keywords_table, stat = zk.get(cfg_zk["keywords_table"])
+
+    command = "SELECT kws FROM {}"
+    # df_keywords = hive_context.sql(command.format(keywords_table))
+    gucdocs_loaded_table = hive_context.sql(command.format(gucdocs_table))
+
+    gucdocs_loaded_table_temp  = gucdocs_loaded_table.select(col("kws").getItem('video').alias('video'), col("kws").getItem('shopping').alias('shopping'),
+                                col("kws").getItem('info').alias('info'), col("kws").getItem('social').alias('social'),
+                                col("kws").getItem('reading').alias('reading'), col("kws").getItem('travel').alias('travel'),
+                                                               col("kws").getItem('entertainment').alias('entertainment'))
+    lst = gucdocs_loaded_table_temp.collect()
+    mean = np.mean(lst)
+    std = np.std(lst)
+    threshold_st = mean - 0.5*std
+    return threshold_st
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Performance Forecasting: CTR Score Generator")
@@ -149,6 +168,12 @@ if __name__ == "__main__":
     # gucdocs join with media_slot_mapping_table
     df_gucdocs_loaded = df_gucdocs_loaded.join(df_media_slot, on=['media_category'], how='left')
 
+
     # save the loaded gucdocs to hive table
     df_gucdocs_loaded.write.option("header", "true").option(
         "encoding", "UTF-8").mode("overwrite").format('hive').saveAsTable(gucdocs_loaded_table)
+
+    #calculating and writting the threshold in zookeeper
+    threshold_st = threshold(hive_context, cfg_zk, zk)
+    zk.set(cfg_zk["threshold"], bytes(threshold_st))
+    zk.stop()

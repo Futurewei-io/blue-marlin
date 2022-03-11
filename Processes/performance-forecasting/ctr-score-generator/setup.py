@@ -4,11 +4,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="ctr_score_generator", # Replace with your own username
+    name="pf_ctr_score_generator", # Replace with your own username
     version="1.0.0",
     author="Reza Adibnia",
     author_email="radibnia@futurewei.com",
-    description="All the packages required for running CTR-Score-Generator process as part of Performance Forecasting.",
+    description="All the packages required for running PF-CTR-Score-Generator process as part of Performance Forecasting.",
     long_description=long_description,
     long_description_content_type="",
     url="https://github.com/Futurewei-io/blue-marlin",
