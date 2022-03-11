@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='dlpredictor',
-    version='1.6.0',
+    version='0.1.2',
     author='Reza Adibnia',
     author_email="reza.adibnia@futurewei.com",
     packages=find_packages(),

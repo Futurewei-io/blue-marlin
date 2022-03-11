@@ -1,0 +1,54 @@
+log_level: 'info'
+product_tag: 'dlpredictor'
+pipeline_tag: '111021_no_residency_no_mapping_india_test_12212021'
+
+#input tables from dlpm pipeline
+area_map_table: 'dlpm_111021_no_residency_no_mapping_tmp_area_map' # this raw data, with filtered si, remapped r and ipl and partitioned by bucket-id
+distribution_table: 'dlpm_111021_no_residency_no_mapping_tmp_distribution_detail_test_12212021'
+norm_table: 'dlpm_111021_no_residency_no_mapping_trainready_test_12212021'
+model_stat_table: 'dlpm_111021_no_residency_no_mapping_model_stat_india'
+bucket_size: 10
+bucket_step: 2
+condition: ''
+
+yesterday: '2021-07-21'
+serving_url: 'http://10.193.217.126:8504/v1/models/dl_india:predict'
+
+config_table: '{product_tag}_{pipeline_tag}_config'
+
+es_host: '10.213.37.41'
+es_port: '9200'
+es_predictions_index: '{product_tag}_{pipeline_tag}_predictions'
+es_predictions_type: 'doc'
+holiday_list: ['2019-11-09', '2019-11-10', '2019-11-11', '2019-11-25', '2019-11-26', '2019-11-27','2019-11-28', '2019-12-24','2019-12-25', '2019-12-26','2019-12-31', '2020-01-01', '2020-01-02', '2020-01-19','2020-01-20', '2020-01-21', '2020-01-22', '2020-01-23',  '2020-01-24',  '2020-01-25', '2020-02-08']
+traffic_dist: [2.905931696,1.792490513,1.592770122,1.447972838,1.657679249,2.716197324,5.117835031,6.5308568,6.570800879,5.302576393,4.423806671,4.43379269,4.858198522,4.338925504,4.219093269,4.224086279,4.613541043,5.412422608,5.60714999,5.327541442,5.167765129,4.828240463,4.009386858,2.900938686]  
+
+dl_predict_ready_path: '{product_tag}_{pipeline_tag}_dl_predict_ready'
+dl_uckey_cluster_path: '{product_tag}_{pipeline_tag}_dl_uckey_cluster'
+
+eligble_slot_ids: [
+      'a47eavw7ex',
+    '66bcd2720e5011e79bc8fa163e05184e',
+    'x0ej5xhk60kjwq',
+    'l03493p0r3',
+    '7b0d7b55ab0c11e68b7900163e3e481d',
+    'b6le0s4qo8',
+    'e351de37263311e6af7500163e291137',
+    'a290af82884e11e5bdec00163e291137',
+    '68bcd2720e5011e79bc8fa163e05184e',
+    'f1iprgyl13',
+    'w9fmyd5r0i',
+    'w3wx3nv9ow5i97',
+    'd971z9825e',
+    'l2d4ec6csv',
+    'z041bf6g4s',
+    '71bcd2720e5011e79bc8fa163e05184e',
+    '5cd1c663263511e6af7500163e291137',
+    'x2fpfbm8rt',
+    'd9jucwkpr3',
+    'k4werqx13k',
+    'j1430itab9wj3b',
+    'a8syykhszz',
+    's4z85pd1h8',
+    '17dd6d8098bf11e5bdec00163e291137',
+    'd4d7362e879511e5bdec00163e291137']
