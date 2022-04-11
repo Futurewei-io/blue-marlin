@@ -102,14 +102,15 @@ if __name__ == '__main__':
     batch_cnt = 0
     for next_element in batched_dataset_train:
         hist_, _, curr_, labl_, _ = next_element
-        print(f'***********************compute batch {batch_cnt}***********************')
+        batch_size_here = labl_.numpy().shape[0]
+        print(f'***********************compute batch {batch_cnt} batch size {batch_size_here}***********************')
         model.fit(
-            [np.zeros(batch_size_train), np.zeros(batch_size_train),
+            [np.zeros(batch_size_here), np.zeros(batch_size_here),
              hist_.numpy().astype(np.int32), curr_.numpy()],
             labl_.numpy(),
             # epochs=1,
             validation_data=(test_X, test_y),
-            batch_size=batch_size_train,
+            batch_size=batch_size_here,
         )
         batch_cnt += 1
 
