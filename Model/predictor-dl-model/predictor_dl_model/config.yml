@@ -60,7 +60,11 @@ pipeline:
     bucket_size: 10 # maximum number of buckets to process starting from 0
     bucket_step: 1 # size of bucket batch that is processed in one iteration
     output_table_name: '{product_tag}_{pipeline_tag}_tmp_ts' # name of the hive table that keeps cleansed and normalized data before writing it into tfrecords, over-writes the existing table
-    outlier_table: '{product_tag}_{pipeline_tag}_tmp_outlier'
+  outlier:
+    input_table_name: '{product_tag}_{pipeline_tag}_tmp_ts'
+    output_table_name: '{product_tag}_{pipeline_tag}_tmp_outlier_2'
+    window_size: 18
+    n: 6
   uckey_clustering: # This is done on whole data, not slicing on buckets
     pre_cluster_table_name: '{product_tag}_{pipeline_tag}_tmp_pre_cluster_test_12212021'
     create_pre_cluster_table: True

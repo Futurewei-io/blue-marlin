@@ -305,7 +305,7 @@ if __name__ == "__main__":
     output_table_name = cfg['uckey_clustering']['output_table_name']
     pre_cluster_table_name = cfg['uckey_clustering']['pre_cluster_table_name']
     create_pre_cluster_table = cfg['uckey_clustering']['create_pre_cluster_table']
-    input_table_name = cfg['time_series']['outlier_table']
+    input_table_name = cfg['outlier']['output_table_name']
     cluster_size_cfg = cfg['uckey_clustering']['cluster_size']
 
     run(hive_context=hive_context,
