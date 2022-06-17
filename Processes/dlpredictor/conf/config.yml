@@ -1,18 +1,18 @@
-log_level: 'info'
+log_level: 'warn'
 product_tag: 'dlpredictor'
-pipeline_tag: '111021_no_residency_no_mapping'
+pipeline_tag: '06092022'
 
 #input tables from dlpm pipeline
-area_map_table: 'dlpm_111021_no_residency_no_mapping_tmp_area_map' # this raw data, with filtered si, remapped r and ipl and partitioned by bucket-id
-distribution_table: 'dlpm_111021_no_residency_no_mapping_tmp_distribution_reza'
-norm_table: 'dlpm_111021_no_residency_no_mapping_trainready'
-model_stat_table: 'dlpm_111021_no_residency_no_mapping_model_stat'
-bucket_size: 10
-bucket_step: 2
+area_map_table: 'dlpm_05172022_tmp_filter' # this raw data, with filtered si, remapped r and ipl and partitioned by bucket-id
+distribution_table: 'dlpm_06092022_tmp_distribution'
+norm_table: 'dlpm_06092022_trainready'
+model_stat_table: 'dlpm_06092022_model_stat'
+bucket_size: 100
+bucket_step: 10
 condition: ''
 
-yesterday: '2021-07-21'
-serving_url: 'http://10.193.217.126:8506/v1/models/dl_no_mapped_ipl:predict'
+yesterday: '20220320'
+serving_url: "http://10.193.217.126:8501/v1/models/20220613:predict"
 
 config_table: '{product_tag}_{pipeline_tag}_config'
 

@@ -8,7 +8,7 @@ fi
 #This module transform T1 : request based factdata to T2 : compatible factdata for rest of pipelie
 if false
 then
-    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml
+    spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml
 fi
 
 #Preparing the data by filtering reliable si, remapping r, ipl and recalculating bucket-ids
@@ -56,6 +56,7 @@ then
 fi
 
 #Saving tables as <config.pipeline.tfrecords_path>
+#For spark3 obtain jar file from https://github.com/linkedin/spark-tfrecord
 if false
 then
     spark-submit --jars spark-tensorflow-connector_2.11-1.15.0.jar pipeline/main_tfrecords.py config.yml

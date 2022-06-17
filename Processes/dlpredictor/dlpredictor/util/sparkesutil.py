@@ -48,9 +48,22 @@ def build_dict_from_counts(h, h_index):
 
     return dict
 
+def build_from_concat_string(uckey):
+        parts = uckey.split(UCDoc.uckey_delimiter)
+        ucdoc = UCDoc(None)
+        ucdoc.uckey = uckey
+        ucdoc.records = {}
+        ucdoc.m = parts[0]
+        ucdoc.si = parts[1]
+        ucdoc.t = parts[2]
+        ucdoc.g = parts[3]
+        ucdoc.a = parts[4]
+        ucdoc.r = parts[5]
+        ucdoc.ipl = parts[6]
+        return ucdoc
 
 def convert_day_hour_counts_to_ucdoc(uckey, day_hour_counts):
-    ucdoc = UCDoc.build_from_concat_string(uckey)
+    ucdoc = build_from_concat_string(uckey)
     for day_map in day_hour_counts:
         if len(day_map) > 0:
             # There is only one key here.

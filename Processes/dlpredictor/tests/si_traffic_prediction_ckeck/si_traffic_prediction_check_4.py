@@ -34,7 +34,7 @@ This file calculated the actual and predicted traffic a si.
     actual traffic from ts (no join with dist_table, all the uckeys are participating)
     predicted traffic from ES
 
-spark-submit --master yarn --py-files lib/imscommon-2.0.0-py2.7.egg --num-executors 5 --executor-cores 3 --executor-memory 16G --driver-memory 16G tests/si_traffic_prediction_ckeck/si_traffic_prediction_check_2.py
+spark-submit --master yarn --py-files lib/imscommon-2.0.0-py2.7.egg --num-executors 5 --executor-cores 3 --executor-memory 16G --driver-memory 16G tests/si_traffic_prediction_ckeck/si_traffic_prediction_check_4.py
 
 
 +------------------------------+----------+----------+--------+---------+-----+
@@ -71,13 +71,14 @@ Author: Reza
     }
 """
 
+DATE_FORMATE = '%Y%m%d'
 
 def query_predictions_traffic(cfg, starting_day, ending_day, si):
     es_host, es_port = cfg['es_host'], cfg['es_port']
     es_index, es_type = cfg['es_predictions_index'], cfg['es_predictions_type']
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
-    day = datetime.strptime(starting_day, '%Y-%m-%d')
-    end_date = datetime.strptime(ending_day, '%Y-%m-%d')
+    day = datetime.strptime(starting_day, DATE_FORMATE)
+    end_date = datetime.strptime(ending_day, DATE_FORMATE)
     predicted_traffic = 0
     # sum up the daily traffic as the total predicted traffic.
     while day <= end_date:
@@ -92,7 +93,7 @@ def query_predictions_traffic(cfg, starting_day, ending_day, si):
             "aggs": {
                 "day": {
                     "sum": {
-                        "field": "ucdoc.predictions.{}.hours.total".format(day.strftime('%Y-%m-%d'))
+                        "field": "ucdoc.predictions.{}.hours.total".format(day.strftime(DATE_FORMATE))
                     }
                 }
             }
@@ -184,7 +185,7 @@ def run(hive_context, cfg, version, traffic, target_days):
     shift = 1
     for row in rows:
         ts_ver = row['ts_ver']
-        ts_ver = ts_ver[shift:]
+        ts_ver = ts_ver[:-2]
         if len(target_days) != len(ts_ver):
             raise Exception('ts_ver len is not equal to target_days')
         for i in range(len(target_days)):
@@ -235,15 +236,15 @@ if __name__ == "__main__":
         'uckey_attrs': ['m', 'si', 't', 'g', 'a', 'pm', 'r', 'ipl'],
         'es_host': '10.213.37.41',
         'es_port': '9200',
-        'es_predictions_index': 'dlpredictor_05172022_predictions',
+        'es_predictions_index': 'dlpredictor_06092022_predictions',
         'es_predictions_type': 'doc',
-        'report_table': 'si_traffic_prediction_check_05172022_06062022'
+        'report_table': 'si_traffic_prediction_check_05172022_06092022'
     }
 
     # list of days in ts_ver in ts table.
-    target_days = sorted(["2021-03-21", "2021-03-2", "2021-03-2", "2021-03-2", "2021-03-2", "2021-03-2", "2021-03-2", "2021-03-2", "2021-03-2"])
+    target_days = sorted(["20220321", "20220322", "20220323", "20220324", "20220325", "20220326", "20220327", "20220328"])
 
-    VERSION = '05172022_06062022'
+    VERSION = '05172022_06092022'
     traffic = {'si': '', 'version': VERSION}
 
     sis = [
@@ -272,6 +273,8 @@ if __name__ == "__main__":
         's4z85pd1h8',
         '17dd6d8098bf11e5bdec00163e291137',
         'd4d7362e879511e5bdec00163e291137']
+    
+    #sis = sis[:2]
 
     sc = SparkContext.getOrCreate()
     hive_context = HiveContext(sc)

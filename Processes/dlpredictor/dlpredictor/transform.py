@@ -164,9 +164,9 @@ def generate_ucdoc(traffic_dist):
                 hour_counts.append({hour_index: count_array})
             day_hour_counts.append({day: hour_counts})
 
-        # UCKey length is always 8
-        while len(uckey.split(',')) < 8:
-            uckey += ','
+        # Uckeys should have correct number of placeholder (,) according to factdata, there is no longer a force to have correct length.
+        # while len(uckey.split(',')) < 8:
+        #     uckey += ','
 
         ucdoc = convert_day_hour_counts_to_ucdoc(uckey, day_hour_counts)
         ucdoc.predictions = ucdoc.records

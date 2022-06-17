@@ -1,0 +1,3 @@
+This is based on almost 90 days of request data.
+
+The average weighted error is 7.05%

@@ -1,0 +1,43 @@
+This is test report based on impression logs.
+
+The following are some data from the pipeline's check-points.
+
+Area_map:
+•	Record number: 2,025,819,694
+•	Number of Bucket_id:  10
+•	Total number of days: 91 days (2021-06-28 is missing)
+•	First day: 2021-05-01
+•	Last day: 2021-07-31
+
+Note: only 82 days are used for the trainer, see Trainready.
+
+Ts:
+•	Number of Uckeys: 1,289,460
+•	Length of ts is 82 days, from May 1st to July 21st 
+•	No buckets 
+
+Pre_cluster:
+•	Number of Uckeys: 559,442
+•	Sparse uckey : 406,957
+•	Dense uckey: 152,485
+•	Length of ts is 82 days, from May 1st to July 21st
+
+Cluster:
+•	Number of Uckey: 154,780
+
+Trainready:
+•	Number of Uckey: 154,780
+•	Length of ts is 82 days, from May 1st to July 21st 
+•	No bucket
+•	Total traffic: 15,864,359,742
+
+Trainer
+The SMAPE error rate of the model is 11%.
+
+Predictor
+The evaluation script (in dlpredictor process) shows aggregated error rate of 5% for prediction.
+This error rate is traffic-weighted average for all valid slots.
+
+traffic(si=A)xprediction-error(si=A) + traffic(si=C)xprediction-error(si=B) + traffic(si=C)xprediction-error(si=C)
+--------------------------------------------------------------------------------------------------------------------
+                                    traffic(si=A) + traffic(si=B) + traffic(si=C)

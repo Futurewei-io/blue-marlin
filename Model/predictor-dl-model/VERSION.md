@@ -13,3 +13,10 @@
 
 ### 0.1.2
 1. Add docs folder
+
+Note: From here, the version matches setup.py
+### 2.0.0
+1. New module added to process request-log table
+2. Cluster module has been modifed to process uckeys with lot's of zeros
+3. Outlier2 has been added to perform hampel on individual uckeys
+4. Date format has been changed

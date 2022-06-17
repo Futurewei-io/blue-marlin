@@ -32,6 +32,8 @@ from pyspark.sql import HiveContext
 from datetime import datetime, timedelta
 from util import resolve_placeholder
 from statistics import stdev
+import pandas as pd
+import numpy as np
 
 
 import transform as transform
@@ -128,32 +130,63 @@ def is_spare(datapoints_threshold, popularity_norm):
     return _helper
 
 
-def is_non_spiked_uckey(whole_popularity_avg, popularity_th, datapoints_min_th):
+def is_spiked_uckey(whole_popularity_avg, datapoints_min_th):
     def _helper(p, ts):
         num_list = [_ for _ in ts if _ is not None and _ != 0]
-        return not(p > whole_popularity_avg and len(num_list) * 1.0 < datapoints_min_th * len(ts))
+        return (p > whole_popularity_avg and len(num_list) * 1.0 < datapoints_min_th * len(ts))
+    return _helper
+
+
+def has_lots_of_zeros(datapoints_min_th):
+    def _helper(ts):
+        num_list = [_ for _ in ts if _ is not None and _ != 0]
+        return (len(num_list) * 1.0 < datapoints_min_th * len(ts))
     return _helper
 
 
 def remove_weak_uckeys(df, popularity_th, datapoints_min_th):
-    df = df.filter(udf(lambda p: p >= popularity_th, BooleanType())(df.p))
-    whole_popularity_avg = df.agg(avg('p').alias('_avg')).take(1)[0]['_avg']
-    df = df.filter(udf(is_non_spiked_uckey(whole_popularity_avg,
-                                           popularity_th, datapoints_min_th), BooleanType())(df.p, df.ts))
+    df = df.filter(udf(lambda p: p > popularity_th, BooleanType())(df.p))
+
+    # Logic change 05-26-2022, use sparsity instead of spykiness
+    # whole_popularity_avg = df.agg(avg('p').alias('_avg')).take(1)[0]['_avg']
+    # df = df.filter(~udf(is_spiked_uckey(whole_popularity_avg,
+    #                                        popularity_th, datapoints_min_th), BooleanType())(df.p, df.ts))
+
+    df = df.filter(~udf(has_lots_of_zeros(
+        datapoints_min_th), BooleanType())(df.ts))
     return df
 
 
 def denoise(df, percentile):
-    df = df.withColumn('nonzero_p', udf(
-        lambda ts: 1.0 * sum(ts) / len([_ for _ in ts if _ != 0]) if len(
-            [_ for _ in ts if _ != 0]) != 0 else 0.0, FloatType())(df.ts))
+    def __helper(ts):
+        _len = len([_ for _ in ts if _ != 0])
+        return (1.0 * sum(ts) / _len) if _len > 0 else 0.0
+    df = df.withColumn('nonzero_p', udf(__helper, FloatType())(df.ts))
+
     # df = df.withColumn('nonzero_sd', udf(
     #     lambda ts: stdev([_ for _ in ts if _ != 0]), FloatType())(df.ts))
 
     df = df.withColumn('ts', udf(lambda ts, nonzero_p: [i if i and i > (nonzero_p / percentile) else 0 for i in ts],
                                  ArrayType(IntegerType()))(df.ts, df.nonzero_p))
-    # df = df.withColumn('ts', udf(lambda ts, nonzero_sd: [i if i and i < (nonzero_sd * 2) else 0 for i in ts],
-    #                              ArrayType(IntegerType()))(df.ts, df.nonzero_sd))
+
+    return df
+
+
+def denoise2(df, lower_percentile, upper_percentile):
+    def __helper(ts):
+        ts_ser = pd.Series(ts)
+        _len = max(len(ts)//2, sum([1 if n == 0 else 0 for n in ts])*2)
+        rolling_median = ts_ser.rolling(
+            _len, center=True).median().fillna(method='bfill').fillna(method='ffill')
+        th_low, th_high = np.percentile(
+            ts, lower_percentile), np.percentile(ts, upper_percentile)
+        th_low = max(th_low, 4)
+        outlier_indices = list(
+            np.array(np.where((ts_ser < th_low) | (ts_ser > th_high))))[0]
+        ts_ser[outlier_indices] = rolling_median[outlier_indices]
+        return [int(i) for i in ts_ser]
+
+    df = df.withColumn('ts', udf(__helper, ArrayType(IntegerType()))(df.ts))
     return df
 
 
@@ -191,11 +224,16 @@ def run(hive_context, cluster_size_cfg, input_table_name,
     # add normalized popularity = mean_n
     df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
 
-    # remove weak uckeys
-    df = remove_weak_uckeys(df, popularity_th, datapoints_min_th)
-
     # replace nan with
     df = transform.replace_nan_with_zero(df)
+
+    # denoising uckeys: remove/set to zero some datapoints of the uckey. keep the data between upper and lower bound
+    df = denoise(df, percentile)
+
+    # TODO: improve code to have logic for popularity_th calculation
+
+    # remove weak uckeys
+    df = remove_weak_uckeys(df, popularity_th, datapoints_min_th)
 
     # add normalized popularity = mean_n
     # df, _ = transform.normalize_ohe_feature(df, ohe_feature='p')
@@ -275,7 +313,11 @@ def run(hive_context, cluster_size_cfg, input_table_name,
         datapoints_th_clusters, -sys.maxsize - 1)(p_n, ts), BooleanType())(df.p_n, df.ts))
 
     # denoising uckeys: remove some datapoints of the uckey. keep the data between upper and lower bound
-    df = denoise(df, percentile)
+    # df = denoise(df, percentile)
+
+    # new code: instead of replacing by zero (denoise method), replace by median of moving window
+    # denoising uckeys: fix some datapoints of the uckey. keep the data between upper and lower bound
+    df = denoise2(df, 5, 99.5)
 
     # drop tmp columns
     df = df.drop('si_imp_total')
@@ -305,7 +347,7 @@ if __name__ == "__main__":
     output_table_name = cfg['uckey_clustering']['output_table_name']
     pre_cluster_table_name = cfg['uckey_clustering']['pre_cluster_table_name']
     create_pre_cluster_table = cfg['uckey_clustering']['create_pre_cluster_table']
-    input_table_name = cfg['time_series']['outlier_table']
+    input_table_name = cfg['uckey_clustering']['input_table_name']
     cluster_size_cfg = cfg['uckey_clustering']['cluster_size']
 
     run(hive_context=hive_context,

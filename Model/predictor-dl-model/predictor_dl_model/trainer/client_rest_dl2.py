@@ -34,6 +34,8 @@ import sys
 
 # from predictor_dl_model.pipeline.util import get_dow
 
+DATE_FORMAT = '%Y%m%d'
+
 
 def get_start_end(records_len, train_window, forward_offset):
     start = records_len - train_window - forward_offset
@@ -44,7 +46,7 @@ def get_start_end(records_len, train_window, forward_offset):
 def get_dow(day_list):
     dow_list = []
     for day in day_list:
-        dow = datetime.datetime.strptime(day, '%Y-%m-%d').weekday()
+        dow = datetime.datetime.strptime(day, DATE_FORMAT).weekday()
         dow_list.append(dow)
 
     week_period = 7.0 / (2 * math.pi)
@@ -65,6 +67,22 @@ def lag_indexes(day_list):
     # key is date, value is day index
     base_index = pd.Series(np.arange(0, len(date_range)), index=date_range)
 
+    '''
+
+    use ones of these solutions for new versions of pd
+    
+    def lag1(offset):
+        base_index_offset = pd.Series(dtype=np.int64)
+        dates = date_range - offset
+        base_index_offset = pd.Series((base_index.get(i) for i in dates), index=date_range).fillna(-1).astype(np.int64)
+        return base_index_offset
+
+    def lag2(offset):
+        dates = date_range - offset
+        return pd.Series(data=base_index.reindex(dates).fillna(-1).astype(np.int64).values, index=date_range)
+    
+    ''' 
+    
     def lag(offset):
         dates = date_range - offset
         return pd.Series(data=base_index[dates].fillna(-1).astype(np.int64).values, index=date_range)
@@ -218,9 +236,9 @@ def predict(serving_url, model_stats, day_list, ucdoc_attribute_map, forward_off
     hits = full_record[start:end]
 
     day_list_cut = day_list[start:end]
-    predict_day = [datetime.datetime.strptime(day_list_cut[-1], "%Y-%m-%d").date() + datetime.timedelta(days=x + 1) for
+    predict_day = [datetime.datetime.strptime(day_list_cut[-1], DATE_FORMAT).date() + datetime.timedelta(days=x + 1) for
                    x in range(prediction_window)]
-    predict_day_list = [x.strftime("%Y-%m-%d") for x in predict_day]
+    predict_day_list = [x.strftime(DATE_FORMAT) for x in predict_day]
     day_list_cut.extend(predict_day_list)
 
     body = {"instances": []}

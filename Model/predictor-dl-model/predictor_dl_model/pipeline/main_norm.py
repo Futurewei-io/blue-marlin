@@ -77,10 +77,13 @@ def normalize(mlist):
 def run(sc, hive_context, columns, input_table_name, output_table_name, yesterday, prepare_past_days, holidays,
         model_info,
         model_table, new_si_list):
-    day = datetime.strptime(yesterday, '%Y-%m-%d')
+    
+    DATE_FORMAT = '%Y%m%d'
+    
+    day = datetime.strptime(yesterday, DATE_FORMAT)
     day_list = []
     for _ in range(0, prepare_past_days):
-        day_list.append(datetime.strftime(day, '%Y-%m-%d'))
+        day_list.append(datetime.strftime(day, DATE_FORMAT))
         day = day + timedelta(days=-1)
     day_list.sort()
 

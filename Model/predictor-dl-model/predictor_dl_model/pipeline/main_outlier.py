@@ -24,6 +24,9 @@ from pyspark.sql import HiveContext
 from util import resolve_placeholder, hampel
 import pandas as pd
 
+'''
+This is a global outlier, using all uckeys (dence and non-dense) to find outlier_indecies
+'''
 
 def write_to_table(df, table_name, mode='overwrite'):
     df.write.option("header", "true").option("encoding", "UTF-8").mode(mode).format('hive').saveAsTable(table_name)
@@ -82,13 +85,8 @@ if __name__ == "__main__":
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg_log['level'])
 
-    percentile = cfg['filter']['percentile']
-    output_table_name = cfg['uckey_clustering']['output_table_name']
-    pre_cluster_table_name = cfg['uckey_clustering']['pre_cluster_table_name']
-    create_pre_cluster_table = cfg['uckey_clustering']['create_pre_cluster_table']
-    input_table_name = cfg['time_series']['output_table_name']
-    cluster_size_cfg = cfg['uckey_clustering']['cluster_size']
-    outlier_table = cfg['time_series']['outlier_table']
+    input_table_name = cfg['outlier']['input_table_name']
+    outlier_table = cfg['outlier']['output_table_name']
 
     run(hive_context=hive_context,
         input_table_name=input_table_name,

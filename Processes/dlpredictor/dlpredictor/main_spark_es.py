@@ -34,9 +34,10 @@ from dlpredictor.util.sparkesutil import *
 
 
 '''
-spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --py-files dist/dlpredictor-1.6.0-py2.7.egg,lib/imscommon-2.0.0-py2.7.egg,lib/predictor_dl_model-1.6.0-py2.7.egg --conf spark.driver.maxResultSize=5G dlpredictor/main_spark_es.py conf/config.yml
+spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --py-files dist/dlpredictor-2.0.0-py2.7.egg,lib/imscommon-2.0.0-py2.7.egg,lib/predictor_dl_model-2.0.0-py2.7.egg --conf spark.driver.maxResultSize=5G dlpredictor/main_spark_es.py conf/config.yml
 '''
 
+DATE_FORMAT = '%Y%m%d'
 
 def sum_count_array(hour_counts):
     '''
@@ -174,10 +175,10 @@ def run(cfg):
 
     # create day_list from yesterday for train_window
     duration = model_stats['model']['duration']
-    day = datetime.strptime(yesterday, '%Y-%m-%d')
+    day = datetime.strptime(yesterday, DATE_FORMAT)
     day_list = []
     for _ in range(0, duration):
-        day_list.append(datetime.strftime(day, '%Y-%m-%d'))
+        day_list.append(datetime.strftime(day, DATE_FORMAT))
         day = day + timedelta(days=-1)
     day_list.sort()
 

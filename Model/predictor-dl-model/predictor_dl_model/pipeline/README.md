@@ -8,7 +8,7 @@ Pipeline takes the following steps:
 5. Compare the new model and old model (new model evaluation)(future)
 6. Set the predictor to use the new model - predictor reads the name of the model that it uses from Ealsticsearch (future)
 
-### UCKEY Elements
+### UCKEY Elements for IMPRESSION table
 uckey consists of the following items.
 
 ucdoc.m = parts[0] #media-type
@@ -19,3 +19,15 @@ ucdoc.a = parts[4] #age
 ucdoc.pm = parts[5] #price-model
 ucdoc.r = parts[6] #resident-location
 ucdoc.ipl = parts[7] #ip-location
+
+
+### UCKEY Elements for REQUEST table
+uckey consists of the following items.
+
+ucdoc.m = parts[0] #media-type
+ucdoc.si = parts[1] #slot-id
+ucdoc.t = parts[2] #connection-type
+ucdoc.g = parts[3] #gender
+ucdoc.a = parts[4] #age
+ucdoc.r = parts[5] #resident-location
+ucdoc.ipl = parts[6] #ip-location

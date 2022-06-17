@@ -69,15 +69,17 @@ T2
 +-----------------------+-------------+-------+
 
 
-spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml
+spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml
+
+nohup spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --conf spark.driver.maxResultSize=5G --conf spark.hadoop.hive.exec.dynamic.partition=true --conf spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict pipeline/main_rti_transform.py config.yml &
 
 '''
 
 
 def advance_date(date, day_added):
-    _time = datetime.strptime(date, "%Y-%m-%d")
+    _time = datetime.strptime(date, "%Y%m%d")
     _time = _time + timedelta(days=day_added)
-    return _time.strftime("%Y-%m-%d")
+    return _time.strftime("%Y%m%d")
 
 
 def assign_new_bucket_id(df, n):
@@ -187,8 +189,8 @@ if __name__ == "__main__":
     start_day = cfg_rti['start_day']
     end_day = cfg_rti['end_day']
     new_bucket_size = cfg_rti['new_bucket_size']
-    input_table = cfg_rti['input_table']
-    output_table = cfg['factdata_table_name']
+    input_table = cfg_rti['input_table_name']
+    output_table = cfg_rti['output_table_name']
 
     run(hive_context=hive_context,
         input_table=input_table, output_table=output_table,

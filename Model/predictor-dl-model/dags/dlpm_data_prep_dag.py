@@ -40,10 +40,10 @@ def sparkOperator(
         **kwargs
 ):
     return SparkSubmitOperator(
-        application='/home/airflow/airflow-apps/predictor-dl-model/predictor_dl_model/pipeline/{}'.format(
+        application='/home/airflow/airflow-apps/bm-dlpredictor/predictor-dl-model/predictor_dl_model/pipeline/{}'.format(
             file),
         application_args=[
-            '/home/airflow/airflow-apps/predictor-dl-model/predictor_dl_model/config.yml'],
+            '//home/airflow/airflow-apps/bm-dlpredictor/predictor-dl-model/predictor_dl_model/config.yml'],
         conn_id='spark_default',
         conf={'spark.driver.maxResultSize': '8g'},
         driver_memory='16G',
@@ -55,9 +55,14 @@ def sparkOperator(
         **kwargs
     )
 
+
 show_config = sparkOperator('show_config.py', 'show_config')
 
-main_filter_si_region_bucket = sparkOperator('main_filter_si_region_bucket.py', 'main_filter_si_region_bucket')
+main_rti_transform = sparkOperator(
+    'main_rti_transform.py', 'main_rti_transform')
+
+main_filter_si_region_bucket = sparkOperator(
+    'main_filter_si_region_bucket.py', 'main_filter_si_region_bucket')
 
 main_ts = sparkOperator('main_ts.py',
                         'main_ts',
@@ -76,5 +81,4 @@ main_tfrecords = sparkOperator('main_tfrecords.py',
                                jars='/home/airflow/airflow-apps/predictor-dl-model/predictor_dl_model/spark-tensorflow-connector_2.11-1.15.0.jar')
 
 
-show_config >> main_filter_si_region_bucket >> main_ts >> main_cluster >> main_distribution >> main_norm >> main_tfrecords
-
+show_config >> main_rti_transform >> main_filter_si_region_bucket >> main_ts >> main_cluster >> main_distribution >> main_norm >> main_tfrecords

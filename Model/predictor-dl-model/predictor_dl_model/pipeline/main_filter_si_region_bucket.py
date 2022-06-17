@@ -27,6 +27,13 @@ from pyspark.sql import HiveContext
 from util import resolve_placeholder
 import hashlib
 
+'''
+spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 16G --driver-memory 16G --conf spark.driver.maxResultSize=5G pipeline/main_filter_si_region_bucket.py config.yml
+
+nohup spark-submit --master yarn --num-executors 10 --executor-cores 5 --executor-memory 32G --driver-memory 32G --conf spark.driver.maxResultSize=5G pipeline/main_filter_si_region_bucket.py config.yml &
+
+'''
+
 
 def __save_as_table(df, table_name, hive_context, create_table):
 
@@ -56,8 +63,10 @@ def __save_as_table(df, table_name, hive_context, create_table):
 
 
 def drop_residency(df):
+    # IMP vs REQUEST
+    RESIDENCY_INDEX = 5
     new_uckey = udf(lambda uckey: ','.join(
-        [v if i != 6 else '' for i, v in enumerate(uckey.split(','))]))
+        [v if i != RESIDENCY_INDEX else '' for i, v in enumerate(uckey.split(','))]))
     df = df.withColumn('_uckey', new_uckey(df.uckey)).drop(
         'uckey').withColumnRenamed('_uckey', 'uckey')
     return df
@@ -73,7 +82,7 @@ def assign_new_bucket_id(df, n):
     return df
 
 
-def run(hive_context, conditions, factdata_table_name, output_table_name, init_start_bucket, bucket_size, bucket_step, new_bucket_size, new_si_set):
+def run(hive_context, conditions, input_table_name, output_table_name, init_start_bucket, bucket_size, bucket_step, new_bucket_size, new_si_set):
 
     start_bucket = init_start_bucket
     first_round = True
@@ -87,7 +96,7 @@ def run(hive_context, conditions, factdata_table_name, output_table_name, init_s
         # Read factdata table
         command = """
         SELECT count_array,day,hour,uckey,bucket_id FROM {} WHERE bucket_id BETWEEN {} AND {}
-        """.format(factdata_table_name, str(start_bucket), str(end_bucket))
+        """.format(input_table_name, str(start_bucket), str(end_bucket))
 
         if len(conditions) > 0:
             command = command + " AND {}".format(' AND '.join(conditions))
@@ -135,7 +144,7 @@ if __name__ == "__main__":
 
     cfg_filter = cfg['pipeline']['filter']
 
-    factdata_table_name = cfg['factdata_table_name']
+    input_table_name = cfg_filter['input_table_name']
     output_table_name = cfg_filter['output_table_name']
     init_start_bucket = cfg_filter['init_start_bucket']
     bucket_size = cfg_filter['bucket_size']
@@ -146,7 +155,7 @@ if __name__ == "__main__":
 
     new_si_set = set(new_si_list)
 
-    run(hive_context=hive_context, conditions=conditions, factdata_table_name=factdata_table_name,
+    run(hive_context=hive_context, conditions=conditions, input_table_name=input_table_name,
         output_table_name=output_table_name, init_start_bucket=init_start_bucket,
         bucket_size=bucket_size, bucket_step=bucket_step, new_bucket_size=new_bucket_size, new_si_set=new_si_set)
 

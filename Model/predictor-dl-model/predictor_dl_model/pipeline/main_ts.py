@@ -80,18 +80,20 @@ def run(hive_context, conditions, input_table, yesterday, past_days, predict_win
 
     # ts will be counts from yesterday-(past_days) to yesterday
 
-    day = datetime.strptime(yesterday, '%Y-%m-%d')
+    DATE_FORMAT = '%Y%m%d'
+
+    day = datetime.strptime(yesterday, DATE_FORMAT)
     day_list = []
-    for _ in range(0, past_days):
-        day_list.append(datetime.strftime(day, '%Y-%m-%d'))
+    for _ in range(past_days):
+        day_list.append(datetime.strftime(day, DATE_FORMAT))
         day = day + timedelta(days=-1)
     day_list.sort()
 
-    day = datetime.strptime(yesterday, '%Y-%m-%d')
+    day = datetime.strptime(yesterday, DATE_FORMAT)
     ver_day_list = []
-    for _ in range(0, predict_window):
+    for _ in range(predict_window):
         day = day + timedelta(days=1)
-        ver_day_list.append(datetime.strftime(day, '%Y-%m-%d'))       
+        ver_day_list.append(datetime.strftime(day, DATE_FORMAT))
     ver_day_list.sort()
 
     start_bucket = 0
@@ -142,12 +144,17 @@ def run(hive_context, conditions, input_table, yesterday, past_days, predict_win
 
         df = transform.calculate_time_series(df, 'ts_ver', ver_day_list)
 
+        # REVIEW FEATURE MAPPING BETWEEB UCKEY-STRING AND DF
+
         # Log processor code to know the index of features
         # v = concat_ws(UCDoc.uckey_delimiter, df.adv_type 0 , df.slot_id 1 , df.net_type 2 , df.gender 3 , df.age 4 ,
         #                   df.price_dev 5 , df.pricing_type 6 , df.residence_city 7 , df.ip_city_code 8 )
+
+        # IMP vs REQUEST
+
         df = df.withColumn('a', transform.add_feature_udf(4)(df.uckey))
         df = df.withColumn('si', transform.add_feature_udf(1)(df.uckey))
-        df = df.withColumn('ipl', transform.add_feature_udf(7)(df.uckey))
+        df = df.withColumn('ipl', transform.add_feature_udf(6)(df.uckey))
         df = df.withColumn('t', transform.add_feature_udf(2)(df.uckey))
         df = df.withColumn('g', transform.add_feature_udf(3)(df.uckey))
 
@@ -167,22 +174,23 @@ if __name__ == "__main__":
         resolve_placeholder(cfg)
 
     cfg_log = cfg['log']
-    cfg_pipeline = cfg['pipeline']['time_series']
+    cfg_ts = cfg['pipeline']['time_series']
 
     sc = SparkContext()
     hive_context = HiveContext(sc)
     sc.setLogLevel(cfg_log['level'])
 
-    yesterday = cfg_pipeline['yesterday']
-    prepare_past_days = cfg_pipeline['prepare_past_days']
-    output_table = cfg_pipeline['output_table_name']
-    bucket_size = cfg_pipeline['bucket_size']
-    bucket_step = cfg_pipeline['bucket_step']
-    input_table = cfg_pipeline['input_table_name']
-    conditions = cfg_pipeline['conditions']
+    yesterday = cfg_ts['yesterday']
+    prepare_past_days = cfg_ts['prepare_past_days']
+    output_table = cfg_ts['output_table_name']
+    bucket_size = cfg_ts['bucket_size']
+    bucket_step = cfg_ts['bucket_step']
+    input_table = cfg_ts['input_table_name']
+    conditions = cfg_ts['conditions']
     predict_window = cfg['trainer']['predict_window']
 
     run(hive_context=hive_context, conditions=conditions, input_table=input_table,
-        yesterday=yesterday, past_days=prepare_past_days, predict_window=predict_window, output_table=output_table, bucket_size=bucket_size, bucket_step=bucket_step)
+        yesterday=yesterday, past_days=prepare_past_days, predict_window=predict_window,
+        output_table=output_table, bucket_size=bucket_size, bucket_step=bucket_step)
 
     sc.stop()

@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="predictor_dl_model", # This is the package name.
-    version="0.1.2",
+    version="2.0.0",
     author="Reza Adibnia",
     author_email="radibnia@futurewei.com",
     description="All the packages required for running predictor pipeline",

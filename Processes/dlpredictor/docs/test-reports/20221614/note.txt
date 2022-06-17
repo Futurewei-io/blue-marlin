@@ -1,0 +1,22 @@
+This is based on almost 90 days of request data.
+
+The average weighted error is 6.78%
+
+Predictor
+The evaluation script (in dlpredictor process) shows aggregated error rate of 6.78% for prediction.
+This error rate is traffic-weighted average for all valid slots per prediction day.
+
+traffic(si=A, day+1) x prediction-error(si=A) + 
+traffic(si=A, day+2) x prediction-error(si=A) + 
+.
+.
+.
+traffic(si=C, day+1) x prediction-error(si=B) + 
+.
+.
+traffic(si=C,day+1) x prediction-error(si=C)
+.
+.
+traffic(si=C,day+10) x prediction-error(si=C)
+--------------------------------------------------------------------------------------------------------------------
+                                    traffic(si=A) + traffic(si=B) + traffic(si=C)
