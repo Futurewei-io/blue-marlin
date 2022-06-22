@@ -3,7 +3,7 @@ docutils==0.16
 elasticsearch==7.8.0
 idna==2.10
 imscommon==2.0.0
-numpy==1.16.6
+numpy==1.22.0
 pandas==0.24.2
 python-dateutil==2.8.1
 requests==2.24.0
