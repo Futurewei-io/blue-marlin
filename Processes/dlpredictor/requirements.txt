@@ -2,6 +2,6 @@ pyaml==20.4.0
 statistics==1.0.3.5
 elasticsearch==7.7.1
 requests==2.24.0
-numpy==1.16.6
+numpy==1.22.0
 typing==3.7.4.3
 pandas==0.24.2
