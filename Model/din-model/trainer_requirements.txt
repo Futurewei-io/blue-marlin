@@ -68,7 +68,7 @@ predictor-ai-model==1.0.0
 predictor-dl-model==1.0.0
 prometheus-client==0.7.1
 prompt-toolkit==2.0.10
-protobuf==3.10.1
+protobuf==3.18.3
 ptyprocess==0.6.0
 py4j==0.10.7
 pyasn1==0.4.8
