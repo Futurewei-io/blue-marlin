@@ -1,4 +1,4 @@
-certifi==2019.11.28
+certifi==2022.12.7
 docutils==0.16
 elasticsearch==7.8.0
 idna==2.10
